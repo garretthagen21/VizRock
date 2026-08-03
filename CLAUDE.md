@@ -48,8 +48,9 @@ every adapter degrades to a no-op and the web UI still drives the full state mac
   defaults for a fresh Pi.
 - Adding a new output = one class with `apply()` + an entry in `_KINDS`. Don't special-case
   outputs inside `brain.py`.
-- Changing the ring payload means editing `../VizRock-Firmware` in the same breath. See the
-  wire protocol in `../CLAUDE.md`.
+- Adding a ring mode means editing `web/index.html` (`paintRing`) **and** both sketches in
+  `../VizRock-Firmware`. `adapters.py` passes the mode string through untouched — there is no
+  table here to update. See the wire protocol in `../CLAUDE.md`.
 
 ## Config notes
 
