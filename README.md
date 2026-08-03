@@ -28,6 +28,7 @@ The ESP32 sketches live in the sibling repo **[VizRock-Firmware](../VizRock-Firm
 - `setup/` — udev rule + systemd unit
 
 ## Install (Raspberry Pi OS Lite, Bookworm)
+Needs **Python 3.10+** — Bookworm ships 3.11.
 ```bash
 sudo apt update && sudo apt install -y python3-venv libasound2-dev libjack-dev i2c-tools
 git clone https://github.com/garretthagen21/VizRock-Brain.git ~/show-brain && cd ~/show-brain

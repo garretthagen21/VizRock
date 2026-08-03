@@ -21,6 +21,8 @@ Workspace root is `../` — read `../CLAUDE.md` first for cross-repo contracts
 
 ## Run
 
+Python **3.10+** (PEP 604 annotations in `brain.py`).
+
 ```bash
 python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
 ./venv/bin/python3 brain.py          # UI at http://<host>:8080
