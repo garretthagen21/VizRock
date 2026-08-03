@@ -1,0 +1,12 @@
+# Stable device names for Show Brain hardware.
+# Install:  sudo cp 99-showbrain.rules /etc/udev/rules.d/  &&  sudo udevadm control --reload
+#
+# M-VAVE Chocolate (USB-MIDI foot controller). VID:PID from community reports
+# (Jieli/SINCO 4353:4b4d) — verify yours with:  lsusb  and  udevadm info -a /dev/...
+SUBSYSTEM=="usb", ATTRS{idVendor}=="4353", ATTRS{idProduct}=="4b4d", SYMLINK+="chocolate", TAG+="showbrain"
+
+# ESP32 ring transmitter (CP210x / CH340 USB-serial). Adjust VID:PID to your board.
+# Silicon Labs CP210x:
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="ring_tx"
+# WCH CH340:
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ring_tx"

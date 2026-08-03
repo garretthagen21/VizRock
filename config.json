@@ -1,0 +1,28 @@
+{
+  "ui": { "port": 8080 },
+
+  "midi_inputs": ["Chocolate", "FM3"],
+
+  "outputs": {
+    "resolume": { "type": "osc",    "host": "192.168.4.50", "port": 7000, "enabled": true },
+    "dmx":      { "type": "artnet",  "host": "192.168.4.60", "universe": 0, "enabled": false,
+                  "cues": {
+                    "off":        {},
+                    "blackout":   {},
+                    "warm_low":   { "1": 180, "2": 60, "3": 20 },
+                    "strobe_cool":{ "1": 0, "2": 120, "3": 255 }
+                  } },
+    "rings":    { "type": "serial", "port": "auto", "baud": 115200, "enabled": true },
+    "oled":     { "type": "oled",   "width": 128, "height": 64, "enabled": true }
+  },
+
+  "triggers": [
+    { "midi": { "kind": "note", "note": 60 }, "do": "arm_prev" },
+    { "midi": { "kind": "note", "note": 61 }, "do": "arm_next" },
+    { "midi": { "kind": "note", "note": 62 }, "do": "go" },
+    { "midi": { "kind": "note", "note": 63 }, "do": "blackout" },
+
+    { "midi": { "kind": "pc", "program": 1 }, "do": "goto", "scene": 2 },
+    { "midi": { "kind": "pc", "program": 2 }, "do": "goto", "scene": 3 }
+  ]
+}

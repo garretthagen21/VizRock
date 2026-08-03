@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Show Brain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0B0E13; --panel:#141922; --panel2:#1B222E; --line:#232C3A;
+    --ink:#E6EDF5; --muted:#6B7A90; --muted2:#48566B;
+    --live:#35E08A; --warn:#FFB347; --idle:#3A4657; --active:#4EA8FF; --armamber:#FFCB6B;
+    --mono:'IBM Plex Mono',ui-monospace,monospace; --disp:'Space Grotesk',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--void); color:var(--ink); font-family:var(--disp); -webkit-font-smoothing:antialiased;
+    overflow:hidden; background-image:radial-gradient(circle at 50% -10%, #131a26 0%, var(--void) 60%);}
+  .app{height:100vh; display:flex; flex-direction:column}
+  header{display:flex; align-items:center; gap:20px; padding:14px 22px; border-bottom:1px solid var(--line);
+    background:rgba(11,14,19,.7); backdrop-filter:blur(6px)}
+  .wordmark{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.14em; font-size:13px}
+  .wordmark .dot{width:9px;height:9px;border-radius:50%;background:var(--warn);box-shadow:0 0 10px var(--warn)}
+  .wordmark .dot.online{background:var(--live);box-shadow:0 0 10px var(--live)}
+  .wordmark small{color:var(--muted); font-weight:500; letter-spacing:.2em}
+  .show-id{font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.04em}
+  .spacer{flex:1}
+  .toggle{display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden}
+  .toggle button{font-family:var(--mono); font-size:12px; letter-spacing:.12em; font-weight:600; background:transparent;
+    color:var(--muted); border:0; padding:9px 18px; cursor:pointer; transition:.18s}
+  .toggle button.on{background:var(--active); color:#06121f}
+  .clock{font-family:var(--mono); font-size:13px; color:var(--muted); letter-spacing:.06em; min-width:74px; text-align:right}
+
+  .statusbar{display:flex; align-items:center; gap:10px; padding:14px 22px; flex-wrap:wrap}
+  .pill{display:flex; align-items:center; gap:9px; padding:8px 14px 8px 12px; border:1px solid var(--line);
+    border-radius:999px; background:var(--panel); font-family:var(--mono); font-size:11px; letter-spacing:.1em; font-weight:600}
+  .pill .led{width:8px;height:8px;border-radius:50%;background:var(--idle);transition:.2s}
+  .pill.ok .led{background:var(--live);box-shadow:0 0 8px var(--live)}
+  .pill.retrying .led{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:blink 1s steps(2) infinite}
+  .pill.off{opacity:.5}
+  .pill .st{color:var(--muted);font-weight:500}
+  .pill.ok .st{color:var(--live)} .pill.retrying .st{color:var(--warn)}
+  @keyframes blink{50%{opacity:.35}}
+  .midiblip{margin-left:auto; display:flex; align-items:center; gap:9px; font-family:var(--mono);
+    font-size:11px; letter-spacing:.1em; color:var(--muted); font-weight:600}
+  .midiblip .sq{width:11px;height:11px;border-radius:2px;border:1px solid var(--muted2);transition:.05s}
+  .midiblip.hit .sq{background:var(--active);border-color:var(--active);box-shadow:0 0 12px var(--active)}
+
+  /* SHOW: LIVE | ARMED */
+  .show{flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0}
+  .stack{display:flex; flex-direction:column; justify-content:center; padding:8px 40px; gap:18px; min-width:0}
+  .stack.deck{border-left:1px solid var(--line); background:linear-gradient(180deg,#0e131b, var(--void))}
+  .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.3em; color:var(--muted); display:flex; align-items:center; gap:10px}
+  .eyebrow .tag{color:var(--active)}
+  .deck .eyebrow .tag{color:var(--armamber)}
+  .row{display:flex; align-items:center; gap:26px}
+  .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em}
+  .live .num{font-size:clamp(78px,12vw,150px)}
+  .deck .num{font-size:clamp(58px,9vw,104px); color:var(--armamber)}
+  .name{font-size:clamp(20px,2.6vw,34px); font-weight:600; margin-top:10px}
+  .deck .name{color:#f0e2c4}
+  .miniring{width:clamp(74px,10vw,120px); aspect-ratio:1; border-radius:50%; flex:none}
+  .ringcap{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--muted); margin-top:12px}
+  .goready{font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:var(--armamber); margin-top:6px}
+  .goready::before{content:"▸ "; }
+
+  .transport{display:flex; align-items:center; gap:12px; padding:14px 22px; border-top:1px solid var(--line); background:var(--panel)}
+  .log{flex:1; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .log .t{color:var(--muted2)}
+  .btn{font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.1em; cursor:pointer; background:var(--panel2);
+    color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:11px 15px; transition:.15s}
+  .btn:hover{border-color:var(--active); color:#fff}
+  .btn.go{background:#12271c; border-color:#2f6b48; color:var(--live); font-weight:700; padding:11px 26px}
+  .btn.go:hover{background:#173626; border-color:var(--live)}
+  .btn.blackout{border-color:#3a2530; color:#ff8a8a}
+  .btn.blackout:hover{background:#2a1720; border-color:#ff8a8a}
+  .foot-note{font-family:var(--mono); font-size:10px; color:var(--muted2); letter-spacing:.1em}
+
+  /* EDIT */
+  .edit{flex:1; display:grid; grid-template-columns:1.35fr 1fr; min-height:0}
+  .col{min-height:0; overflow:auto; padding:18px 22px}
+  .col.right{border-left:1px solid var(--line); background:var(--panel)}
+  .col::-webkit-scrollbar{width:8px} .col::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .sectlab{font-family:var(--mono); font-size:11px; letter-spacing:.24em; color:var(--muted); margin:4px 0 14px}
+  .sectlab.mt{margin-top:26px}
+  .scene{display:flex; align-items:center; gap:14px; padding:13px 14px; border:1px solid var(--line); border-radius:10px;
+    background:var(--panel); margin-bottom:9px; cursor:pointer; transition:.15s}
+  .scene:hover{border-color:var(--muted2)}
+  .scene.sel{border-color:var(--active); background:#141d2a}
+  .scene.islive{box-shadow:inset 3px 0 0 var(--live)}
+  .scene.isarmed{box-shadow:inset 3px 0 0 var(--armamber)}
+  .scene .id{font-family:var(--mono); font-weight:700; font-size:19px; width:34px; text-align:center}
+  .scene.sel .id{color:var(--active)}
+  .scene .body{flex:1; min-width:0}
+  .scene .nm{font-weight:600; font-size:15px; margin-bottom:6px; display:flex; align-items:center; gap:8px}
+  .flag{font-family:var(--mono); font-size:9px; letter-spacing:.12em; padding:2px 6px; border-radius:4px}
+  .flag.live{background:#12271c; color:var(--live)} .flag.armed{background:#2a2413; color:var(--armamber)}
+  .chips{display:flex; gap:6px; flex-wrap:wrap}
+  .chip{font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--muted); border:1px solid var(--line);
+    border-radius:5px; padding:3px 7px; display:flex; align-items:center; gap:5px; background:var(--panel2)}
+  .chip .sw{width:9px;height:9px;border-radius:50%;box-shadow:0 0 6px currentColor}
+  .fire{font-family:var(--mono); font-size:15px; color:var(--muted); border:1px solid var(--line); background:var(--panel2);
+    width:38px;height:38px;border-radius:9px;cursor:pointer;transition:.15s;flex:none}
+  .fire:hover{border-color:var(--live);color:var(--live)}
+  .insp .nm{font-size:22px;font-weight:600;margin-bottom:2px}
+  .insp .sub{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:20px}
+  .field{margin-bottom:16px}
+  .field label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--muted);display:block;margin-bottom:7px}
+  .field .val{font-family:var(--mono);font-size:14px;color:var(--ink);background:var(--void);border:1px solid var(--line);border-radius:7px;padding:10px 12px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .slider{display:flex;align-items:center;gap:12px}
+  .ringmini{width:44px;height:44px;border-radius:50%;flex:none}
+  .learn{display:flex;align-items:center;justify-content:space-between;border:1px dashed var(--line);border-radius:9px;
+    padding:12px 14px;margin-bottom:9px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .learn b{color:var(--ink);font-weight:600}
+  .learnbtn{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--active);background:transparent;border:1px solid var(--active);border-radius:6px;padding:7px 12px;cursor:pointer}
+  .out{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:var(--panel);margin-bottom:8px;font-family:var(--mono);font-size:12px}
+  .out .led{width:8px;height:8px;border-radius:50%;background:var(--idle)}
+  .out.ok .led{background:var(--live);box-shadow:0 0 8px var(--live)}
+  .out.retrying .led{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+  .out .nm{color:var(--ink);font-weight:600;letter-spacing:.06em}
+  .out .addr{color:var(--muted);margin-left:auto}
+  .hidden{display:none!important}
+  @media (max-width:860px){
+    .show{grid-template-columns:1fr} .stack.deck{border-left:0;border-top:1px solid var(--line)}
+    .edit{grid-template-columns:1fr} .col.right{border-left:0;border-top:1px solid var(--line)}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="wordmark"><span class="dot" id="conn"></span>SHOW&nbsp;BRAIN <small id="mode">demo</small></div>
+    <div class="show-id" id="showId">// —</div>
+    <div class="spacer"></div>
+    <div class="toggle">
+      <button id="tShow" class="on" onclick="setView('show')">SHOW</button>
+      <button id="tEdit" onclick="setView('edit')">EDIT</button>
+    </div>
+    <div class="clock" id="clock">--:--:--</div>
+  </header>
+
+  <div id="viewShow">
+    <div class="statusbar" id="pills"></div>
+    <div class="show">
+      <div class="stack live">
+        <div class="eyebrow"><span class="tag">●</span> LIVE</div>
+        <div class="row">
+          <div>
+            <div class="num" id="lNum">--</div>
+            <div class="name" id="lName">—</div>
+          </div>
+          <div>
+            <div class="miniring" id="lRing"></div>
+            <div class="ringcap" id="lCap"></div>
+          </div>
+        </div>
+      </div>
+      <div class="stack deck">
+        <div class="eyebrow"><span class="tag">◇</span> ON DECK</div>
+        <div class="row">
+          <div>
+            <div class="num" id="aNum">--</div>
+            <div class="name" id="aName">—</div>
+            <div class="goready">GO fires this</div>
+          </div>
+          <div>
+            <div class="miniring" id="aRing"></div>
+            <div class="ringcap" id="aCap"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="transport">
+      <button class="btn" onclick="act('arm_prev')">◄ PREV</button>
+      <button class="btn" onclick="act('arm_next')">NEXT ►</button>
+      <button class="btn go" onclick="act('go')">GO ▸</button>
+      <div class="log" id="log"><span class="t">[--:--:--]</span> connecting…</div>
+      <span class="foot-note">FM3 + Chocolate feed these</span>
+      <button class="btn blackout" onclick="act('blackout')">BLACKOUT</button>
+    </div>
+  </div>
+
+  <div id="viewEdit" class="hidden">
+    <div class="edit">
+      <div class="col"><div class="sectlab">SCENE TABLE</div><div id="sceneList"></div></div>
+      <div class="col right">
+        <div class="sectlab">INSPECTOR</div><div class="insp" id="insp"></div>
+        <div class="sectlab mt">TRIGGERS · M-VAVE CHOCOLATE</div>
+        <div class="learn"><span>SW1 <b>prev</b> · SW2 <b>next</b> · SW3 <b>GO</b> · SW4 <b>blackout</b></span>
+          <button class="learnbtn" onclick="learn(this)">MIDI LEARN</button></div>
+        <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- demo fallback state (used only if the brain WS isn't reachable) ----
+const DEMO = {
+  live:1, armed:2, last_event:"demo mode · no brain connected",
+  outputs:{resolume:"ok", dmx:"off", rings:"retrying", oled:"ok"},
+  meta:{show:"THC 2026-09-12 (demo)"},
+  scenes:[
+    {id:1,name:"Intro",resolume:{layer:1,clip:1},dmx:{cue:"blackout"},ring:{mode:"pulse",hue:200,bright:80,speed:2},audio:true},
+    {id:2,name:"Song A - verse",resolume:{layer:1,clip:2},dmx:{cue:"warm_low"},ring:{mode:"solid",hue:20,bright:120,speed:0},audio:false},
+    {id:3,name:"Song A - drop",resolume:{layer:1,clip:3},dmx:{cue:"strobe_cool"},ring:{mode:"strobe",hue:150,bright:200,speed:8},audio:false},
+    {id:4,name:"Interlude",resolume:{layer:1,clip:4},dmx:{cue:"warm_low"},ring:{mode:"chase",hue:280,bright:100,speed:4},audio:true},
+    {id:0,name:"Blackout",resolume:{clear:true},dmx:{cue:"off"},ring:{mode:"off"},audio:false},
+  ]
+};
+let state = structuredClone(DEMO);
+let selected = 1, ws = null, online = false;
+
+const H = h => Math.round(h/255*360);
+const now = () => new Date().toTimeString().slice(0,8);
+const scene = id => state.scenes.find(s=>s.id===id);
+const order = () => state.scenes.filter(s=>s.id!==0).map(s=>s.id);
+
+// ---- websocket to the brain (graceful demo fallback) ----
+function connect(){
+  try{ ws = new WebSocket(`ws://${location.host}/ws`); }catch(e){ return; }
+  ws.onopen = ()=>{ online=true; document.getElementById('conn').classList.add('online');
+    document.getElementById('mode').textContent="live"; };
+  ws.onmessage = e => { const d=JSON.parse(e.data); if(d.type==="state"){ state=d; blip(); render(); } };
+  ws.onclose = ()=>{ online=false; document.getElementById('conn').classList.remove('online');
+    document.getElementById('mode').textContent="demo"; setTimeout(connect, 2000); };
+  ws.onerror = ()=>{ try{ws.close();}catch(_){} };
+}
+function act(action, sceneId){
+  if(online && ws && ws.readyState===1){ ws.send(JSON.stringify({type:"action",action,scene:sceneId})); return; }
+  demoAct(action, sceneId);                          // local simulation
+}
+function demoAct(action, sceneId){
+  const ord=order();
+  if(action==="arm_prev"){ let i=ord.indexOf(state.armed); state.armed=ord[Math.max(0,i-1)]; state.last_event=`armed → ${lbl(state.armed)}`; }
+  else if(action==="arm_next"){ let i=ord.indexOf(state.armed); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`armed → ${lbl(state.armed)}`; }
+  else if(action==="go"){ state.live=state.armed; let i=ord.indexOf(state.live); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`LIVE → ${lbl(state.live)} · dispatched`; }
+  else if(action==="goto"){ state.live=sceneId; state.last_event=`LIVE → ${lbl(sceneId)}`; }
+  else if(action==="blackout"){ state.live=0; state.last_event=`LIVE → 00 Blackout`; }
+  blip(); render();
+}
+const lbl = id => { const s=scene(id); return s?`${String(id).padStart(2,'0')} ${s.name}`:String(id); };
+
+// ---- ring visualization ----
+function paintRing(el, r){
+  if(!el) return;
+  const hue=H(r.hue), light=38+r.bright/255*24, sat=r.mode==="off"?0:85, col=`hsl(${hue} ${sat}% ${light}%)`;
+  el.style.animation="none";
+  if(r.mode==="off"){ el.style.background="conic-gradient(#161b24,#161b24)"; el.style.boxShadow="none"; el.style.opacity=".5"; return; }
+  el.style.opacity="1";
+  el.style.background = r.mode==="chase"
+    ? `conic-gradient(${col}, transparent 40%, ${col})`
+    : `radial-gradient(closest-side,#0c1017 55%,${col} 58%,${col} 80%,transparent 84%)`;
+  const glow=12+r.bright/255*26; el.style.boxShadow=`0 0 ${glow}px ${Math.round(glow/2)}px ${col}`;
+  const dur=Math.max(0.25,2.4-r.speed*0.26)+"s";
+  if(r.mode==="pulse")  el.style.animation=`rpulse ${dur} ease-in-out infinite`;
+  if(r.mode==="strobe") el.style.animation=`rstrobe ${Math.max(0.12,0.5-r.speed*0.04)}s steps(2) infinite`;
+  if(r.mode==="chase")  el.style.animation=`rspin ${dur} linear infinite`;
+}
+const kf=document.createElement('style');
+kf.textContent=`@keyframes rpulse{0%,100%{filter:brightness(.6)}50%{filter:brightness(1.35)}}@keyframes rstrobe{50%{opacity:.15}}@keyframes rspin{to{transform:rotate(360deg)}}`;
+document.head.appendChild(kf);
+const capOf = r => r.mode==="off" ? "OFF" : `${r.mode.toUpperCase()} · H${r.hue} · ${r.bright}`;
+
+// ---- render ----
+function render(){
+  document.getElementById('showId').textContent = "// "+(state.meta?.show||"—");
+  renderPills(); renderShow();
+  if(!document.getElementById('viewEdit').classList.contains('hidden')){ renderList(); renderInsp(); }
+  const l=document.getElementById('log'); l.innerHTML=`<span class="t">[${now()}]</span> ${state.last_event||""}`;
+}
+function renderPills(){
+  const labels={resolume:"VISUALS",dmx:"DMX",rings:"RINGS",oled:"DISPLAY"};
+  const wrap=document.getElementById('pills'); wrap.innerHTML="";
+  ["resolume","dmx","rings","oled"].forEach(k=>{
+    const st=state.outputs?.[k]||"off";
+    const el=document.createElement('div'); el.className="pill "+st;
+    el.innerHTML=`<span class="led"></span>${labels[k]} <span class="st">${st}</span>`;
+    wrap.appendChild(el);
+  });
+  const b=document.createElement('div'); b.className="midiblip"; b.id="blip"; b.innerHTML=`<span class="sq"></span>MIDI IN`;
+  wrap.appendChild(b);
+}
+function renderShow(){
+  const L=scene(state.live)||{name:"—",ring:{mode:"off",hue:0,bright:0}};
+  const A=scene(state.armed)||{name:"—",ring:{mode:"off",hue:0,bright:0}};
+  document.getElementById('lNum').textContent=String(state.live??0).padStart(2,'0');
+  document.getElementById('lName').textContent=L.name;
+  paintRing(document.getElementById('lRing'),L.ring); document.getElementById('lCap').textContent=capOf(L.ring);
+  document.getElementById('aNum').textContent=String(state.armed??0).padStart(2,'0');
+  document.getElementById('aName').textContent=A.name;
+  paintRing(document.getElementById('aRing'),A.ring); document.getElementById('aCap').textContent=capOf(A.ring);
+}
+function ringColor(r){ return r.mode==="off"?"#3a4657":`hsl(${H(r.hue)} 85% ${45+r.bright/255*20}%)`; }
+function renderList(){
+  const wrap=document.getElementById('sceneList'); wrap.innerHTML="";
+  state.scenes.forEach(s=>{
+    const el=document.createElement('div');
+    el.className="scene"+(s.id===selected?" sel":"")+(s.id===state.live?" islive":"")+(s.id===state.armed?" isarmed":"");
+    el.onclick=()=>{ selected=s.id; renderList(); renderInsp(); };
+    const flags=(s.id===state.live?`<span class="flag live">LIVE</span>`:"")+(s.id===state.armed?`<span class="flag armed">ARMED</span>`:"");
+    el.innerHTML=`<div class="id">${String(s.id).padStart(2,'0')}</div>
+      <div class="body"><div class="nm">${s.name} ${flags}</div>
+      <div class="chips">
+        <span class="chip">▚ ${s.resolume?.clear?"clear":("L"+s.resolume.layer+"·C"+s.resolume.clip)}</span>
+        <span class="chip">✦ ${s.dmx?.cue||"—"}</span>
+        <span class="chip" style="color:${ringColor(s.ring)}"><span class="sw" style="background:${ringColor(s.ring)}"></span>${s.ring.mode}</span>
+        <span class="chip">${s.audio?"♪ audio":"muted"}</span></div></div>
+      <button class="fire" title="test-fire" onclick="event.stopPropagation(); testFire(${s.id})">▸</button>`;
+    wrap.appendChild(el);
+  });
+}
+function renderInsp(){
+  const s=scene(selected); if(!s){document.getElementById('insp').innerHTML="";return;}
+  document.getElementById('insp').innerHTML=`
+    <div class="nm">${s.name}</div><div class="sub">SCENE ${String(s.id).padStart(2,'0')}</div>
+    <div class="field"><label>VISUALS — RESOLUME</label><div class="val">${s.resolume?.clear?"clear all":("layer "+s.resolume.layer+" · clip "+s.resolume.clip)}${s.audio?"  ·  audio embedded":""}</div></div>
+    <div class="field"><label>DMX CUE</label><div class="val">${s.dmx?.cue||"—"}</div></div>
+    <div class="field"><label>RING</label><div class="slider"><div class="ringmini" id="mini"></div>
+      <div style="flex:1"><div class="val" style="margin-bottom:8px">mode: ${s.ring.mode}</div>
+      <div class="row2"><div class="val">hue ${s.ring.hue??"—"}</div><div class="val">bright ${s.ring.bright??"—"}</div></div></div></div></div>`;
+  paintRing(document.getElementById('mini'),s.ring);
+}
+function renderOuts(){
+  const wrap=document.getElementById('outList'); if(!wrap) return; wrap.innerHTML="";
+  const addr={resolume:"osc 192.168.4.50:7000",dmx:"artnet .60 · u0",rings:"serial /dev/ring_tx",oled:"i2c 0x3C"};
+  ["resolume","dmx","rings","oled"].forEach(k=>{
+    const st=state.outputs?.[k]||"off"; const el=document.createElement('div'); el.className="out "+st;
+    el.innerHTML=`<span class="led"></span><span class="nm">${k.toUpperCase()}</span><span class="addr">${addr[k]}</span>`;
+    wrap.appendChild(el);
+  });
+}
+function testFire(id){ setView('show'); act(online?"goto":"goto", id); }
+function learn(b){ b.textContent="LISTENING…"; b.style.color="var(--warn)"; b.style.borderColor="var(--warn)";
+  setTimeout(()=>{ b.textContent="CAPTURED"; b.style.color="var(--live)"; b.style.borderColor="var(--live)"; },1400); }
+function blip(){ const b=document.getElementById('blip'); if(!b)return; b.classList.add('hit'); setTimeout(()=>b.classList.remove('hit'),120); }
+function setView(v){
+  const show=v==='show';
+  document.getElementById('viewShow').classList.toggle('hidden',!show);
+  document.getElementById('viewEdit').classList.toggle('hidden',show);
+  document.getElementById('tShow').classList.toggle('on',show);
+  document.getElementById('tEdit').classList.toggle('on',!show);
+  if(show) renderShow(); else { renderList(); renderInsp(); renderOuts(); }
+}
+setInterval(()=>document.getElementById('clock').textContent=now(),1000);
+document.getElementById('clock').textContent=now();
+render(); connect();
+window.act=act; window.setView=setView; window.testFire=testFire; window.learn=learn;
+</script>
+</body>
+</html>
