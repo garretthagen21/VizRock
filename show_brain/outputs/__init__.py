@@ -33,7 +33,12 @@ def build_outputs():
         if not output_class:
             logger.warning('unknown output type: %s', spec.get('type'))
             continue
-        output = output_class(**{k: v for k, v in spec.items() if k not in ('type', 'enabled')})
+        try:
+            output = output_class(**{k: v for k, v in spec.items() if k not in ('type', 'enabled')})
+        except Exception as error:
+            # a malformed output must not take the show down at startup
+            logger.warning('output %s failed to build: %s', name, error)
+            continue
         output.name = name
         outputs.append(output)
         logger.info('output up: %s (%s)', name, spec['type'])

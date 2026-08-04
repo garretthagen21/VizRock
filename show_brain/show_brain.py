@@ -54,6 +54,7 @@ class ShowBrain:
             'armed': self.armed,
             'last_event': self.last_event,
             'outputs': {output.name: output.status() for output in self.outputs},
+            'addresses': {output.name: output.address_label() for output in self.outputs},
             'scenes': self.scene_library.sorted_scenes(),
             'meta': self.scene_library.meta,
         }

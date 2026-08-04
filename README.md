@@ -52,7 +52,7 @@ sudo nmcli device wifi hotspot ssid SHOWBRAIN password <choose-one> ifname wlan0
 ```
 Then either **wire the Resolume machine to the Pi over ethernet** (recommended — OSC and
 Art-Net run great over a cable; put both on one cheap switch) or have that machine join
-the SHOWBRAIN hotspot. Set its IP in `configs/show_config.json` → `outputs.resolume.host`. The rings
+the SHOWBRAIN hotspot. Add its IP to `configs/show_config.json` → `outputs.resolume.hosts`. The rings
 are on **ESP-NOW**, not WiFi, so they're unaffected by any of this.
 
 > Ask THC: can you get a wired ethernet link (or a spare port) to their Resolume machine,

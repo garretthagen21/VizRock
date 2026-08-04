@@ -57,6 +57,9 @@ every output degrades to a no-op and the web UI still drives the full state mach
   `paths.py` resolves `REPO_DIR` to the clone at `~/show-brain`, which `pi` can write. A
   non-editable install would silently break UI scene edits.
 - **Never hardcode a path.** Everything resolves through `constants/paths.py`.
+- **Only outputs with a real connection may report `ok`.** Fire-and-forget UDP (Resolume,
+  DMX) reports `sending` — it means the packet left, not that anything received it. Don't
+  let the UI imply a confirmation the protocol can't give.
 - Adding a new output = one file in `outputs/` + an entry in `OUTPUT_KINDS`. Don't
   special-case outputs inside `show_brain.py`.
 - Adding a ring mode means editing `interface/web/index.html` (`paintRing`) **and** both

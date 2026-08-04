@@ -38,6 +38,12 @@ class ArtNetDmx(Output):
             frame[int(channel) - 1] = max(0, min(255, int(value)))
         self._send(frame)
 
+    def status(self):
+        return 'sending'
+
+    def address_label(self):
+        return f'{self.address[0]}:{self.address[1]} u{self.universe}'
+
     def close(self):
         self.socket.close()
 

@@ -38,10 +38,12 @@
     border-radius:999px; background:var(--panel); font-family:var(--mono); font-size:11px; letter-spacing:.1em; font-weight:600}
   .pill .led{width:8px;height:8px;border-radius:50%;background:var(--idle);transition:.2s}
   .pill.ok .led{background:var(--live);box-shadow:0 0 8px var(--live)}
+  .pill.sending .led{background:var(--active);box-shadow:0 0 8px var(--active)}
   .pill.retrying .led{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:blink 1s steps(2) infinite}
   .pill.off{opacity:.5}
   .pill .st{color:var(--muted);font-weight:500}
   .pill.ok .st{color:var(--live)} .pill.retrying .st{color:var(--warn)}
+  .pill.sending .st{color:var(--active)}
   @keyframes blink{50%{opacity:.35}}
   .midiblip{margin-left:auto; display:flex; align-items:center; gap:9px; font-family:var(--mono);
     font-size:11px; letter-spacing:.1em; color:var(--muted); font-weight:600}
@@ -119,6 +121,7 @@
   .out{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:var(--panel);margin-bottom:8px;font-family:var(--mono);font-size:12px}
   .out .led{width:8px;height:8px;border-radius:50%;background:var(--idle)}
   .out.ok .led{background:var(--live);box-shadow:0 0 8px var(--live)}
+  .out.sending .led{background:var(--active);box-shadow:0 0 8px var(--active)}
   .out.retrying .led{background:var(--warn);box-shadow:0 0 8px var(--warn)}
   .out .nm{color:var(--ink);font-weight:600;letter-spacing:.06em}
   .out .addr{color:var(--muted);margin-left:auto}
@@ -202,7 +205,8 @@
 // ---- demo fallback state (used only if the brain WS isn't reachable) ----
 const DEMO = {
   live:1, armed:2, last_event:"demo mode · no brain connected",
-  outputs:{resolume:"ok", dmx:"off", rings:"retrying", oled:"ok"},
+  outputs:{resolume:"sending", dmx:"off", rings:"retrying", oled:"ok"},
+  addresses:{resolume:"192.168.4.50:7000, 192.168.1.20:7000", dmx:"", rings:"/dev/ring_tx (searching)", oled:"i2c 0x3C"},
   meta:{show:"THC 2026-09-12 (demo)"},
   scenes:[
     {id:1,name:"Intro",resolume:{layer:1,clip:1},dmx:{cue:"blackout"},ring:{mode:"pulse",hue:200,bright:80,speed:2},audio:true},
@@ -273,13 +277,14 @@ function render(){
   if(!document.getElementById('viewEdit').classList.contains('hidden')){ renderList(); renderInsp(); }
   const l=document.getElementById('log'); l.innerHTML=`<span class="t">[${now()}]</span> ${state.last_event||""}`;
 }
+const outputKeys = () => Object.keys(state.outputs||{});
 function renderPills(){
   const labels={resolume:"VISUALS",dmx:"DMX",rings:"RINGS",oled:"DISPLAY"};
   const wrap=document.getElementById('pills'); wrap.innerHTML="";
-  ["resolume","dmx","rings","oled"].forEach(k=>{
+  outputKeys().forEach(k=>{
     const st=state.outputs?.[k]||"off";
     const el=document.createElement('div'); el.className="pill "+st;
-    el.innerHTML=`<span class="led"></span>${labels[k]} <span class="st">${st}</span>`;
+    el.innerHTML=`<span class="led"></span>${labels[k]||k.toUpperCase()} <span class="st">${st}</span>`;
     wrap.appendChild(el);
   });
   const b=document.createElement('div'); b.className="midiblip"; b.id="blip"; b.innerHTML=`<span class="sq"></span>MIDI IN`;
@@ -327,10 +332,10 @@ function renderInsp(){
 }
 function renderOuts(){
   const wrap=document.getElementById('outList'); if(!wrap) return; wrap.innerHTML="";
-  const addr={resolume:"osc 192.168.4.50:7000",dmx:"artnet .60 · u0",rings:"serial /dev/ring_tx",oled:"i2c 0x3C"};
-  ["resolume","dmx","rings","oled"].forEach(k=>{
+  outputKeys().forEach(k=>{
     const st=state.outputs?.[k]||"off"; const el=document.createElement('div'); el.className="out "+st;
-    el.innerHTML=`<span class="led"></span><span class="nm">${k.toUpperCase()}</span><span class="addr">${addr[k]}</span>`;
+    const addr=state.addresses?.[k]||"—";
+    el.innerHTML=`<span class="led"></span><span class="nm">${k.toUpperCase()}</span><span class="addr">${addr}</span>`;
     wrap.appendChild(el);
   });
 }

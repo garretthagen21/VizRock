@@ -18,12 +18,16 @@ logger = logging.getLogger(__name__)
 
 
 class ResolumeOsc(Output):
-    """Fire-and-forget UDP OSC. Nothing listening means packets harmlessly vanish."""
+    """
+    Fire-and-forget UDP OSC to every configured host — typically THC's machine plus
+    a local laptop for testing. Nothing listening means packets harmlessly vanish,
+    so an absent target costs nothing and needs no switching.
+    """
 
     name = 'resolume'
 
-    def __init__(self, host, port, **_):
-        self.address = (host, port)
+    def __init__(self, hosts, port, **_):
+        self.addresses = [(host, port) for host in hosts]
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def apply(self, scene):
@@ -35,6 +39,12 @@ class ResolumeOsc(Output):
         else:
             self._send(f"/composition/layers/{resolume['layer']}/clips/{resolume['clip']}/connect", 1)
 
+    def status(self):
+        return 'sending'
+
+    def address_label(self):
+        return ', '.join(f'{host}:{port}' for host, port in self.addresses)
+
     def close(self):
         self.socket.close()
 
@@ -44,7 +54,8 @@ class ResolumeOsc(Output):
             return raw + b'\x00' * (4 - len(raw) % 4)
 
         message = pad(path.encode()) + pad(b',i') + int(argument).to_bytes(4, 'big', signed=True)
-        try:
-            self.socket.sendto(message, self.address)
-        except OSError as error:
-            logger.warning('osc send failed: %s', error)
+        for address in self.addresses:
+            try:
+                self.socket.sendto(message, address)
+            except OSError as error:
+                logger.warning('osc send to %s failed: %s', address, error)

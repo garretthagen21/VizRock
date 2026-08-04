@@ -11,9 +11,13 @@
 
 class Output:
     """
-    apply(scene)   reflect a committed scene on this output (fired on GO)
-    on_state(snap) react to any state change (fired on ARM moves too)
-    status()       'ok' | 'retrying' | 'off'
+    apply(scene)    reflect a committed scene on this output (fired on GO)
+    on_state(snap)  react to any state change (fired on ARM moves too)
+    status()        'ok' | 'sending' | 'retrying' | 'off'
+    address_label() where this output points, for the UI
+
+    'sending' means fire-and-forget with no delivery confirmation. Only outputs
+    with a real connection may claim 'ok'.
     """
 
     name = 'base'
@@ -24,5 +28,8 @@ class Output:
 
     def status(self):
         return 'ok'
+
+    def address_label(self):
+        return ''
 
     def close(self): ...

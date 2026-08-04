@@ -48,6 +48,11 @@ class RingSerial(Output):
     def status(self):
         return 'ok' if self.serial_port and self.serial_port.is_open else 'retrying'
 
+    def address_label(self):
+        if self.serial_port and self.serial_port.is_open:
+            return self.serial_port.port
+        return f'{self.port_hint} (searching)'
+
     def close(self):
         self.is_running = False
         if self.serial_port:

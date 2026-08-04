@@ -4,7 +4,7 @@
   "midi_inputs": ["Chocolate", "FM3"],
 
   "outputs": {
-    "resolume": { "type": "osc",    "host": "192.168.4.50", "port": 7000, "enabled": true },
+    "resolume": { "type": "osc",    "hosts": ["192.168.4.50", "192.168.1.20"], "port": 7000, "enabled": true },
     "dmx":      { "type": "artnet",  "host": "192.168.4.60", "universe": 0, "enabled": false,
                   "cues": {
                     "off":        {},

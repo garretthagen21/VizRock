@@ -15,7 +15,7 @@ from show_brain.outputs.output import Output
 
 logger = logging.getLogger(__name__)
 
-STATUS_SYMBOLS = {'ok': '*', 'retrying': '?', 'off': '.'}
+STATUS_SYMBOLS = {'ok': '*', 'sending': '>', 'retrying': '?', 'off': '.'}
 OUTPUT_LABELS = (('resolume', 'VIS'), ('dmx', 'DMX'), ('rings', 'RNG'))
 
 
@@ -49,6 +49,9 @@ class OledDisplay(Output):
 
     def status(self):
         return 'ok' if self.is_available else 'off'
+
+    def address_label(self):
+        return 'i2c 0x3C'
 
     def _label(self, snapshot, scene_id):
         for scene in snapshot['scenes']:
