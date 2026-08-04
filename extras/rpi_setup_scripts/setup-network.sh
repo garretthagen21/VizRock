@@ -25,7 +25,7 @@ if [ "${#PASSWORD}" -lt 8 ]; then
     echo "WPA requires at least 8 characters" >&2
     exit 1
 fi
-if [ "$EUID" -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]; then
     echo "run me with sudo" >&2
     exit 1
 fi

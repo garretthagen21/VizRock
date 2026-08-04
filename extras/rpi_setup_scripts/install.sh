@@ -14,7 +14,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 RUN_USER="${SUDO_USER:-pi}"
 
-if [ "$EUID" -ne 0 ]; then echo "run me with sudo" >&2; exit 1; fi
+if [ "$(id -u)" -ne 0 ]; then echo "run me with sudo" >&2; exit 1; fi
 if [ -z "$PASSWORD" ]; then echo "usage: sudo $0 <hotspot-password>" >&2; exit 1; fi
 if [ "$REPO" != "/home/$RUN_USER/show-brain" ]; then
     echo "WARNING: the systemd unit expects /home/$RUN_USER/show-brain, found $REPO" >&2
