@@ -30,6 +30,10 @@ class ResolumeOsc(Output):
     Hosts may be IPs or mDNS names ('my-laptop.local'). Names matter on a direct
     ethernet cable, where both ends take random link-local 169.254.x.x addresses
     that cannot be hardcoded.
+
+    A name that resolves to several addresses — a laptop on both a cable and WiFi —
+    is cued on all of them. The OSC verbs are idempotent, so the duplicate costs one
+    UDP packet and buys automatic failover if the cable is pulled mid-show.
     """
 
     name = 'resolume'
@@ -37,7 +41,7 @@ class ResolumeOsc(Output):
     def __init__(self, hosts, port, **_):
         self.hosts = list(hosts)
         self.port = port
-        self.resolved = {}                 # host -> (ip, port)
+        self.resolved = {}                 # host -> [(ip, port), ...]
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.is_running = True
         self.thread = threading.Thread(target=self._resolve_loop, daemon=True)
@@ -58,7 +62,8 @@ class ResolumeOsc(Output):
 
     def address_label(self):
         return ', '.join(
-            f'{host}→{self.resolved[host][0]}' if host in self.resolved else f'{host} (unresolved)'
+            f"{host}→{'+'.join(ip for ip, _ in self.resolved[host])}"
+            if host in self.resolved else f'{host} (unresolved)'
             for host in self.hosts)
 
     def close(self):
@@ -76,11 +81,11 @@ class ResolumeOsc(Output):
             for host in self.hosts:
                 try:
                     info = socket.getaddrinfo(host, self.port, socket.AF_INET, socket.SOCK_DGRAM)
-                    was_missing = host not in self.resolved
-                    self.resolved[host] = info[0][4]
-                    if host in reported or was_missing:
-                        logger.info('resolved %s to %s', host, self.resolved[host][0])
-                        reported.discard(host)
+                    addresses = list(dict.fromkeys(entry[4] for entry in info))
+                    if self.resolved.get(host) != addresses:
+                        logger.info('resolved %s to %s', host, ', '.join(ip for ip, _ in addresses))
+                    self.resolved[host] = addresses
+                    reported.discard(host)      # recovered: a later failure must warn again
                 except OSError as error:
                     # report the transition, not the state — a typo'd name would
                     # otherwise warn on every pass for the length of the show
@@ -95,8 +100,9 @@ class ResolumeOsc(Output):
             return raw + b'\x00' * (4 - len(raw) % 4)
 
         message = pad(path.encode()) + pad(b',i') + int(argument).to_bytes(4, 'big', signed=True)
-        for address in list(self.resolved.values()):
-            try:
-                self.socket.sendto(message, address)
-            except OSError as error:
-                logger.warning('osc send to %s failed: %s', address, error)
+        for addresses in list(self.resolved.values()):
+            for address in addresses:
+                try:
+                    self.socket.sendto(message, address)
+                except OSError as error:
+                    logger.warning('osc send to %s failed: %s', address, error)

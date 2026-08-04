@@ -64,9 +64,20 @@ Names resolve on a background thread, never during a cue, and the OUTPUTS panel 
 one as `host→ip` or `(unresolved)` — the closest thing to delivery feedback OSC allows. Plain
 IPs still work if you prefer them.
 
-## No WiFi and no cable — the Pi is the network
+Names that resolve to several addresses — a laptop on both a cable and WiFi — are cued on
+**all** of them. The OSC verbs are idempotent, so the duplicate costs one UDP packet and buys
+automatic failover if the cable is pulled mid-show.
 
-Phone control, or a fallback if the cable path fails.
+## Network setup — run once
+
+```bash
+sudo extras/rpi_setup_scripts/setup-network.sh <hotspot-password>
+```
+
+Installs mDNS, gives the wired connection top priority, and creates a persistent **SHOWBRAIN**
+hotspot that autoconnects on boot as the fallback. Nothing needs switching afterwards — the
+cable wins when it's plugged in, the hotspot is there when it isn't, and the UI answers on
+every interface either way.
 The show path never needs internet; the Pi just has to let your phone and the Resolume
 machine see each other. Make the Pi a self-contained access point:
 ```bash

@@ -25,7 +25,7 @@ with a console-script entry point.
 | `show_brain/constants/paths.py` | `Directories` / `Files` — all path resolution |
 | `configs/show_config.json` | Outputs, MIDI input filters, trigger map, named DMX cues |
 | `configs/scenes.json` | The show — **rewritten at runtime by the UI** |
-| `extras/rpi_setup_scripts/` | systemd unit + udev rules |
+| `extras/rpi_setup_scripts/` | systemd unit, udev rules, one-shot network setup |
 
 ## Run
 
