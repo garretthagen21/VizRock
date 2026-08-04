@@ -128,6 +128,15 @@
   .out .led{width:8px;height:8px;border-radius:50%;background:var(--idle)}
   .out.ok .led{background:var(--live);box-shadow:0 0 8px var(--live)}
   .out.sending .led{background:var(--active);box-shadow:0 0 8px var(--active)}
+  .out{flex-wrap:wrap}
+  .outcfg{flex-basis:100%;display:flex;gap:8px;align-items:center;margin-top:9px}
+  .outcfg input{flex:1;min-width:0;font-family:var(--mono);font-size:12px;color:var(--ink);
+    background:var(--void);border:1px solid var(--line);border-radius:6px;padding:8px 10px;outline:none}
+  .outcfg input:focus{border-color:var(--active)}
+  .outcfg input.port{flex:0 0 74px}
+  .applybtn{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--active);background:transparent;
+    border:1px solid var(--active);border-radius:6px;padding:8px 12px;cursor:pointer;flex:none}
+  .applybtn:disabled{color:var(--muted2);border-color:var(--line);cursor:default}
   .out.retrying .led{background:var(--warn);box-shadow:0 0 8px var(--warn)}
   .out .nm{color:var(--ink);font-weight:600;letter-spacing:.06em}
   .out .addr{color:var(--muted);margin-left:auto}
@@ -212,7 +221,9 @@
 const DEMO = {
   live:1, armed:2, last_event:"demo mode · no brain connected",
   outputs:{resolume:"sending", dmx:"off", rings:"retrying", oled:"ok"},
-  addresses:{resolume:"192.168.4.50:7000, 192.168.1.20:7000", dmx:"", rings:"/dev/ring_tx (searching)", oled:"i2c 0x3C"},
+  addresses:{resolume:"thc-resolume.local→10.0.0.7+169.254.9.2, my-laptop.local (unresolved)", dmx:"", rings:"/dev/ring_tx (searching)", oled:"i2c 0x3C"},
+  output_config:{resolume:{type:"osc",hosts:["thc-resolume.local","my-laptop.local"],port:7000},
+                 dmx:{type:"artnet",host:"192.168.4.60"}, rings:{type:"serial"}, oled:{type:"oled"}},
   meta:{show:"THC 2026-09-12 (demo)"},
   scenes:[
     {id:1,name:"Intro",resolume:{layer:1,clip:1},dmx:{cue:"blackout"},ring:{mode:"pulse",hue:200,bright:80,speed:2},audio:true},
@@ -394,13 +405,42 @@ function sendSceneEdit(){
   if(tag){ tag.classList.add('on'); setTimeout(()=>tag.classList.remove('on'),900); }
 }
 function renderOuts(){
-  const wrap=document.getElementById('outList'); if(!wrap) return; wrap.innerHTML="";
+  const wrap=document.getElementById('outList'); if(!wrap) return;
+  if(wrap.contains(document.activeElement)) return;   // don't clobber a field mid-edit
+  wrap.innerHTML="";
   outputKeys().forEach(k=>{
-    const st=state.outputs?.[k]||"off"; const el=document.createElement('div'); el.className="out "+st;
+    const st=state.outputs?.[k]||"off";
+    const cfg=state.output_config?.[k]||{};
+    const el=document.createElement('div'); el.className="out "+st;
     const addr=state.addresses?.[k]||"—";
-    el.innerHTML=`<span class="led"></span><span class="nm">${k.toUpperCase()}</span><span class="addr">${addr}</span>`;
+    let fields="";
+    if("hosts" in cfg) fields+=`<input type="text" id="c_${k}_hosts" value="${(cfg.hosts||[]).join(', ')}" placeholder="name.local, 10.0.0.5">`;
+    else if("host" in cfg) fields+=`<input type="text" id="c_${k}_host" value="${cfg.host||""}" placeholder="host or ip">`;
+    if("port" in cfg) fields+=`<input type="number" class="port" id="c_${k}_port" value="${cfg.port}" min="1" max="65535">`;
+    el.innerHTML=`<span class="led"></span><span class="nm">${k.toUpperCase()}</span><span class="addr">${addr}</span>`
+      + (fields?`<div class="outcfg">${fields}<button class="applybtn" onclick="applyOutput('${k}',this)">APPLY</button></div>`:"");
     wrap.appendChild(el);
   });
+}
+function applyOutput(name,btn){
+  const val=id=>document.getElementById(id)?.value;
+  const spec={};
+  const hosts=val(`c_${name}_hosts`);
+  if(hosts!==undefined) spec.hosts=hosts.split(',').map(s=>s.trim()).filter(Boolean);
+  const host=val(`c_${name}_host`);
+  if(host!==undefined) spec.host=host.trim();
+  const port=val(`c_${name}_port`);
+  if(port!==undefined) spec.port=parseInt(port,10);
+  if(!(online && ws && ws.readyState===1)){ flashApply(btn,"OFFLINE"); return; }
+  ws.send(JSON.stringify({type:"edit_config",name,spec}));
+  flashApply(btn,"APPLIED");
+}
+// The brain rejects a spec that will not come up and rolls back, so the next
+// state push is the real answer — this is just acknowledgement of the click.
+function flashApply(btn,text){
+  if(!btn) return;
+  const was=btn.textContent; btn.textContent=text; btn.disabled=true;
+  setTimeout(()=>{btn.textContent=was; btn.disabled=false;},1200);
 }
 function testFire(id){ setView('show'); act(online?"goto":"goto", id); }
 function learn(b){ b.textContent="LISTENING…"; b.style.color="var(--warn)"; b.style.borderColor="var(--warn)";
@@ -418,6 +458,7 @@ setInterval(()=>document.getElementById('clock').textContent=now(),1000);
 document.getElementById('clock').textContent=now();
 render(); connect();
 window.act=act; window.setView=setView; window.testFire=testFire; window.learn=learn;
+window.applyOutput=applyOutput;
 </script>
 </body>
 </html>

@@ -11,7 +11,9 @@
 
 import logging
 
+from show_brain.configurations.settings import show_settings
 from show_brain.managers.scene_library import BLACKOUT_SCENE_ID, SceneLibrary
+from show_brain.outputs import build_output
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +57,7 @@ class ShowBrain:
             'last_event': self.last_event,
             'outputs': {output.name: output.status() for output in self.outputs},
             'addresses': {output.name: output.address_label() for output in self.outputs},
+            'output_config': show_settings.outputs,
             'scenes': self.scene_library.sorted_scenes(),
             'meta': self.scene_library.meta,
         }
@@ -68,6 +71,46 @@ class ShowBrain:
                 logger.warning('state-sub %s failed: %s', output.name, error)
         if self.ui_server:
             self.ui_server.broadcast(snapshot)
+
+    def apply_output_config(self, name, spec):
+        """
+        Rebuild before persisting: a spec that cannot come up is rolled back and
+        never reaches disk, so a bad edit can't also break the next boot.
+        """
+        previous = dict(show_settings.outputs.get(name, {}))
+        show_settings.update_output(name, spec)
+        if self.replace_output(name):
+            show_settings.save()
+            return True
+        logger.warning('config for %s rejected, rolling back', name)
+        show_settings.outputs[name] = previous
+        self.replace_output(name)
+        return False
+
+    def replace_output(self, name):
+        """
+        Rebuild one output from current settings and swap it in, so a config edit
+        takes effect without a restart. Returns False if the replacement would not
+        come up, leaving the old one closed and removed.
+        """
+        replacement = build_output(name, show_settings.outputs.get(name, {}))
+        existing = next((i for i, o in enumerate(self.outputs) if o.name == name), None)
+        if existing is not None:
+            try:
+                self.outputs[existing].close()
+            except Exception as error:
+                logger.warning('closing %s failed: %s', name, error)
+            self.outputs.pop(existing)
+        if replacement:
+            self.outputs.insert(existing if existing is not None else len(self.outputs), replacement)
+            # a new output starts blank — bring it up to whatever is already on stage
+            if self.live in self.scene_library.scenes:
+                try:
+                    replacement.apply(self.scene_library.scenes[self.live])
+                except Exception as error:
+                    logger.warning('output %s failed: %s', name, error)
+        self.push_state()
+        return replacement is not None
 
     # MARK: - Private
     def _arm_step(self, delta):

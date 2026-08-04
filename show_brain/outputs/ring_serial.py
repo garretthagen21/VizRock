@@ -59,17 +59,23 @@ class RingSerial(Output):
             self.serial_port.close()
 
     def _find_port(self):
-        import serial.tools.list_ports
-
         if self.port_hint != 'auto':
             return self.port_hint
+        import serial.tools.list_ports
+
         for port in serial.tools.list_ports.comports():
             if any(keyword in (port.description or '') for keyword in USB_SERIAL_KEYWORDS):
                 return port.device
         return None
 
     def _run(self):
-        import serial
+        try:
+            import serial
+        except ImportError as error:
+            # match the other outputs: degrade to a no-op rather than killing the thread
+            logger.warning('pyserial not available (%s) — ring output disabled', error)
+            self.is_running = False
+            return
 
         while self.is_running:
             if not (self.serial_port and self.serial_port.is_open):

@@ -26,8 +26,10 @@ class ArtNetDmx(Output):
     name = 'dmx'
 
     def __init__(self, host, universe=0, cues=None, **_):
-        self.address = (host, ARTNET_PORT)
-        self.universe = universe
+        if not isinstance(host, str) or not host.strip():
+            raise ValueError(f'host must be a non-empty string, got {host!r}')
+        self.address = (host.strip(), ARTNET_PORT)
+        self.universe = int(universe)
         self.cues = cues or {}
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 

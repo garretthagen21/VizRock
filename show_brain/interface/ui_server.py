@@ -24,6 +24,7 @@ class UiServer:
     server -> client : {type:'state', live, armed, outputs, scenes, ...}
     client -> server : {type:'action', action:'go'|'arm_next'|..., scene?}
                        {type:'edit_scene', scene:{...}}
+                       {type:'edit_config', name:'resolume', spec:{...}}
     """
 
     def __init__(self, brain):
@@ -70,3 +71,5 @@ class UiServer:
         elif data.get('type') == 'edit_scene':
             self.brain.scene_library.upsert(data['scene'])
             self.brain.push_state()
+        elif data.get('type') == 'edit_config':
+            self.brain.apply_output_config(data['name'], data['spec'])

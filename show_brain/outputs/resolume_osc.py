@@ -21,6 +21,13 @@ logger = logging.getLogger(__name__)
 RESOLVE_INTERVAL_SECONDS = 15
 
 
+def _valid_port(port):
+    port = int(port)                       # rejects '' and 'nope'; accepts '7000'
+    if not 1 <= port <= 65535:
+        raise ValueError(f'port out of range: {port}')
+    return port
+
+
 class ResolumeOsc(Output):
     """
     Fire-and-forget UDP OSC to every configured host — typically THC's machine plus
@@ -39,8 +46,14 @@ class ResolumeOsc(Output):
     name = 'resolume'
 
     def __init__(self, hosts, port, **_):
-        self.hosts = list(hosts)
-        self.port = port
+        # validate here: the factory turns a raise into a rejection, and a live
+        # config edit is only persisted if the output actually came up
+        if isinstance(hosts, str) or not isinstance(hosts, (list, tuple)) or not hosts:
+            raise ValueError(f'hosts must be a non-empty list, got {hosts!r}')
+        if not all(isinstance(host, str) and host.strip() for host in hosts):
+            raise ValueError(f'every host must be a non-empty string, got {hosts!r}')
+        self.hosts = [host.strip() for host in hosts]
+        self.port = _valid_port(port)
         self.resolved = {}                 # host -> [(ip, port), ...]
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.is_running = True

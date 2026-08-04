@@ -27,6 +27,20 @@ The ESP32 sketches live in the sibling repo **[VizRock-Firmware](../VizRock-Firm
 - `setup.py` — deps and the `showbrain_run` console script
 
 ## Install (Raspberry Pi OS Lite, Bookworm)
+
+One command on a fresh flash — packages, venv, I2C, udev, mDNS, hotspot, systemd:
+
+```bash
+git clone https://github.com/garretthagen21/VizRock-Brain.git ~/show-brain
+cd ~/show-brain && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
+```
+
+Idempotent, so re-run it after a `git pull`. Then open `http://show-brain.local:8080`.
+Flash the SD card with Raspberry Pi Imager and preset the hostname to `show-brain`, plus
+your WiFi and SSH key, so the only device-side step is the clone.
+
+<details><summary>Manual steps, if you'd rather not run the script</summary>
+
 Needs **Python 3.10+** — Bookworm ships 3.11.
 ```bash
 sudo apt update && sudo apt install -y python3-venv libasound2-dev libjack-dev i2c-tools \
@@ -44,6 +58,7 @@ Boot as an appliance:
 sudo cp extras/rpi_setup_scripts/show-brain.service /etc/systemd/system/
 sudo systemctl enable --now show-brain
 ```
+</details>
 
 ## Connecting at the venue
 

@@ -25,7 +25,7 @@ with a console-script entry point.
 | `show_brain/constants/paths.py` | `Directories` / `Files` — all path resolution |
 | `configs/show_config.json` | Outputs, MIDI input filters, trigger map, named DMX cues |
 | `configs/scenes.json` | The show — **rewritten at runtime by the UI** |
-| `extras/rpi_setup_scripts/` | systemd unit, udev rules, one-shot network setup |
+| `extras/rpi_setup_scripts/` | `install.sh` (one-shot), network setup, systemd unit, udev rules |
 
 ## Run
 
@@ -60,6 +60,10 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **The UI ships no external assets.** No CDN fonts, scripts or styles — the venue has no
   internet, and a render-blocking fetch delays first paint until it times out. Everything
   `index.html` needs must be inline or served from `interface/web/`.
+- **Outputs validate their own config in `__init__`.** The factory turns a raise into a
+  rejection, and a live config edit is persisted only if the output actually came up — so
+  validation is what stops a bad edit reaching disk. Python won't do it for you: `list('abc')`
+  succeeds and `self.port = 'nope'` is silently accepted.
 - **Never resolve a hostname in the dispatch path.** `ResolumeOsc` resolves on a background
   thread and `apply()` uses the cache; a blocking mDNS lookup during GO would stall the cue.
 - **Debounce anything that writes `scenes.json`.** It lands on the Pi's SD card; a slider

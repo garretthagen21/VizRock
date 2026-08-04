@@ -31,7 +31,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 echo "==> mDNS (.local names, both directions)"
-apt-get install -y avahi-daemon libnss-mdns
+apt-get install -y avahi-daemon libnss-mdns avahi-utils
 systemctl enable --now avahi-daemon
 
 echo "==> wired connection takes priority when a cable is present"
