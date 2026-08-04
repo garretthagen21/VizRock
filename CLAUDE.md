@@ -57,13 +57,18 @@ every output degrades to a no-op and the web UI still drives the full state mach
   `paths.py` resolves `REPO_DIR` to the clone at `~/show-brain`, which `pi` can write. A
   non-editable install would silently break UI scene edits.
 - **Never hardcode a path.** Everything resolves through `constants/paths.py`.
+- **The UI ships no external assets.** No CDN fonts, scripts or styles — the venue has no
+  internet, and a render-blocking fetch delays first paint until it times out. Everything
+  `index.html` needs must be inline or served from `interface/web/`.
+- **Debounce anything that writes `scenes.json`.** It lands on the Pi's SD card; a slider
+  firing per pixel would hammer it.
 - **Only outputs with a real connection may report `ok`.** Fire-and-forget UDP (Resolume,
   DMX) reports `sending` — it means the packet left, not that anything received it. Don't
   let the UI imply a confirmation the protocol can't give.
 - Adding a new output = one file in `outputs/` + an entry in `OUTPUT_KINDS`. Don't
   special-case outputs inside `show_brain.py`.
-- Adding a ring mode means editing `interface/web/index.html` (`paintRing`) **and** both
-  sketches in `../VizRock-Firmware`. `outputs/ring_serial.py` passes the mode string through
+- Adding a ring mode means editing `interface/web/index.html` — **both** `RING_MODES` and
+  `paintRing` — **and** both sketches in `../VizRock-Firmware`. `outputs/ring_serial.py` passes the mode string through
   untouched — there is no table here to update. See the wire protocol in `../CLAUDE.md`.
 
 ## Config notes

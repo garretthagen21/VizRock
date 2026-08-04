@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Show Brain</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- No webfont CDN: the venue has no internet and the fetch would block first paint.
+     The font-family stacks below fall back to system faces. -->
 <style>
   :root{
     --void:#0B0E13; --panel:#141922; --panel2:#1B222E; --line:#232C3A;
@@ -112,6 +111,13 @@
   .field label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--muted);display:block;margin-bottom:7px}
   .field .val{font-family:var(--mono);font-size:14px;color:var(--ink);background:var(--void);border:1px solid var(--line);border-radius:7px;padding:10px 12px}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .field input[type=text],.field input[type=number],.field select{width:100%;font-family:var(--mono);font-size:14px;
+    color:var(--ink);background:var(--void);border:1px solid var(--line);border-radius:7px;padding:10px 12px;outline:none}
+  .field input:focus,.field select:focus{border-color:var(--active)}
+  .field input[type=range]{width:100%;accent-color:var(--active);background:transparent}
+  .field .rowlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:5px}
+  .saved{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--live);opacity:0;transition:.2s}
+  .saved.on{opacity:1}
   .slider{display:flex;align-items:center;gap:12px}
   .ringmini{width:44px;height:44px;border-radius:50%;flex:none}
   .learn{display:flex;align-items:center;justify-content:space-between;border:1px dashed var(--line);border-radius:9px;
@@ -274,7 +280,11 @@ const capOf = r => r.mode==="off" ? "OFF" : `${r.mode.toUpperCase()} · H${r.hue
 function render(){
   document.getElementById('showId').textContent = "// "+(state.meta?.show||"—");
   renderPills(); renderShow();
-  if(!document.getElementById('viewEdit').classList.contains('hidden')){ renderList(); renderInsp(); }
+  if(!document.getElementById('viewEdit').classList.contains('hidden')){
+    renderList();
+    // a server echo must not yank the input out from under the operator
+    if(!document.getElementById('insp')?.contains(document.activeElement)) renderInsp();
+  }
   const l=document.getElementById('log'); l.innerHTML=`<span class="t">[${now()}]</span> ${state.last_event||""}`;
 }
 const outputKeys = () => Object.keys(state.outputs||{});
@@ -319,16 +329,69 @@ function renderList(){
     wrap.appendChild(el);
   });
 }
+const RING_MODES = ["off","solid","pulse","chase","strobe"];
 function renderInsp(){
   const s=scene(selected); if(!s){document.getElementById('insp').innerHTML="";return;}
+  const r=s.ring||{mode:"off"};
+  const opts=RING_MODES.map(m=>`<option value="${m}"${r.mode===m?" selected":""}>${m}</option>`).join("");
   document.getElementById('insp').innerHTML=`
-    <div class="nm">${s.name}</div><div class="sub">SCENE ${String(s.id).padStart(2,'0')}</div>
-    <div class="field"><label>VISUALS — RESOLUME</label><div class="val">${s.resolume?.clear?"clear all":("layer "+s.resolume.layer+" · clip "+s.resolume.clip)}${s.audio?"  ·  audio embedded":""}</div></div>
-    <div class="field"><label>DMX CUE</label><div class="val">${s.dmx?.cue||"—"}</div></div>
-    <div class="field"><label>RING</label><div class="slider"><div class="ringmini" id="mini"></div>
-      <div style="flex:1"><div class="val" style="margin-bottom:8px">mode: ${s.ring.mode}</div>
-      <div class="row2"><div class="val">hue ${s.ring.hue??"—"}</div><div class="val">bright ${s.ring.bright??"—"}</div></div></div></div></div>`;
-  paintRing(document.getElementById('mini'),s.ring);
+    <div class="nm">${s.name}</div>
+    <div class="sub">SCENE ${String(s.id).padStart(2,'0')} <span class="saved" id="savedTag">SAVED</span></div>
+    <div class="field"><label>NAME</label>
+      <input type="text" id="f_name" value="${s.name.replace(/"/g,'&quot;')}"></div>
+    <div class="field"><label>VISUALS — RESOLUME</label>${s.resolume?.clear
+      ? `<div class="val">clear all</div>`
+      : `<div class="row2"><div><div class="rowlab"><span>layer</span></div>
+           <input type="number" id="f_layer" min="1" value="${s.resolume?.layer??1}"></div>
+         <div><div class="rowlab"><span>clip</span></div>
+           <input type="number" id="f_clip" min="1" value="${s.resolume?.clip??1}"></div></div>`}</div>
+    <div class="field"><label>DMX CUE</label>
+      <input type="text" id="f_cue" value="${(s.dmx?.cue||"").replace(/"/g,'&quot;')}"></div>
+    <div class="field"><label>RING</label>
+      <div class="slider"><div class="ringmini" id="mini"></div>
+        <div style="flex:1"><select id="f_mode">${opts}</select></div></div>
+      <div style="margin-top:12px">
+        <div class="rowlab"><span>hue</span><span id="l_hue">${r.hue??0}</span></div>
+        <input type="range" id="f_hue" min="0" max="255" value="${r.hue??0}">
+        <div class="rowlab"><span>bright</span><span id="l_bright">${r.bright??0}</span></div>
+        <input type="range" id="f_bright" min="0" max="255" value="${r.bright??0}">
+        <div class="rowlab"><span>speed</span><span id="l_speed">${r.speed??0}</span></div>
+        <input type="range" id="f_speed" min="0" max="10" value="${r.speed??0}">
+      </div></div>`;
+  paintRing(document.getElementById('mini'),r);
+  ["f_name","f_layer","f_clip","f_cue","f_mode","f_hue","f_bright","f_speed"].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.addEventListener('input',()=>{
+      ["hue","bright","speed"].forEach(k=>{
+        const v=document.getElementById('f_'+k), lab=document.getElementById('l_'+k);
+        if(v&&lab) lab.textContent=v.value;
+      });
+      paintRing(document.getElementById('mini'), readRing());
+      queueSceneEdit();
+    });
+  });
+}
+function readRing(){
+  const num=id=>{const e=document.getElementById(id); return e?parseInt(e.value,10)||0:0;};
+  const mode=document.getElementById('f_mode')?.value||"off";
+  return {mode, hue:num('f_hue'), bright:num('f_bright'), speed:num('f_speed')};
+}
+// Debounced: sliders fire per pixel and every edit writes scenes.json to the SD card.
+let editTimer=null;
+function queueSceneEdit(){ clearTimeout(editTimer); editTimer=setTimeout(sendSceneEdit,300); }
+function sendSceneEdit(){
+  const s=scene(selected); if(!s) return;
+  const el=id=>document.getElementById(id);
+  const edited={...s, name:el('f_name')?.value ?? s.name, ring:readRing(),
+                dmx:{...(s.dmx||{}), cue:el('f_cue')?.value ?? ""}};
+  if(!s.resolume?.clear && el('f_layer') && el('f_clip')){
+    edited.resolume={...(s.resolume||{}), layer:parseInt(el('f_layer').value,10)||1,
+                                          clip:parseInt(el('f_clip').value,10)||1};
+  }
+  if(online && ws && ws.readyState===1){ ws.send(JSON.stringify({type:"edit_scene",scene:edited})); }
+  else { state.scenes=state.scenes.map(x=>x.id===edited.id?edited:x); renderList(); }
+  const tag=document.getElementById('savedTag');
+  if(tag){ tag.classList.add('on'); setTimeout(()=>tag.classList.remove('on'),900); }
 }
 function renderOuts(){
   const wrap=document.getElementById('outList'); if(!wrap) return; wrap.innerHTML="";
