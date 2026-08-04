@@ -29,7 +29,8 @@ The ESP32 sketches live in the sibling repo **[VizRock-Firmware](../VizRock-Firm
 ## Install (Raspberry Pi OS Lite, Bookworm)
 Needs **Python 3.10+** — Bookworm ships 3.11.
 ```bash
-sudo apt update && sudo apt install -y python3-venv libasound2-dev libjack-dev i2c-tools
+sudo apt update && sudo apt install -y python3-venv libasound2-dev libjack-dev i2c-tools \
+  avahi-daemon libnss-mdns          # mDNS: .local names, both directions
 git clone https://github.com/garretthagen21/VizRock-Brain.git ~/show-brain && cd ~/show-brain
 python3 -m venv venv && ./venv/bin/pip install -e .
 sudo raspi-config nonint do_i2c 0          # enable I2C for the OLED
@@ -44,7 +45,28 @@ sudo cp extras/rpi_setup_scripts/show-brain.service /etc/systemd/system/
 sudo systemctl enable --now show-brain
 ```
 
-## No WiFi at the venue — the Pi is the network
+## Connecting at the venue
+
+**Prefer a cable.** The UI binds `0.0.0.0:8080`, so the Pi answers on every interface at once —
+ethernet, WiFi, hotspot — with nothing to configure or switch. A direct ethernet run from the
+Pi to your laptop needs no DHCP server: both ends take link-local `169.254.x.x` addresses and
+find each other by mDNS at `show-brain.local:8080`. One cheap switch puts the Pi, your laptop
+and THC's machine on one wire and covers every connection in the show.
+
+Because link-local addresses are assigned at random, **use mDNS names, not IPs**, for the
+visuals targets:
+
+```json
+"resolume": { "type": "osc", "hosts": ["thc-resolume.local", "my-laptop.local"], "port": 7000 }
+```
+
+Names resolve on a background thread, never during a cue, and the OUTPUTS panel shows each
+one as `host→ip` or `(unresolved)` — the closest thing to delivery feedback OSC allows. Plain
+IPs still work if you prefer them.
+
+## No WiFi and no cable — the Pi is the network
+
+Phone control, or a fallback if the cable path fails.
 The show path never needs internet; the Pi just has to let your phone and the Resolume
 machine see each other. Make the Pi a self-contained access point:
 ```bash

@@ -60,6 +60,8 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **The UI ships no external assets.** No CDN fonts, scripts or styles — the venue has no
   internet, and a render-blocking fetch delays first paint until it times out. Everything
   `index.html` needs must be inline or served from `interface/web/`.
+- **Never resolve a hostname in the dispatch path.** `ResolumeOsc` resolves on a background
+  thread and `apply()` uses the cache; a blocking mDNS lookup during GO would stall the cue.
 - **Debounce anything that writes `scenes.json`.** It lands on the Pi's SD card; a slider
   firing per pixel would hammer it.
 - **Only outputs with a real connection may report `ok`.** Fire-and-forget UDP (Resolume,
