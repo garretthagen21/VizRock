@@ -18,30 +18,29 @@ the brain re-pushes the current cue when it reconnects.
 
 The ESP32 sketches live in the sibling repo **[VizRock-Firmware](../VizRock-Firmware)**.
 
-## Files
-- `brain.py` — state machine, MIDI intake, dispatch
-- `adapters.py` — OSC / Art-Net / ring-serial / OLED outputs (common interface)
-- `server.py` — serves `web/` + websocket for live state and edits
-- `config.json` — outputs, MIDI inputs, trigger map, DMX cues
-- `scenes.json` — the show (edited live from the UI, saved here)
-- `web/index.html` — SHOW (LIVE|ARMED) + EDIT UI
-- `setup/` — udev rule + systemd unit
+## Layout
+- `show_brain/` — the package (`show_brain.py` state machine, `managers/`, `outputs/`,
+  `interface/`, `configurations/`, `constants/`)
+- `configs/show_config.json` — outputs, MIDI inputs, trigger map, DMX cues
+- `configs/scenes.json` — the show (edited live from the UI, saved here)
+- `extras/rpi_setup_scripts/` — udev rule + systemd unit
+- `setup.py` — deps and the `showbrain_run` console script
 
 ## Install (Raspberry Pi OS Lite, Bookworm)
 Needs **Python 3.10+** — Bookworm ships 3.11.
 ```bash
 sudo apt update && sudo apt install -y python3-venv libasound2-dev libjack-dev i2c-tools
 git clone https://github.com/garretthagen21/VizRock-Brain.git ~/show-brain && cd ~/show-brain
-python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
+python3 -m venv venv && ./venv/bin/pip install -e .
 sudo raspi-config nonint do_i2c 0          # enable I2C for the OLED
-sudo cp setup/99-showbrain.rules /etc/udev/rules.d/ && sudo udevadm control --reload
-./venv/bin/python3 brain.py                # test run; open http://<pi>.local:8080
+sudo cp extras/rpi_setup_scripts/99-showbrain.rules /etc/udev/rules.d/ && sudo udevadm control --reload
+./venv/bin/showbrain_run                   # test run; open http://<pi>.local:8080
 ```
-Clone to `~/show-brain` — the systemd unit and udev rule hardcode that path.
+Clone to `~/show-brain` — the systemd unit hardcodes that path.
 
 Boot as an appliance:
 ```bash
-sudo cp setup/show-brain.service /etc/systemd/system/
+sudo cp extras/rpi_setup_scripts/show-brain.service /etc/systemd/system/
 sudo systemctl enable --now show-brain
 ```
 
@@ -53,7 +52,7 @@ sudo nmcli device wifi hotspot ssid SHOWBRAIN password <choose-one> ifname wlan0
 ```
 Then either **wire the Resolume machine to the Pi over ethernet** (recommended — OSC and
 Art-Net run great over a cable; put both on one cheap switch) or have that machine join
-the SHOWBRAIN hotspot. Set its IP in `config.json` → `outputs.resolume.host`. The rings
+the SHOWBRAIN hotspot. Set its IP in `configs/show_config.json` → `outputs.resolume.host`. The rings
 are on **ESP-NOW**, not WiFi, so they're unaffected by any of this.
 
 > Ask THC: can you get a wired ethernet link (or a spare port) to their Resolume machine,
@@ -66,7 +65,7 @@ adapter just no-ops.
 
 ## Program the M-VAVE Chocolate (once, in the CubeSuite app)
 Set the four switches to send **Note On** 60/61/62/63, then export the profile as `.fcp`.
-The `config.json` trigger map binds: `60→arm_prev · 61→arm_next · 62→go · 63→blackout`.
+The `show_config.json` trigger map binds: `60→arm_prev · 61→arm_next · 62→go · 63→blackout`.
 Buy the plain Chocolate (or run the Plus in **wired USB mode**) — ignore its Bluetooth.
 
 ## Clip prep (so nothing stutters or goes silent)
