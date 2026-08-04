@@ -53,7 +53,9 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **Scene id `0` is Blackout** and is excluded from `SceneLibrary.order`. Anything that steps
   the setlist must keep skipping it.
 - **`configs/scenes.json` is not source of truth** — the UI overwrites it. Committed values
-  are defaults for a fresh Pi.
+  are defaults for a fresh Pi. This works because the install is editable (`pip install -e .`):
+  `paths.py` resolves `REPO_DIR` to the clone at `~/show-brain`, which `pi` can write. A
+  non-editable install would silently break UI scene edits.
 - **Never hardcode a path.** Everything resolves through `constants/paths.py`.
 - Adding a new output = one file in `outputs/` + an entry in `OUTPUT_KINDS`. Don't
   special-case outputs inside `show_brain.py`.
