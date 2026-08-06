@@ -29,7 +29,12 @@ with a console-script entry point.
 
 ## Run
 
-Targets Python 3.10+ (`python_requires` in `setup.py`); Bookworm ships 3.11.
+Targets **Raspberry Pi OS Lite, Bookworm** (Python 3.11). Lite, not Desktop — the Pi is
+headless and the UI is served over HTTP.
+
+**Do not move to Trixie without bumping the pins.** Trixie ships Python 3.13, and both
+compiled dependencies stop at cp312 — `aiohttp==3.9.5` and `python-rtmidi==1.5.8` publish no
+cp313 wheels, so pip would build them from source against a Python they predate.
 
 ```bash
 python3 -m venv venv && ./venv/bin/pip install -e .

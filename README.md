@@ -41,7 +41,8 @@ your WiFi and SSH key, so the only device-side step is the clone.
 
 <details><summary>Manual steps, if you'd rather not run the script</summary>
 
-Needs **Python 3.10+** — Bookworm ships 3.11.
+Use **Raspberry Pi OS Lite** (not Desktop) on **Bookworm**. Trixie ships Python 3.13, and the
+pinned `aiohttp` and `python-rtmidi` have no cp313 wheels — see `CLAUDE.md`.
 ```bash
 sudo apt update && sudo apt install -y python3-venv libasound2-dev libjack-dev i2c-tools \
   avahi-daemon libnss-mdns          # mDNS: .local names, both directions
