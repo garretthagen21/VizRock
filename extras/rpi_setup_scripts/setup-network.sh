@@ -54,9 +54,9 @@ nmcli connection modify SHOWBRAIN \
 nmcli connection up SHOWBRAIN
 
 echo
-echo "Done. The Pi is reachable at http://show-brain.local:8080"
+echo "Done. The Pi is reachable at http://vizrock-brain.local:8080"
 echo "  cable  : plug in and browse — nothing to configure"
 echo "  wifi   : join SHOWBRAIN, then browse the same address"
 echo
-echo "Confirm from your laptop:  ping show-brain.local"
+echo "Confirm from your laptop:  ping vizrock-brain.local"
 echo "Set the visuals targets in configs/show_config.json to the machines' .local names."

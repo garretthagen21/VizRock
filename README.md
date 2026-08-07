@@ -35,8 +35,8 @@ git clone https://github.com/garretthagen21/VizRock-Brain.git ~/show-brain
 cd ~/show-brain && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
 ```
 
-Idempotent, so re-run it after a `git pull`. Then open `http://show-brain.local:8080`.
-Flash the SD card with Raspberry Pi Imager and preset the hostname to `show-brain`, plus
+Idempotent, so re-run it after a `git pull`. Then open `http://vizrock-brain.local:8080`.
+Flash the SD card with Raspberry Pi Imager and preset the hostname to `vizrock-brain`, plus
 your WiFi and SSH key, so the only device-side step is the clone.
 
 <details><summary>Manual steps, if you'd rather not run the script</summary>
@@ -66,7 +66,7 @@ sudo systemctl enable --now show-brain
 **Prefer a cable.** The UI binds `0.0.0.0:8080`, so the Pi answers on every interface at once —
 ethernet, WiFi, hotspot — with nothing to configure or switch. A direct ethernet run from the
 Pi to your laptop needs no DHCP server: both ends take link-local `169.254.x.x` addresses and
-find each other by mDNS at `show-brain.local:8080`. One cheap switch puts the Pi, your laptop
+find each other by mDNS at `vizrock-brain.local:8080`. One cheap switch puts the Pi, your laptop
 and THC's machine on one wire and covers every connection in the show.
 
 Because link-local addresses are assigned at random, **use mDNS names, not IPs**, for the
@@ -107,7 +107,12 @@ are on **ESP-NOW**, not WiFi, so they're unaffected by any of this.
 > Ask THC: can you get a wired ethernet link (or a spare port) to their Resolume machine,
 > and can they enable **OSC input** (Preferences → OSC, note the port)?
 
-## OLED wiring (I2C SSD1306, 128×64)
+## OLED wiring (I2C, 128×64)
+
+Buy a **0.96" SSD1306 I2C** module — 4 pins. Avoid 7-pin SPI boards; many 1.3" modules use the
+SH1106 driver instead. Both `driver` (`ssd1306` / `sh1106`) and `address` are set in
+`configs/show_config.json`, so either panel works.
+
 `VCC→3V3 (pin 1) · GND→(pin 6) · SDA→GPIO2 (pin 3) · SCL→GPIO3 (pin 5)`.
 Confirm it's seen: `i2cdetect -y 1` should show `3c`. If you don't wire one, the OLED
 adapter just no-ops.

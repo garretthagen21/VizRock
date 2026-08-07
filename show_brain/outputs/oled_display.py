@@ -20,18 +20,28 @@ OUTPUT_LABELS = (('resolume', 'VIS'), ('dmx', 'DMX'), ('rings', 'RNG'))
 
 
 class OledDisplay(Output):
-    """I2C SSD1306. Absent panel degrades to a no-op so the brain runs on a dev machine."""
+    """
+    I2C OLED. Absent panel degrades to a no-op so the brain runs on a dev machine.
+
+    driver/address are configurable because the cheap modules vary: 0.96" panels are
+    usually SSD1306 at 0x3C, while many 1.3" ones are SH1106, and some boards strap
+    0x3D. Getting the wrong one is a config change, not a re-order.
+    """
 
     name = 'oled'
 
-    def __init__(self, width=128, height=64, **_):
+    def __init__(self, width=128, height=64, driver='ssd1306', address=0x3C, **_):
         self.is_available = False
+        self.address = int(address, 0) if isinstance(address, str) else int(address)
+        self.driver = driver
         try:
             from luma.core.interface.serial import i2c
-            from luma.oled.device import ssd1306
+            import luma.oled.device
             from PIL import ImageFont
 
-            self.device = ssd1306(i2c(port=1, address=0x3C), width=width, height=height)
+            device_class = getattr(luma.oled.device, driver)
+            self.device = device_class(i2c(port=1, address=self.address),
+                                       width=width, height=height)
             self.font = ImageFont.load_default()
             self.is_available = True
         except Exception as error:
@@ -51,7 +61,7 @@ class OledDisplay(Output):
         return 'ok' if self.is_available else 'off'
 
     def address_label(self):
-        return 'i2c 0x3C'
+        return f'i2c {self.address:#04x} {self.driver}'
 
     def _label(self, snapshot, scene_id):
         for scene in snapshot['scenes']:

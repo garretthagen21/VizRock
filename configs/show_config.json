@@ -13,7 +13,7 @@
                     "strobe_cool":{ "1": 0, "2": 120, "3": 255 }
                   } },
     "rings":    { "type": "serial", "port": "auto", "baud": 115200, "enabled": true },
-    "oled":     { "type": "oled",   "width": 128, "height": 64, "enabled": true }
+    "oled":     { "type": "oled",   "width": 128, "height": 64, "driver": "ssd1306", "address": "0x3C", "enabled": true }
   },
 
   "triggers": [

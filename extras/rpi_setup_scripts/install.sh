@@ -47,7 +47,7 @@ systemctl daemon-reload
 systemctl enable --now show-brain
 
 echo
-echo "Installed. http://show-brain.local:8080"
+echo "Installed. http://vizrock-brain.local:8080"
 systemctl --no-pager --lines=5 status show-brain || true
 echo
 echo "Next: set the visuals targets in configs/show_config.json — or just edit them"
