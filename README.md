@@ -37,8 +37,9 @@ cd VizRock && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
 
 Clone wherever you like — the installer rewrites the systemd unit for the actual path and
 user. Idempotent, so re-run it after a `git pull`. Then open
-`http://vizrock-brain.local:8080`.
-Flash the SD card with Raspberry Pi Imager and preset the hostname to `vizrock-brain`, plus
+`http://vizrock-box.local:8080`.
+Flash the SD card with Raspberry Pi Imager and preset the hostname — `vizrock-box` here, but it is a free choice and nothing in the
+code depends on it, plus
 your WiFi, and SSH with password auth, so the only device-side step is the clone. Password
 auth rather than key-only means you can SSH from any machine at the venue, not just the
 one holding your key — the Pi is never internet-facing.
@@ -74,7 +75,7 @@ sudo systemctl enable --now vizrock
 **Prefer a cable.** The UI binds `0.0.0.0:8080`, so the Pi answers on every interface at once —
 ethernet, WiFi, hotspot — with nothing to configure or switch. A direct ethernet run from the
 Pi to your laptop needs no DHCP server: both ends take link-local `169.254.x.x` addresses and
-find each other by mDNS at `vizrock-brain.local:8080`. One cheap switch puts the Pi, your laptop
+find each other by mDNS at `vizrock-box.local:8080`. One cheap switch puts the Pi, your laptop
 and THC's machine on one wire and covers every connection in the show.
 
 Because link-local addresses are assigned at random, **use mDNS names, not IPs**, for the
@@ -106,7 +107,7 @@ every interface either way.
 ### Phone or tablet at the pedalboard
 
 No venue network, router or internet needed — the Pi is the access point and hands out DHCP
-itself. Join **VIZROCK** and browse `vizrock-brain.local:8080`.
+itself. Join **VIZROCK** and browse `vizrock-box.local:8080`.
 
 If the name doesn't resolve — Android browsers are patchy with mDNS where iOS is not — use
 **`http://10.42.0.1:8080`**. NetworkManager's shared mode always places the Pi at that address,

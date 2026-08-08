@@ -52,7 +52,7 @@ systemctl daemon-reload
 systemctl enable --now vizrock
 
 echo
-echo "Installed. http://vizrock-brain.local:8080"
+echo "Installed. http://vizrock-box.local:8080"
 systemctl --no-pager --lines=5 status vizrock || true
 echo
 echo "Next: set the visuals targets in configs/show_config.json — or just edit them"
