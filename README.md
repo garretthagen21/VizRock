@@ -37,12 +37,18 @@ cd ~/show-brain && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
 
 Idempotent, so re-run it after a `git pull`. Then open `http://vizrock-brain.local:8080`.
 Flash the SD card with Raspberry Pi Imager and preset the hostname to `vizrock-brain`, plus
-your WiFi and SSH key, so the only device-side step is the clone.
+your WiFi, and SSH with password auth, so the only device-side step is the clone. Password
+auth rather than key-only means you can SSH from any machine at the venue, not just the
+one holding your key — the Pi is never internet-facing.
 
 <details><summary>Manual steps, if you'd rather not run the script</summary>
 
-Use **Raspberry Pi OS Lite** (not Desktop) on **Bookworm**. Trixie ships Python 3.13, and the
-pinned `aiohttp` and `python-rtmidi` have no cp313 wheels — see `CLAUDE.md`.
+Use **Raspberry Pi OS Lite** (not Desktop). **Bookworm** is the verified target; Trixie is
+untested because `python-rtmidi` publishes no cp313 wheels and would compile from source.
+
+Imager now defaults to Trixie. For Bookworm: *Choose OS* → **Raspberry Pi OS (other)** →
+**Raspberry Pi OS Lite (Legacy, 64-bit)**. Failing that, download the Bookworm image from
+raspberrypi.com/software/operating-systems and use *Use custom* in Imager.
 ```bash
 sudo apt update && sudo apt install -y python3-venv libasound2-dev libjack-dev i2c-tools \
   avahi-daemon libnss-mdns          # mDNS: .local names, both directions

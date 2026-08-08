@@ -32,9 +32,11 @@ with a console-script entry point.
 Targets **Raspberry Pi OS Lite, Bookworm** (Python 3.11). Lite, not Desktop — the Pi is
 headless and the UI is served over HTTP.
 
-**Do not move to Trixie without bumping the pins.** Trixie ships Python 3.13, and both
-compiled dependencies stop at cp312 — `aiohttp==3.9.5` and `python-rtmidi==1.5.8` publish no
-cp313 wheels, so pip would build them from source against a Python they predate.
+**Bookworm is the verified target. Trixie is untested.** Trixie ships Python 3.13:
+`aiohttp` has cp313 wheels from 3.14 onward, but **`python-rtmidi` has none at any version**,
+so on Trixie it must compile from source. `install.sh` installs `build-essential` and
+`python3-dev` so that build can at least be attempted. Dependencies are lower bounds rather
+than exact pins so pip can pick a prebuilt wheel wherever one exists.
 
 ```bash
 python3 -m venv venv && ./venv/bin/pip install -e .

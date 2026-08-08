@@ -18,11 +18,14 @@ setup(name='VizRock-Brain',
               "showbrain_test = show_brain.test.test_runner:main"
           ]
       },
+      # lower bounds, not pins: the exact pins forced a source build on any newer
+      # Python, and pip should be free to pick a prebuilt wheel for whatever the
+      # OS ships. See CLAUDE.md for the Bookworm/Trixie situation.
       install_requires=[
-          'mido==1.3.2',
-          'python-rtmidi==1.5.8',
-          'pyserial==3.5',
-          'aiohttp==3.9.5',
-          'luma.oled==3.13.0',
+          'mido>=1.3.2',
+          'python-rtmidi>=1.5.8',
+          'pyserial>=3.5',
+          'aiohttp>=3.9.5',
+          'luma.oled>=3.13.0',
           'Pillow>=10.0'
       ])

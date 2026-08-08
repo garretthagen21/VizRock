@@ -20,7 +20,8 @@ if [ -z "$PASSWORD" ]; then echo "usage: sudo $0 <hotspot-password>" >&2; exit 1
 
 echo "==> system packages"
 apt-get update
-apt-get install -y python3-venv libasound2-dev libjack-dev i2c-tools avahi-utils
+apt-get install -y python3-venv python3-dev build-essential \
+                   libasound2-dev libjack-dev i2c-tools avahi-utils
 
 echo "==> I2C for the OLED"
 raspi-config nonint do_i2c 0
