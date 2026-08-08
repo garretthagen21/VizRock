@@ -11,14 +11,15 @@
 
 import logging
 
-from vizrock.configurations.settings import show_settings
+from vizrock.configurations.settings import vizrock_settings
 from vizrock.managers.scene_library import BLACKOUT_SCENE_ID, SceneLibrary
 from vizrock.outputs import build_output
+from vizrock.managers.updater import Updater
 
 logger = logging.getLogger(__name__)
 
 
-class ShowBrain:
+class Brain:
     """
     Holds two pieces of state: LIVE (what is currently playing) and ARMED (what GO
     will fire next). Triggers move ARMED; GO commits ARMED to LIVE and fans the scene
@@ -32,6 +33,7 @@ class ShowBrain:
         self.armed = self.scene_library.order[0] if self.scene_library.order else None
         self.outputs = []
         self.ui_server = None
+        self.updater = None
         self.last_event = 'armed · waiting for trigger'
 
     # MARK: - Actions (called from MIDI or the UI)
@@ -57,7 +59,8 @@ class ShowBrain:
             'last_event': self.last_event,
             'outputs': {output.name: output.status() for output in self.outputs},
             'addresses': {output.name: output.address_label() for output in self.outputs},
-            'output_config': show_settings.outputs,
+            'output_config': vizrock_settings.outputs,
+            'update': self.updater.snapshot() if self.updater else None,
             'scenes': self.scene_library.sorted_scenes(),
             'meta': self.scene_library.meta,
         }
@@ -77,13 +80,13 @@ class ShowBrain:
         Rebuild before persisting: a spec that cannot come up is rolled back and
         never reaches disk, so a bad edit can't also break the next boot.
         """
-        previous = dict(show_settings.outputs.get(name, {}))
-        show_settings.update_output(name, spec)
+        previous = dict(vizrock_settings.outputs.get(name, {}))
+        vizrock_settings.update_output(name, spec)
         if self.replace_output(name):
-            show_settings.save()
+            vizrock_settings.save()
             return True
         logger.warning('config for %s rejected, rolling back', name)
-        show_settings.outputs[name] = previous
+        vizrock_settings.outputs[name] = previous
         self.replace_output(name)
         return False
 
@@ -93,7 +96,7 @@ class ShowBrain:
         takes effect without a restart. Returns False if the replacement would not
         come up, leaving the old one closed and removed.
         """
-        replacement = build_output(name, show_settings.outputs.get(name, {}))
+        replacement = build_output(name, vizrock_settings.outputs.get(name, {}))
         existing = next((i for i, o in enumerate(self.outputs) if o.name == name), None)
         if existing is not None:
             try:

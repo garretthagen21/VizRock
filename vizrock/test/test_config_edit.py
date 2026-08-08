@@ -15,7 +15,7 @@ import tempfile
 
 import vizrock.constants.paths as show_paths
 from vizrock.outputs import build_outputs
-from vizrock.brain import ShowBrain
+from vizrock.brain import Brain
 
 
 def run():
@@ -34,7 +34,7 @@ def _on_disk():
 
 
 def _edits_apply_and_persist():
-    brain = ShowBrain()
+    brain = Brain()
     brain.outputs = build_outputs()
     names_before = [output.name for output in brain.outputs]
     assert 'resolume' in names_before, names_before
@@ -53,7 +53,7 @@ def _edits_apply_and_persist():
 
 
 def _bad_edits_roll_back():
-    brain = ShowBrain()
+    brain = Brain()
     brain.outputs = build_outputs()
     for bad in [{'hosts': 'a-bare-string'}, {'hosts': []}, {'hosts': ['']},
                 {'hosts': ['ok.local'], 'port': 'nope'}, {'hosts': ['ok.local'], 'port': 0},

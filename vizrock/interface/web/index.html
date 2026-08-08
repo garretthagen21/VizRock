@@ -146,6 +146,22 @@
   .applybtn{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--active);background:transparent;
     border:1px solid var(--active);border-radius:6px;padding:8px 12px;cursor:pointer;flex:none}
   .applybtn:disabled{color:var(--muted2);border-color:var(--line);cursor:default}
+  .upd{border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:var(--panel);
+    font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .upd .top{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .upd .net{display:flex;align-items:center;gap:7px;margin-left:auto;font-size:11px;letter-spacing:.1em}
+  .upd .net .led{width:8px;height:8px;border-radius:50%;background:var(--idle)}
+  .upd.online .net .led{background:var(--live);box-shadow:0 0 8px var(--live)}
+  .upd.online .net{color:var(--live)}
+  .upd .ver{color:var(--ink)}
+  .upd .list{margin:9px 0 0;padding-left:16px;color:var(--muted)}
+  .upd .list li{margin-bottom:3px}
+  .upd .msg{margin-top:9px;color:var(--muted2)}
+  .updbtn{font-family:var(--mono);font-size:11px;letter-spacing:.1em;background:transparent;
+    border-radius:6px;padding:8px 12px;cursor:pointer;margin-top:11px;
+    color:var(--active);border:1px solid var(--active)}
+  .updbtn:disabled{color:var(--muted2);border-color:var(--line);cursor:default}
+  .updbtn.confirm{color:var(--warn);border-color:var(--warn)}
   .out.retrying .led{background:var(--warn);box-shadow:0 0 8px var(--warn)}
   .out .nm{color:var(--ink);font-weight:600;letter-spacing:.06em}
   .out .addr{color:var(--muted);margin-left:auto}
@@ -220,6 +236,7 @@
         <div class="learn"><span>SW1 <b>prev</b> · SW2 <b>next</b> · SW3 <b>GO</b> · SW4 <b>blackout</b></span>
           <button class="learnbtn" onclick="learn(this)">MIDI LEARN</button></div>
         <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
+        <div class="sectlab mt">SOFTWARE</div><div id="updBox"></div>
       </div>
     </div>
   </div>
@@ -233,6 +250,9 @@ const DEMO = {
   addresses:{resolume:"thc-resolume.local→10.0.0.7+169.254.9.2, my-laptop.local (unresolved)", dmx:"", rings:"/dev/ring_tx (searching)", oled:"i2c 0x3C"},
   output_config:{resolume:{type:"osc",hosts:["thc-resolume.local","my-laptop.local"],port:7000},
                  dmx:{type:"artnet",host:"192.168.4.60"}, rings:{type:"serial"}, oled:{type:"oled"}},
+  update:{online:true,current:"8da0852",subject:"Drop the show-brain name everywhere",
+          behind:1,incoming:[{sha:"a1b2c3d",subject:"Add MIDI learn"}],busy:false,
+          can_update:true,message:"1 update(s) available"},
   meta:{show:"THC 2026-09-12 (demo)"},
   scenes:[
     {id:1,name:"Intro",resolume:{layer:1,clip:1},dmx:{cue:"blackout"},ring:{mode:"pulse",hue:200,bright:80,speed:2},audio:true},
@@ -302,6 +322,7 @@ function render(){
   renderPills(); renderShow();
   if(!document.getElementById('viewEdit').classList.contains('hidden')){
     renderList();
+    renderUpdate();
     // a server echo must not yank the input out from under the operator
     if(!document.getElementById('insp')?.contains(document.activeElement)) renderInsp();
   }
@@ -413,6 +434,38 @@ function sendSceneEdit(){
   const tag=document.getElementById('savedTag');
   if(tag){ tag.classList.add('on'); setTimeout(()=>tag.classList.remove('on'),900); }
 }
+let confirmingUpdate = false;
+function renderUpdate(){
+  const box=document.getElementById('updBox'); if(!box) return;
+  const u=state.update;
+  if(!u){ box.innerHTML=`<div class="upd"><div class="msg">unavailable</div></div>`; return; }
+  const net=u.online?"ONLINE":"OFFLINE";
+  const list=u.incoming?.length
+    ? `<ul class="list">${u.incoming.map(c=>`<li>${c.sha} ${esc(c.subject)}</li>`).join("")}</ul>` : "";
+  const label = u.busy ? "WORKING…" : confirmingUpdate ? "CONFIRM — RESTARTS NOW" : "UPDATE & RESTART";
+  box.innerHTML=`<div class="upd ${u.online?"online":""}">
+      <div class="top"><span class="ver">${u.current||"—"}</span>
+        <span class="net"><span class="led"></span>${net}</span></div>
+      <div>${esc(u.subject||"")}</div>
+      ${list}
+      <div class="msg">${esc(u.message||"")}</div>
+      <button class="updbtn ${confirmingUpdate?"confirm":""}" id="updBtn"
+        ${u.can_update?"":"disabled"} onclick="askUpdate()">${label}</button>
+    </div>`;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// two-step: the first click only arms the button, so a stray tap can't restart the show
+function askUpdate(){
+  const u=state.update; if(!u?.can_update) return;
+  if(!confirmingUpdate){
+    confirmingUpdate=true; renderUpdate();
+    setTimeout(()=>{ if(confirmingUpdate){ confirmingUpdate=false; renderUpdate(); } }, 5000);
+    return;
+  }
+  confirmingUpdate=false;
+  if(online && ws && ws.readyState===1) ws.send(JSON.stringify({type:"update", to:u.incoming[0].sha}));
+  renderUpdate();
+}
 function renderOuts(){
   const wrap=document.getElementById('outList'); if(!wrap) return;
   if(wrap.contains(document.activeElement)) return;   // don't clobber a field mid-edit
@@ -467,7 +520,7 @@ setInterval(()=>document.getElementById('clock').textContent=now(),1000);
 document.getElementById('clock').textContent=now();
 render(); connect();
 window.act=act; window.setView=setView; window.testFire=testFire; window.learn=learn;
-window.applyOutput=applyOutput;
+window.applyOutput=applyOutput; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>

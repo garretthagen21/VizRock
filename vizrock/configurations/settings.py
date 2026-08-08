@@ -2,7 +2,7 @@
 #
 # @file    settings.py
 #
-# @brief   Show configuration; singleton show_settings
+# @brief   Show configuration; singleton vizrock_settings
 #
 # @author  Garrett Hagen <garretthagen21@gmail.com>
 #
@@ -17,7 +17,7 @@ import vizrock.constants.paths as show_paths
 logger = logging.getLogger(__name__)
 
 
-class ShowSettings:
+class VizRockSettings:
     """
     show_config.json, editable at runtime. The raw document is kept so unknown
     keys survive a round-trip — we only ever rewrite what the UI edited.
@@ -39,4 +39,4 @@ class ShowSettings:
         logger.info('show_config.json saved')
 
 
-show_settings = ShowSettings()
+vizrock_settings = VizRockSettings()

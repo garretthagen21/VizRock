@@ -14,14 +14,15 @@ with a console-script entry point.
 
 | Path | Role |
 |------|------|
-| `vizrock/vizrock.py` | `ShowBrain` — LIVE/ARMED state and dispatch |
+| `vizrock/brain.py` | `Brain` — LIVE/ARMED state and dispatch |
 | `vizrock/__main__.py` | `vizrock_run` entry point; wires everything together |
 | `vizrock/managers/scene_library.py` | Scene table, setlist order, `scenes.json` persistence |
 | `vizrock/managers/midi_interface.py` | MIDI port setup + trigger matching |
+| `vizrock/managers/updater.py` | Reachability polling, `git pull`, self-restart |
 | `vizrock/outputs/` | One file per output + `build_outputs()` factory |
 | `vizrock/interface/ui_server.py` | aiohttp static serving + websocket |
 | `vizrock/interface/web/index.html` | Single-file UI, no build step |
-| `vizrock/configurations/settings.py` | Singleton `show_settings` |
+| `vizrock/configurations/settings.py` | Singleton `vizrock_settings` |
 | `vizrock/constants/paths.py` | `Directories` / `Files` — all path resolution |
 | `configs/show_config.json` | Outputs, MIDI input filters, trigger map, named DMX cues |
 | `configs/scenes.json` | The show — **rewritten at runtime by the UI** |
@@ -61,8 +62,8 @@ every output degrades to a no-op and the web UI still drives the full state mach
   the setlist must keep skipping it.
 - **`configs/scenes.json` is not source of truth** — the UI overwrites it. Committed values
   are defaults for a fresh Pi. This works because the install is editable (`pip install -e .`):
-  `paths.py` resolves `REPO_DIR` to the clone at `~/vizrock`, which `pi` can write. A
-  non-editable install would silently break UI scene edits.
+  `paths.py` resolves `REPO_DIR` to the clone, wherever it is, and the running user can write
+  there. A non-editable install would silently break UI scene edits.
 - **Never hardcode a path.** Everything resolves through `constants/paths.py`.
 - **The UI ships no external assets.** No CDN fonts, scripts or styles — the venue has no
   internet, and a render-blocking fetch delays first paint until it times out. Everything
@@ -78,8 +79,13 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **Only outputs with a real connection may report `ok`.** Fire-and-forget UDP (Resolume,
   DMX) reports `sending` — it means the packet left, not that anything received it. Don't
   let the UI imply a confirmation the protocol can't give.
+- **Updating restarts the process, it does not reload.** `Updater` pulls, optionally
+  reinstalls, then raises SIGTERM to itself; systemd's `Restart=always` brings it back on the
+  new code. That is why no sudo is needed. It refuses when offline, when already running, or
+  when the requested sha is not the one the UI last displayed — so a queued click cannot apply
+  something the operator never saw.
 - Adding a new output = one file in `outputs/` + an entry in `OUTPUT_KINDS`. Don't
-  special-case outputs inside `vizrock.py`.
+  special-case outputs inside `brain.py`.
 - Adding a ring mode means editing `interface/web/index.html` — **both** `RING_MODES` and
   `paintRing` — **and** both sketches in `../VizRock-Firmware`. `outputs/ring_serial.py` passes the mode string through
   untouched — there is no table here to update. See the wire protocol in `../CLAUDE.md`.

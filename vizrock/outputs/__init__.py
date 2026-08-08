@@ -2,7 +2,7 @@
 #
 # @file    __init__.py
 #
-# @brief   Output factory; builds every enabled output from show_settings
+# @brief   Output factory; builds every enabled output from vizrock_settings
 #
 # @author  Garrett Hagen <garretthagen21@gmail.com>
 #
@@ -11,7 +11,7 @@
 
 import logging
 
-from vizrock.configurations.settings import show_settings
+from vizrock.configurations.settings import vizrock_settings
 from vizrock.outputs.artnet_dmx import ArtNetDmx
 from vizrock.outputs.oled_display import OledDisplay
 from vizrock.outputs.resolume_osc import ResolumeOsc
@@ -43,7 +43,7 @@ def build_output(name, spec):
 
 
 def build_outputs():
-    """Instantiate every enabled output named in show_settings."""
+    """Instantiate every enabled output named in vizrock_settings."""
     return [output for output in
-            (build_output(name, spec) for name, spec in show_settings.outputs.items())
+            (build_output(name, spec) for name, spec in vizrock_settings.outputs.items())
             if output is not None]

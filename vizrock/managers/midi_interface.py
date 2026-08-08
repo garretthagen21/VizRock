@@ -13,7 +13,7 @@ import logging
 
 import mido
 
-from vizrock.configurations.settings import show_settings
+from vizrock.configurations.settings import vizrock_settings
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class MidiInterface:
         self.open_ports = []
 
     def open(self):
-        wanted = show_settings.midi_inputs
+        wanted = vizrock_settings.midi_inputs
         for name in mido.get_input_names():
             if wanted and not any(w.lower() in name.lower() for w in wanted):
                 continue
@@ -49,7 +49,7 @@ class MidiInterface:
 
     def match_trigger(self, message):
         """Return (action, scene) for an incoming mido message, or None."""
-        for trigger in show_settings.triggers:
+        for trigger in vizrock_settings.triggers:
             midi = trigger['midi']
             kind = midi['kind']
             if kind == 'note' and message.type == 'note_on' \

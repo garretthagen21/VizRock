@@ -25,6 +25,7 @@ class UiServer:
     client -> server : {type:'action', action:'go'|'arm_next'|..., scene?}
                        {type:'edit_scene', scene:{...}}
                        {type:'edit_config', name:'resolume', spec:{...}}
+                       {type:'update', to:'<sha>'}
     """
 
     def __init__(self, brain):
@@ -73,3 +74,9 @@ class UiServer:
             self.brain.push_state()
         elif data.get('type') == 'edit_config':
             self.brain.apply_output_config(data['name'], data['spec'])
+        elif data.get('type') == 'update' and self.brain.updater:
+            started, message = self.brain.updater.apply(data.get('to'))
+            logger.info('update requested: %s', message)
+            if not started:
+                self.brain.updater.message = message
+                self.brain.push_state()

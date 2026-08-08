@@ -11,11 +11,11 @@
 
 from vizrock.test.stubs import message
 from vizrock.managers.midi_interface import MidiInterface
-from vizrock.brain import ShowBrain
+from vizrock.brain import Brain
 
 
 def run():
-    brain = ShowBrain()
+    brain = Brain()
     assert brain.scene_library.order == [1, 2, 3, 4], brain.scene_library.order
     assert brain.armed == 1
 
