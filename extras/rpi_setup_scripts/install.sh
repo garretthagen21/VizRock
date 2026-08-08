@@ -16,10 +16,7 @@ RUN_USER="${SUDO_USER:-pi}"
 
 if [ "$(id -u)" -ne 0 ]; then echo "run me with sudo" >&2; exit 1; fi
 if [ -z "$PASSWORD" ]; then echo "usage: sudo $0 <hotspot-password>" >&2; exit 1; fi
-if [ "$REPO" != "/home/$RUN_USER/show-brain" ]; then
-    echo "WARNING: the systemd unit expects /home/$RUN_USER/show-brain, found $REPO" >&2
-    echo "         clone there, or edit show-brain.service before enabling it." >&2
-fi
+
 
 echo "==> system packages"
 apt-get update
@@ -42,7 +39,14 @@ echo "==> network (mDNS, wired priority, SHOWBRAIN fallback)"
 "$HERE/setup-network.sh" "$PASSWORD"
 
 echo "==> boot as an appliance"
-install -m 644 "$HERE/show-brain.service" /etc/systemd/system/
+# the unit ships with pi/ /home/pi/show-brain as defaults; rewrite it for whoever
+# actually cloned this, so the username and clone path are free choices
+UNIT="$(mktemp)"
+sed -e "s|^User=.*|User=$RUN_USER|" \
+    -e "s|/home/pi/show-brain|$REPO|g" \
+    "$HERE/show-brain.service" > "$UNIT"
+install -m 644 "$UNIT" /etc/systemd/system/show-brain.service
+rm -f "$UNIT"
 systemctl daemon-reload
 systemctl enable --now show-brain
 
