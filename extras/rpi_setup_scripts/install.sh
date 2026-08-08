@@ -2,7 +2,7 @@
 #
 # Show Brain — one-shot install on a fresh Raspberry Pi OS Lite (Bookworm).
 #
-#   git clone https://github.com/garretthagen21/VizRock-Brain.git ~/show-brain
+#   git clone https://github.com/garretthagen21/VizRock.git ~/show-brain
 #   cd ~/show-brain && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
 #
 # Everything below is idempotent — safe to re-run after a git pull.

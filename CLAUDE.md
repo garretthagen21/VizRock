@@ -1,4 +1,4 @@
-# VizRock-Brain
+# VizRock
 
 Python appliance on a Raspberry Pi. Takes MIDI footswitch triggers and fans a committed scene
 out to Resolume (OSC), DMX (Art-Net), the wearable LED rings (USB serial → ESP-NOW), and a

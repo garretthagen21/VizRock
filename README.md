@@ -31,7 +31,7 @@ The ESP32 sketches live in the sibling repo **[VizRock-Firmware](../VizRock-Firm
 One command on a fresh flash — packages, venv, I2C, udev, mDNS, hotspot, systemd:
 
 ```bash
-git clone https://github.com/garretthagen21/VizRock-Brain.git ~/show-brain
+git clone https://github.com/garretthagen21/VizRock.git ~/show-brain
 cd ~/show-brain && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
 ```
 
@@ -52,7 +52,7 @@ raspberrypi.com/software/operating-systems and use *Use custom* in Imager.
 ```bash
 sudo apt update && sudo apt install -y python3-venv libasound2-dev libjack-dev i2c-tools \
   avahi-daemon libnss-mdns          # mDNS: .local names, both directions
-git clone https://github.com/garretthagen21/VizRock-Brain.git ~/show-brain && cd ~/show-brain
+git clone https://github.com/garretthagen21/VizRock.git ~/show-brain && cd ~/show-brain
 python3 -m venv venv && ./venv/bin/pip install -e .
 sudo raspi-config nonint do_i2c 0          # enable I2C for the OLED
 sudo cp extras/rpi_setup_scripts/99-showbrain.rules /etc/udev/rules.d/ && sudo udevadm control --reload

@@ -2,13 +2,13 @@
 
 from setuptools import setup, find_packages
 
-setup(name='VizRock-Brain',
+setup(name='VizRock',
       version='1.0.0',
       author='Garrett Hagen',
       author_email='garretthagen21@gmail.com',
       description='Show Brain live control appliance for VizRock',
       long_description=open('README.md').read(),
-      url='https://github.com/garretthagen21/VizRock-Brain.git',
+      url='https://github.com/garretthagen21/VizRock.git',
       packages=find_packages(),
       package_data={'show_brain': ['interface/web/*']},
       python_requires='>=3.10',
