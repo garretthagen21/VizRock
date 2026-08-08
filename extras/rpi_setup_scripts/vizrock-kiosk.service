@@ -1,0 +1,20 @@
+[Unit]
+Description=VizRock kiosk display
+# Ordering only. Deliberately NOT Requires= — the kiosk is just another browser
+# client, and a failure here must never be able to stop the show.
+After=vizrock.service
+Wants=vizrock.service
+
+[Service]
+Type=simple
+User=pi
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WLR_LIBINPUT_NO_DEVICES=1
+# Chromium shows a static error page if it loads before the brain is listening,
+# and will not retry on its own — so restart until the port answers.
+ExecStart=/usr/bin/cage -- BROWSER --kiosk --noerrdialogs --disable-infobars --incognito --force-prefers-reduced-motion --ozone-platform=wayland http://localhost:8080
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

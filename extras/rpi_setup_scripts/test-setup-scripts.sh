@@ -16,7 +16,7 @@ MOCKLOG="$WORK/calls.log"
 trap 'rm -rf "$WORK"' EXIT
 
 # stubs log one argument per line so word-splitting bugs are visible
-for cmd in apt-get raspi-config udevadm systemctl nmcli install sudo; do
+for cmd in apt-get raspi-config udevadm systemctl nmcli install sudo usermod; do
     cat > "$FAKE/$cmd" <<EOF
 #!/bin/bash
 { echo "CMD $cmd"; for a in "\$@"; do echo "ARG \$a"; done; } >> "\$MOCKLOG"
@@ -24,6 +24,7 @@ exit 0
 EOF
     chmod +x "$FAKE/$cmd"
 done
+printf '#!/bin/bash\nexit 0\n' > "$FAKE/chromium-browser"; chmod +x "$FAKE/chromium-browser"
 cat > "$FAKE/id" <<'EOF'
 #!/bin/bash
 echo "${FAKE_UID:-0}"
@@ -83,6 +84,25 @@ check "User is rewritten"      "$(grep -c '^User=someoneelse' "$UNIT_OUT")" 1
 check "no stale pi user"       "$(grep -c '^User=pi' "$UNIT_OUT")" 0
 check "paths are rewritten"    "$(grep -c '/opt/vizrock' "$UNIT_OUT")" 2
 check "no stale clone path"    "$(grep -c '/home/pi/vizrock' "$UNIT_OUT")" 0
+
+echo "--- kiosk is optional and independent ---"
+check "install.sh never calls it" \
+      "$(grep -c 'setup-kiosk' "$HERE/install.sh")" 0
+rc=$(run "$HERE/setup-kiosk.sh"); check "kiosk completes" "$rc" 0
+check "installs cage"          "$(has 'apt-get install -y cage seatd')" yes
+check "enables seatd"          "$(has 'systemctl enable --now seatd')" yes
+check "grants seat access"     "$(has 'usermod -aG video,input,render,seat')" yes
+check "enables the kiosk unit" "$(has 'systemctl enable --now vizrock-kiosk')" yes
+FAKE_UID=1000 rc=$(run "$HERE/setup-kiosk.sh"); check "kiosk refuses non-root" "$rc" 1
+FAKE_UID=0
+rc=$(run "$HERE/setup-kiosk.sh" notaport); check "kiosk rejects a bad port" "$rc" 1
+
+# the whole point: a kiosk failure must not be able to stop the show
+check "unit orders after the show"  "$(grep -c '^After=vizrock.service' "$HERE/vizrock-kiosk.service")" 1
+check "unit does NOT Require it"    "$(grep -c '^Requires=' "$HERE/vizrock-kiosk.service")" 0
+check "unit restarts on crash"      "$(grep -c '^Restart=always' "$HERE/vizrock-kiosk.service")" 1
+check "kiosk points at localhost"   "$(grep -c 'http://localhost' "$HERE/vizrock-kiosk.service")" 1
+check "no python package touched"   "$(grep -rc 'kiosk' "$HERE/../../vizrock" 2>/dev/null | grep -v ':0' | wc -l | tr -d ' ')" 0
 
 echo "--- unit matches the package ---"
 check "ExecStart is the console script" \

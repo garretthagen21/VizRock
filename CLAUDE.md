@@ -102,6 +102,13 @@ every output degrades to a no-op and the web UI still drives the full state mach
   `paintRing` — **and** both sketches in `../VizRock-Firmware`. `outputs/ring_serial.py` passes the mode string through
   untouched — there is no table here to update. See the wire protocol in `../CLAUDE.md`.
 
+## Optional kiosk
+
+`extras/rpi_setup_scripts/setup-kiosk.sh` puts the UI on an attached screen via cage +
+Chromium against `localhost`. It is **not** called by `install.sh` and touches no Python: the
+screen is a browser client like any other. The unit uses `After=`/`Wants=` and never
+`Requires=`, so the kiosk can fail without affecting the show. Keep it that way.
+
 ## Tests
 
 ```bash

@@ -129,6 +129,22 @@ are on **ESP-NOW**, not WiFi, so they're unaffected by any of this.
 > Ask THC: can you get a wired ethernet link (or a spare port) to their Resolume machine,
 > and can they enable **OSC input** (Preferences → OSC, note the port)?
 
+## Optional: a screen on the Pi
+
+```bash
+sudo extras/rpi_setup_scripts/setup-kiosk.sh      # port defaults to 8080
+```
+
+Runs the UI full-screen on an attached display via `cage` + Chromium against `localhost`. The
+screen is just another browser client — the same thing your phone is — so the brain has no
+idea it exists. The unit orders *after* `vizrock.service` but does not require it, so a kiosk
+failure can never stop the show. Remove it with
+`sudo systemctl disable --now vizrock-kiosk`.
+
+Cable goes in **HDMI0**, the port nearest the USB-C power input; HDMI1 stays dark during boot.
+Touch panels usually need a `dtoverlay` line in `/boot/firmware/config.txt` — check the
+panel's own docs.
+
 ## Tests
 
 ```bash
