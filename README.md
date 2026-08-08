@@ -94,6 +94,19 @@ Installs mDNS, gives the wired connection top priority, and creates a persistent
 hotspot that autoconnects on boot as the fallback. Nothing needs switching afterwards — the
 cable wins when it's plugged in, the hotspot is there when it isn't, and the UI answers on
 every interface either way.
+
+### Phone or tablet at the pedalboard
+
+No venue network, router or internet needed — the Pi is the access point and hands out DHCP
+itself. Join **SHOWBRAIN** and browse `vizrock-brain.local:8080`.
+
+If the name doesn't resolve — Android browsers are patchy with mDNS where iOS is not — use
+**`http://10.42.0.1:8080`**. NetworkManager's shared mode always places the Pi at that address,
+so it's a reliable fallback. Expect a "no internet" warning; stay connected and the phone
+routes LAN over WiFi and internet over cellular. A spare phone with no SIM works fine.
+
+`wlan0` and `eth0` run simultaneously, so a laptop on the cable and a phone on SHOWBRAIN both
+reach the same brain.
 The show path never needs internet; the Pi just has to let your phone and the Resolume
 machine see each other. Make the Pi a self-contained access point:
 ```bash
