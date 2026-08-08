@@ -13,7 +13,7 @@ import json
 import shutil
 import tempfile
 
-import vizrock.constants.paths as show_paths
+import vizrock.constants.paths as vizrock_paths
 from vizrock.outputs import build_outputs
 from vizrock.brain import Brain
 
@@ -21,16 +21,16 @@ from vizrock.brain import Brain
 def run():
     """Edits write show_config.json, so the real file is restored afterwards."""
     backup = tempfile.NamedTemporaryFile(suffix='.json', delete=False).name
-    shutil.copy(show_paths.Files.SHOW_CONFIG_FILE, backup)
+    shutil.copy(vizrock_paths.Files.SHOW_CONFIG_FILE, backup)
     try:
         _edits_apply_and_persist()
         _bad_edits_roll_back()
     finally:
-        shutil.copy(backup, show_paths.Files.SHOW_CONFIG_FILE)
+        shutil.copy(backup, vizrock_paths.Files.SHOW_CONFIG_FILE)
 
 
 def _on_disk():
-    return json.loads(show_paths.Files.SHOW_CONFIG_FILE.read_text())
+    return json.loads(vizrock_paths.Files.SHOW_CONFIG_FILE.read_text())
 
 
 def _edits_apply_and_persist():

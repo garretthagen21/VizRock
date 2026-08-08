@@ -22,3 +22,18 @@ class Directories:
 class Files:
     SHOW_CONFIG_FILE = Directories.CONFIG_DIR / 'show_config.json'
     SCENES_FILE = Directories.CONFIG_DIR / 'scenes.json'
+
+
+def ensure_seeded(path):
+    """
+    Copy the committed .example alongside `path` if `path` is missing.
+
+    The live configs are deliberately untracked: the UI rewrites them at runtime, and
+    a tracked file carrying local edits makes `git pull` fail — which would break the
+    self-update button the first time anyone edited a scene.
+    """
+    if not path.exists():
+        example = path.with_name(f'{path.stem}.example.json')
+        if example.exists():
+            path.write_text(example.read_text())
+    return path

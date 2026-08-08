@@ -5,3 +5,7 @@ __pycache__/
 *.DS_Store
 *.egg-info/
 dist/
+
+# runtime state: the UI rewrites these, and tracking them breaks git pull
+configs/show_config.json
+configs/scenes.json

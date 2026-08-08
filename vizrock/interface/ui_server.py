@@ -15,7 +15,7 @@ import logging
 
 from aiohttp import WSMsgType, web
 
-import vizrock.constants.paths as show_paths
+import vizrock.constants.paths as vizrock_paths
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class UiServer:
         self.app.add_routes([
             web.get('/ws', self._websocket),
             web.get('/', lambda request: web.HTTPFound('/index.html')),
-            web.static('/', show_paths.Directories.WEB_DIR),
+            web.static('/', vizrock_paths.Directories.WEB_DIR),
         ])
 
     async def start(self, port):

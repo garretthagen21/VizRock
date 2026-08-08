@@ -65,6 +65,10 @@ every output degrades to a no-op and the web UI still drives the full state mach
   `paths.py` resolves `REPO_DIR` to the clone, wherever it is, and the running user can write
   there. A non-editable install would silently break UI scene edits.
 - **Never hardcode a path.** Everything resolves through `constants/paths.py`.
+- **The live configs are untracked; the `.example` files are the committed ones.** The UI
+  rewrites `configs/*.json` at runtime, and a tracked file with local edits makes `git pull`
+  fail — which would have broken self-update the first time anyone edited a scene.
+  `paths.ensure_seeded()` copies the example on first read, so a fresh clone still works.
 - **`broadcast` must schedule, not call.** `WebSocketResponse.send_str` is a coroutine;
   calling it from the synchronous `push_state` path only creates one. Every push after the
   initial snapshot silently vanished until this was fixed.

@@ -12,7 +12,7 @@
 import json
 import logging
 
-import vizrock.constants.paths as show_paths
+import vizrock.constants.paths as vizrock_paths
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class VizRockSettings:
     """
 
     def __init__(self):
-        self.raw = json.loads(show_paths.Files.SHOW_CONFIG_FILE.read_text())
+        self.raw = json.loads(vizrock_paths.ensure_seeded(vizrock_paths.Files.SHOW_CONFIG_FILE).read_text())
         self.ui_port = self.raw.get('ui', {}).get('port', 8080)
         self.midi_inputs = self.raw.get('midi_inputs', [])
         self.triggers = self.raw.get('triggers', [])
@@ -35,7 +35,7 @@ class VizRockSettings:
         self.outputs.setdefault(name, {}).update(spec)
 
     def save(self):
-        show_paths.Files.SHOW_CONFIG_FILE.write_text(json.dumps(self.raw, indent=2))
+        vizrock_paths.Files.SHOW_CONFIG_FILE.write_text(json.dumps(self.raw, indent=2))
         logger.info('show_config.json saved')
 
 

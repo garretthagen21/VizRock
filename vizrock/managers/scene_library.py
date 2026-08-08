@@ -12,7 +12,7 @@
 import json
 import logging
 
-import vizrock.constants.paths as show_paths
+import vizrock.constants.paths as vizrock_paths
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class SceneLibrary:
     """Scene lookup plus the steppable setlist order, which excludes Blackout."""
 
     def __init__(self):
-        self.load(json.loads(show_paths.Files.SCENES_FILE.read_text()))
+        self.load(json.loads(vizrock_paths.ensure_seeded(vizrock_paths.Files.SCENES_FILE).read_text()))
 
     def load(self, data):
         self.scenes = {scene['id']: scene for scene in data['scenes']}
@@ -33,7 +33,7 @@ class SceneLibrary:
     def save(self):
         data = {'meta': self.meta,
                 'scenes': [self.scenes[i] for i in sorted(self.scenes)]}
-        show_paths.Files.SCENES_FILE.write_text(json.dumps(data, indent=2))
+        vizrock_paths.Files.SCENES_FILE.write_text(json.dumps(data, indent=2))
         logger.info('scenes.json saved')
 
     def upsert(self, scene):
