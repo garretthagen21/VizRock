@@ -1,12 +1,12 @@
 [Unit]
-Description=Show Brain live control
+Description=VizRock live control
 After=network.target sound.target
 
 [Service]
 Type=simple
 User=pi
-WorkingDirectory=/home/pi/show-brain
-ExecStart=/home/pi/show-brain/venv/bin/showbrain_run
+WorkingDirectory=/home/pi/vizrock
+ExecStart=/home/pi/vizrock/venv/bin/vizrock_run
 Restart=always
 RestartSec=2
 

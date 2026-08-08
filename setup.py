@@ -10,12 +10,12 @@ setup(name='VizRock',
       long_description=open('README.md').read(),
       url='https://github.com/garretthagen21/VizRock.git',
       packages=find_packages(),
-      package_data={'show_brain': ['interface/web/*']},
+      package_data={'vizrock': ['interface/web/*']},
       python_requires='>=3.10',
       entry_points={
           "console_scripts": [
-              "showbrain_run = show_brain.__main__:run",
-              "showbrain_test = show_brain.test.test_runner:main"
+              "vizrock_run = vizrock.__main__:run",
+              "vizrock_test = vizrock.test.test_runner:main"
           ]
       },
       # lower bounds, not pins: the exact pins forced a source build on any newer

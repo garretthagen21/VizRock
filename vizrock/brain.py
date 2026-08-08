@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# @file    show_brain.py
+# @file    vizrock.py
 #
 # @brief   Core state machine: LIVE, ARMED, and dispatch to every output
 #
@@ -11,9 +11,9 @@
 
 import logging
 
-from show_brain.configurations.settings import show_settings
-from show_brain.managers.scene_library import BLACKOUT_SCENE_ID, SceneLibrary
-from show_brain.outputs import build_output
+from vizrock.configurations.settings import show_settings
+from vizrock.managers.scene_library import BLACKOUT_SCENE_ID, SceneLibrary
+from vizrock.outputs import build_output
 
 logger = logging.getLogger(__name__)
 

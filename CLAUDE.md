@@ -9,20 +9,20 @@ Workspace root is `../` — read `../CLAUDE.md` first for cross-repo contracts
 
 ## Layout
 
-Standard Gener8 Python package shape: `show_brain/` package, `configs/` for JSON, `setup.py`
+Standard Gener8 Python package shape: `vizrock/` package, `configs/` for JSON, `setup.py`
 with a console-script entry point.
 
 | Path | Role |
 |------|------|
-| `show_brain/show_brain.py` | `ShowBrain` — LIVE/ARMED state and dispatch |
-| `show_brain/__main__.py` | `showbrain_run` entry point; wires everything together |
-| `show_brain/managers/scene_library.py` | Scene table, setlist order, `scenes.json` persistence |
-| `show_brain/managers/midi_interface.py` | MIDI port setup + trigger matching |
-| `show_brain/outputs/` | One file per output + `build_outputs()` factory |
-| `show_brain/interface/ui_server.py` | aiohttp static serving + websocket |
-| `show_brain/interface/web/index.html` | Single-file UI, no build step |
-| `show_brain/configurations/settings.py` | Singleton `show_settings` |
-| `show_brain/constants/paths.py` | `Directories` / `Files` — all path resolution |
+| `vizrock/vizrock.py` | `ShowBrain` — LIVE/ARMED state and dispatch |
+| `vizrock/__main__.py` | `vizrock_run` entry point; wires everything together |
+| `vizrock/managers/scene_library.py` | Scene table, setlist order, `scenes.json` persistence |
+| `vizrock/managers/midi_interface.py` | MIDI port setup + trigger matching |
+| `vizrock/outputs/` | One file per output + `build_outputs()` factory |
+| `vizrock/interface/ui_server.py` | aiohttp static serving + websocket |
+| `vizrock/interface/web/index.html` | Single-file UI, no build step |
+| `vizrock/configurations/settings.py` | Singleton `show_settings` |
+| `vizrock/constants/paths.py` | `Directories` / `Files` — all path resolution |
 | `configs/show_config.json` | Outputs, MIDI input filters, trigger map, named DMX cues |
 | `configs/scenes.json` | The show — **rewritten at runtime by the UI** |
 | `extras/rpi_setup_scripts/` | `install.sh` (one-shot), network setup, systemd unit, udev rules |
@@ -40,7 +40,7 @@ than exact pins so pip can pick a prebuilt wheel wherever one exists.
 
 ```bash
 python3 -m venv venv && ./venv/bin/pip install -e .
-./venv/bin/showbrain_run          # UI at http://<host>:8080
+./venv/bin/vizrock_run          # UI at http://<host>:8080
 ```
 
 Works on a dev laptop: with no OLED, no MIDI devices and nothing listening on the UDP ports,
@@ -61,7 +61,7 @@ every output degrades to a no-op and the web UI still drives the full state mach
   the setlist must keep skipping it.
 - **`configs/scenes.json` is not source of truth** — the UI overwrites it. Committed values
   are defaults for a fresh Pi. This works because the install is editable (`pip install -e .`):
-  `paths.py` resolves `REPO_DIR` to the clone at `~/show-brain`, which `pi` can write. A
+  `paths.py` resolves `REPO_DIR` to the clone at `~/vizrock`, which `pi` can write. A
   non-editable install would silently break UI scene edits.
 - **Never hardcode a path.** Everything resolves through `constants/paths.py`.
 - **The UI ships no external assets.** No CDN fonts, scripts or styles — the venue has no
@@ -79,7 +79,7 @@ every output degrades to a no-op and the web UI still drives the full state mach
   DMX) reports `sending` — it means the packet left, not that anything received it. Don't
   let the UI imply a confirmation the protocol can't give.
 - Adding a new output = one file in `outputs/` + an entry in `OUTPUT_KINDS`. Don't
-  special-case outputs inside `show_brain.py`.
+  special-case outputs inside `vizrock.py`.
 - Adding a ring mode means editing `interface/web/index.html` — **both** `RING_MODES` and
   `paintRing` — **and** both sketches in `../VizRock-Firmware`. `outputs/ring_serial.py` passes the mode string through
   untouched — there is no table here to update. See the wire protocol in `../CLAUDE.md`.
@@ -87,7 +87,7 @@ every output degrades to a no-op and the web UI still drives the full state mach
 ## Tests
 
 ```bash
-./venv/bin/showbrain_test                      # python suites
+./venv/bin/vizrock_test                      # python suites
 extras/rpi_setup_scripts/test-setup-scripts.sh # setup scripts, system commands mocked
 ```
 

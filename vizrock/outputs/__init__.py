@@ -11,11 +11,11 @@
 
 import logging
 
-from show_brain.configurations.settings import show_settings
-from show_brain.outputs.artnet_dmx import ArtNetDmx
-from show_brain.outputs.oled_display import OledDisplay
-from show_brain.outputs.resolume_osc import ResolumeOsc
-from show_brain.outputs.ring_serial import RingSerial
+from vizrock.configurations.settings import show_settings
+from vizrock.outputs.artnet_dmx import ArtNetDmx
+from vizrock.outputs.oled_display import OledDisplay
+from vizrock.outputs.resolume_osc import ResolumeOsc
+from vizrock.outputs.ring_serial import RingSerial
 
 logger = logging.getLogger(__name__)
 

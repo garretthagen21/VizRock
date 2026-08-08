@@ -19,23 +19,25 @@ the brain re-pushes the current cue when it reconnects.
 The ESP32 sketches live in the sibling repo **[VizRock-Firmware](../VizRock-Firmware)**.
 
 ## Layout
-- `show_brain/` — the package (`show_brain.py` state machine, `managers/`, `outputs/`,
+- `vizrock/` — the package (`vizrock.py` state machine, `managers/`, `outputs/`,
   `interface/`, `configurations/`, `constants/`)
 - `configs/show_config.json` — outputs, MIDI inputs, trigger map, DMX cues
 - `configs/scenes.json` — the show (edited live from the UI, saved here)
 - `extras/rpi_setup_scripts/` — udev rule + systemd unit
-- `setup.py` — deps and the `showbrain_run` console script
+- `setup.py` — deps and the `vizrock_run` console script
 
 ## Install (Raspberry Pi OS Lite, Bookworm)
 
 One command on a fresh flash — packages, venv, I2C, udev, mDNS, hotspot, systemd:
 
 ```bash
-git clone https://github.com/garretthagen21/VizRock.git ~/show-brain
-cd ~/show-brain && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
+git clone https://github.com/garretthagen21/VizRock.git
+cd VizRock && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
 ```
 
-Idempotent, so re-run it after a `git pull`. Then open `http://vizrock-brain.local:8080`.
+Clone wherever you like — the installer rewrites the systemd unit for the actual path and
+user. Idempotent, so re-run it after a `git pull`. Then open
+`http://vizrock-brain.local:8080`.
 Flash the SD card with Raspberry Pi Imager and preset the hostname to `vizrock-brain`, plus
 your WiFi, and SSH with password auth, so the only device-side step is the clone. Password
 auth rather than key-only means you can SSH from any machine at the venue, not just the
@@ -52,18 +54,18 @@ raspberrypi.com/software/operating-systems and use *Use custom* in Imager.
 ```bash
 sudo apt update && sudo apt install -y python3-venv libasound2-dev libjack-dev i2c-tools \
   avahi-daemon libnss-mdns          # mDNS: .local names, both directions
-git clone https://github.com/garretthagen21/VizRock.git ~/show-brain && cd ~/show-brain
+git clone https://github.com/garretthagen21/VizRock.git && cd VizRock
 python3 -m venv venv && ./venv/bin/pip install -e .
 sudo raspi-config nonint do_i2c 0          # enable I2C for the OLED
-sudo cp extras/rpi_setup_scripts/99-showbrain.rules /etc/udev/rules.d/ && sudo udevadm control --reload
-./venv/bin/showbrain_run                   # test run; open http://<pi>.local:8080
+sudo cp extras/rpi_setup_scripts/99-vizrock.rules /etc/udev/rules.d/ && sudo udevadm control --reload
+./venv/bin/vizrock_run                   # test run; open http://<pi>.local:8080
 ```
-Clone to `~/show-brain` — the systemd unit hardcodes that path.
+The systemd unit is generated for wherever you cloned, so the location is free.
 
 Boot as an appliance:
 ```bash
-sudo cp extras/rpi_setup_scripts/show-brain.service /etc/systemd/system/
-sudo systemctl enable --now show-brain
+sudo cp extras/rpi_setup_scripts/vizrock.service /etc/systemd/system/
+sudo systemctl enable --now vizrock
 ```
 </details>
 
@@ -96,7 +98,7 @@ automatic failover if the cable is pulled mid-show.
 sudo extras/rpi_setup_scripts/setup-network.sh <hotspot-password>
 ```
 
-Installs mDNS, gives the wired connection top priority, and creates a persistent **SHOWBRAIN**
+Installs mDNS, gives the wired connection top priority, and creates a persistent **VIZROCK**
 hotspot that autoconnects on boot as the fallback. Nothing needs switching afterwards — the
 cable wins when it's plugged in, the hotspot is there when it isn't, and the UI answers on
 every interface either way.
@@ -104,23 +106,23 @@ every interface either way.
 ### Phone or tablet at the pedalboard
 
 No venue network, router or internet needed — the Pi is the access point and hands out DHCP
-itself. Join **SHOWBRAIN** and browse `vizrock-brain.local:8080`.
+itself. Join **VIZROCK** and browse `vizrock-brain.local:8080`.
 
 If the name doesn't resolve — Android browsers are patchy with mDNS where iOS is not — use
 **`http://10.42.0.1:8080`**. NetworkManager's shared mode always places the Pi at that address,
 so it's a reliable fallback. Expect a "no internet" warning; stay connected and the phone
 routes LAN over WiFi and internet over cellular. A spare phone with no SIM works fine.
 
-`wlan0` and `eth0` run simultaneously, so a laptop on the cable and a phone on SHOWBRAIN both
+`wlan0` and `eth0` run simultaneously, so a laptop on the cable and a phone on VIZROCK both
 reach the same brain.
 The show path never needs internet; the Pi just has to let your phone and the Resolume
 machine see each other. Make the Pi a self-contained access point:
 ```bash
-sudo nmcli device wifi hotspot ssid SHOWBRAIN password <choose-one> ifname wlan0
+sudo nmcli device wifi hotspot ssid VIZROCK password <choose-one> ifname wlan0
 ```
 Then either **wire the Resolume machine to the Pi over ethernet** (recommended — OSC and
 Art-Net run great over a cable; put both on one cheap switch) or have that machine join
-the SHOWBRAIN hotspot. Add its IP to `configs/show_config.json` → `outputs.resolume.hosts`. The rings
+the VIZROCK hotspot. Add its IP to `configs/show_config.json` → `outputs.resolume.hosts`. The rings
 are on **ESP-NOW**, not WiFi, so they're unaffected by any of this.
 
 > Ask THC: can you get a wired ethernet link (or a spare port) to their Resolume machine,
@@ -129,7 +131,7 @@ are on **ESP-NOW**, not WiFi, so they're unaffected by any of this.
 ## Tests
 
 ```bash
-./venv/bin/showbrain_test                      # python suites
+./venv/bin/vizrock_test                      # python suites
 extras/rpi_setup_scripts/test-setup-scripts.sh # setup scripts, system commands mocked
 ```
 

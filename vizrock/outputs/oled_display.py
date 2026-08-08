@@ -11,7 +11,7 @@
 
 import logging
 
-from show_brain.outputs.output import Output
+from vizrock.outputs.output import Output
 
 logger = logging.getLogger(__name__)
 

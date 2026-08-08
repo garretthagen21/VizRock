@@ -13,12 +13,12 @@ import asyncio
 import logging
 import signal
 
-import show_brain.configurations.logger  # configures logging on import
-from show_brain.configurations.settings import show_settings
-from show_brain.interface.ui_server import UiServer
-from show_brain.managers.midi_interface import MidiInterface
-from show_brain.outputs import build_outputs
-from show_brain.show_brain import ShowBrain
+import vizrock.configurations.logger  # configures logging on import
+from vizrock.configurations.settings import show_settings
+from vizrock.interface.ui_server import UiServer
+from vizrock.managers.midi_interface import MidiInterface
+from vizrock.outputs import build_outputs
+from vizrock.brain import ShowBrain
 
 logger = logging.getLogger(__name__)
 

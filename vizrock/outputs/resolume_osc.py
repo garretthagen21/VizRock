@@ -14,7 +14,7 @@ import socket
 import threading
 import time
 
-from show_brain.outputs.output import Output
+from vizrock.outputs.output import Output
 
 logger = logging.getLogger(__name__)
 

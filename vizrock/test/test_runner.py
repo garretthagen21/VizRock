@@ -2,7 +2,7 @@
 #
 # @file    test_runner.py
 #
-# @brief   Runs every suite; showbrain_test entry point
+# @brief   Runs every suite; vizrock_test entry point
 #
 # @author  Garrett Hagen <garretthagen21@gmail.com>
 #
@@ -11,7 +11,7 @@
 
 import traceback
 
-from show_brain.test import stubs
+from vizrock.test import stubs
 
 stubs.install()
 
@@ -23,7 +23,7 @@ def main():
 
     failures = 0
     for name in SUITES:
-        module = importlib.import_module(f'show_brain.test.{name}')
+        module = importlib.import_module(f'vizrock.test.{name}')
         try:
             module.run()
             print(f'  ok   {name}')

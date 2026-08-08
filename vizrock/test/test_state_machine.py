@@ -9,9 +9,9 @@
 # @date    2026-08-08
 #
 
-from show_brain.test.stubs import message
-from show_brain.managers.midi_interface import MidiInterface
-from show_brain.show_brain import ShowBrain
+from vizrock.test.stubs import message
+from vizrock.managers.midi_interface import MidiInterface
+from vizrock.brain import ShowBrain
 
 
 def run():

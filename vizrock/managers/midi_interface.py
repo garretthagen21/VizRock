@@ -13,7 +13,7 @@ import logging
 
 import mido
 
-from show_brain.configurations.settings import show_settings
+from vizrock.configurations.settings import show_settings
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@
 #   1. Ethernet  — plug a cable into the Pi and it wins. No DHCP server needed:
 #                  both ends fall back to link-local 169.254.x.x and find each
 #                  other by mDNS. This is the path to prefer at the venue.
-#   2. SHOWBRAIN — the Pi's own hotspot, for phone control or when there is no
+#   2. VIZROCK — the Pi's own hotspot, for phone control or when there is no
 #                  cable. Persistent and autoconnecting, so it survives a reboot.
 #
 # Nothing needs switching: the UI binds 0.0.0.0 and answers on every interface at
@@ -41,22 +41,22 @@ nmcli connection modify "Wired connection 1" \
     connection.autoconnect-priority 100 \
     ipv4.may-fail yes 2>/dev/null || echo "    (no wired profile yet — created on first plug-in)"
 
-echo "==> SHOWBRAIN hotspot as the fallback"
-nmcli connection delete SHOWBRAIN 2>/dev/null || true
-nmcli connection add type wifi ifname wlan0 con-name SHOWBRAIN autoconnect yes ssid SHOWBRAIN
-nmcli connection modify SHOWBRAIN \
+echo "==> VIZROCK hotspot as the fallback"
+nmcli connection delete VIZROCK 2>/dev/null || true
+nmcli connection add type wifi ifname wlan0 con-name VIZROCK autoconnect yes ssid VIZROCK
+nmcli connection modify VIZROCK \
     802-11-wireless.mode ap \
     802-11-wireless.band bg \
     ipv4.method shared \
     wifi-sec.key-mgmt wpa-psk \
     wifi-sec.psk "$PASSWORD" \
     connection.autoconnect-priority 10
-nmcli connection up SHOWBRAIN
+nmcli connection up VIZROCK
 
 echo
 echo "Done. The Pi is reachable at http://vizrock-brain.local:8080"
 echo "  cable  : plug in and browse — nothing to configure"
-echo "  wifi   : join SHOWBRAIN, then browse the same address"
+echo "  wifi   : join VIZROCK, then browse the same address"
 echo
 echo "Confirm from your laptop:  ping vizrock-brain.local"
 echo "Set the visuals targets in configs/show_config.json to the machines' .local names."

@@ -14,7 +14,7 @@ import logging
 
 from aiohttp import WSMsgType, web
 
-import show_brain.constants.paths as show_paths
+import vizrock.constants.paths as show_paths
 
 logger = logging.getLogger(__name__)
 

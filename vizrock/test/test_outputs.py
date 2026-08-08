@@ -11,9 +11,9 @@
 
 import socket
 
-from show_brain.outputs.artnet_dmx import ArtNetDmx
-from show_brain.outputs.oled_display import OledDisplay
-from show_brain.outputs.resolume_osc import ResolumeOsc
+from vizrock.outputs.artnet_dmx import ArtNetDmx
+from vizrock.outputs.oled_display import OledDisplay
+from vizrock.outputs.resolume_osc import ResolumeOsc
 
 
 def _listeners(count):

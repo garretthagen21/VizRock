@@ -2,8 +2,8 @@
 #
 # Show Brain — one-shot install on a fresh Raspberry Pi OS Lite (Bookworm).
 #
-#   git clone https://github.com/garretthagen21/VizRock.git ~/show-brain
-#   cd ~/show-brain && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
+#   git clone https://github.com/garretthagen21/VizRock.git
+#   cd VizRock && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
 #
 # Everything below is idempotent — safe to re-run after a git pull.
 #
@@ -33,27 +33,27 @@ sudo -u "$RUN_USER" "$REPO/venv/bin/pip" install --upgrade pip
 sudo -u "$RUN_USER" "$REPO/venv/bin/pip" install -e "$REPO"
 
 echo "==> stable device names"
-install -m 644 "$HERE/99-showbrain.rules" /etc/udev/rules.d/
+install -m 644 "$HERE/99-vizrock.rules" /etc/udev/rules.d/
 udevadm control --reload
 
-echo "==> network (mDNS, wired priority, SHOWBRAIN fallback)"
+echo "==> network (mDNS, wired priority, VIZROCK fallback)"
 "$HERE/setup-network.sh" "$PASSWORD"
 
 echo "==> boot as an appliance"
-# the unit ships with pi/ /home/pi/show-brain as defaults; rewrite it for whoever
+# the unit ships with pi/ /home/pi/vizrock as defaults; rewrite it for whoever
 # actually cloned this, so the username and clone path are free choices
 UNIT="$(mktemp)"
 sed -e "s|^User=.*|User=$RUN_USER|" \
-    -e "s|/home/pi/show-brain|$REPO|g" \
-    "$HERE/show-brain.service" > "$UNIT"
-install -m 644 "$UNIT" /etc/systemd/system/show-brain.service
+    -e "s|/home/pi/vizrock|$REPO|g" \
+    "$HERE/vizrock.service" > "$UNIT"
+install -m 644 "$UNIT" /etc/systemd/system/vizrock.service
 rm -f "$UNIT"
 systemctl daemon-reload
-systemctl enable --now show-brain
+systemctl enable --now vizrock
 
 echo
 echo "Installed. http://vizrock-brain.local:8080"
-systemctl --no-pager --lines=5 status show-brain || true
+systemctl --no-pager --lines=5 status vizrock || true
 echo
 echo "Next: set the visuals targets in configs/show_config.json — or just edit them"
 echo "      in the OUTPUTS panel of the web UI and hit APPLY."

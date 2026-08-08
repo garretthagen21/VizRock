@@ -13,8 +13,8 @@ import logging
 import socket
 import time
 
-from show_brain.outputs import resolume_osc
-from show_brain.outputs.resolume_osc import ResolumeOsc
+from vizrock.outputs import resolume_osc
+from vizrock.outputs.resolume_osc import ResolumeOsc
 
 
 def run():

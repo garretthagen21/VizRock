@@ -13,9 +13,9 @@ import json
 import shutil
 import tempfile
 
-import show_brain.constants.paths as show_paths
-from show_brain.outputs import build_outputs
-from show_brain.show_brain import ShowBrain
+import vizrock.constants.paths as show_paths
+from vizrock.outputs import build_outputs
+from vizrock.brain import ShowBrain
 
 
 def run():
