@@ -120,6 +120,15 @@ are on **ESP-NOW**, not WiFi, so they're unaffected by any of this.
 > Ask THC: can you get a wired ethernet link (or a spare port) to their Resolume machine,
 > and can they enable **OSC input** (Preferences → OSC, note the port)?
 
+## Tests
+
+```bash
+./venv/bin/showbrain_test                      # python suites
+extras/rpi_setup_scripts/test-setup-scripts.sh # setup scripts, system commands mocked
+```
+
+Logic only — no hardware is involved.
+
 ## OLED wiring (I2C, 128×64)
 
 Buy a **0.96" SSD1306 I2C** module — 4 pins. Avoid 7-pin SPI boards; many 1.3" modules use the

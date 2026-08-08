@@ -1,0 +1,10 @@
+{
+  "name": "VizRock Show Brain",
+  "short_name": "VizRock",
+  "start_url": ".",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0B0E13",
+  "theme_color": "#0B0E13",
+  "icons": [{ "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }]
+}

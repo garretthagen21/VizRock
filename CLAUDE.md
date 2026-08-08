@@ -82,6 +82,19 @@ every output degrades to a no-op and the web UI still drives the full state mach
   `paintRing` — **and** both sketches in `../VizRock-Firmware`. `outputs/ring_serial.py` passes the mode string through
   untouched — there is no table here to update. See the wire protocol in `../CLAUDE.md`.
 
+## Tests
+
+```bash
+./venv/bin/showbrain_test                      # python suites
+extras/rpi_setup_scripts/test-setup-scripts.sh # setup scripts, system commands mocked
+```
+
+Run both after any change — the suites are cheap and a later edit silently breaking an earlier
+one is the failure mode they exist to catch. `test_config_edit` writes `show_config.json` and
+restores it; if it is interrupted, check `git diff configs/`.
+
+They cover logic, not hardware: no MIDI device, ring, OLED or Pi is involved anywhere.
+
 ## Config notes
 
 - `midi_inputs` are **substring** filters against port names (`["Chocolate", "FM3"]`); empty

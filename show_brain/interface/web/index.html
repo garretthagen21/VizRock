@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Show Brain</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>VizRock</title>
+<!-- Add to Home Screen: launches fullscreen with no browser chrome, which matters on a
+     pedalboard where a stray swipe on the address bar loses the show. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VizRock">
+<meta name="theme-color" content="#0B0E13">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
 <!-- No webfont CDN: the venue has no internet and the fetch would block first paint.
      The font-family stacks below fall back to system faces. -->
 <style>
@@ -18,7 +27,7 @@
   body{background:var(--void); color:var(--ink); font-family:var(--disp); -webkit-font-smoothing:antialiased;
     overflow:hidden; background-image:radial-gradient(circle at 50% -10%, #131a26 0%, var(--void) 60%);}
   .app{height:100vh; display:flex; flex-direction:column}
-  header{display:flex; align-items:center; gap:20px; padding:14px 22px; border-bottom:1px solid var(--line);
+  header{display:flex; align-items:center; gap:20px; padding:14px 22px; padding-top:max(14px, env(safe-area-inset-top)); border-bottom:1px solid var(--line);
     background:rgba(11,14,19,.7); backdrop-filter:blur(6px)}
   .wordmark{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.14em; font-size:13px}
   .wordmark .dot{width:9px;height:9px;border-radius:50%;background:var(--warn);box-shadow:0 0 10px var(--warn)}

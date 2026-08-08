@@ -14,7 +14,8 @@ setup(name='VizRock-Brain',
       python_requires='>=3.10',
       entry_points={
           "console_scripts": [
-              "showbrain_run = show_brain.__main__:run"
+              "showbrain_run = show_brain.__main__:run",
+              "showbrain_test = show_brain.test.test_runner:main"
           ]
       },
       install_requires=[
