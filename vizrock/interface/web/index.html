@@ -81,11 +81,15 @@
   .log .t{color:var(--muted2)}
   .btn{font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.1em; cursor:pointer; background:var(--panel2);
     color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:11px 15px; transition:.15s}
-  .btn:hover{border-color:var(--active); color:#fff}
+  .btn:active{border-color:var(--active); color:#fff; transform:translateY(1px)}
+  /* :hover sticks after a tap on touch devices, which made the transport look latched */
+  @media (hover:hover){ .btn:hover{border-color:var(--active); color:#fff} }
   .btn.go{background:#12271c; border-color:#2f6b48; color:var(--live); font-weight:700; padding:11px 26px}
-  .btn.go:hover{background:#173626; border-color:var(--live)}
+  .btn.go:active{background:#173626; border-color:var(--live)}
+  @media (hover:hover){ .btn.go:hover{background:#173626; border-color:var(--live)} }
   .btn.blackout{border-color:#3a2530; color:#ff8a8a}
-  .btn.blackout:hover{background:#2a1720; border-color:#ff8a8a}
+  .btn.blackout:active{background:#2a1720; border-color:#ff8a8a}
+  @media (hover:hover){ .btn.blackout:hover{background:#2a1720; border-color:#ff8a8a} }
   .foot-note{font-family:var(--mono); font-size:10px; color:var(--muted2); letter-spacing:.1em}
 
   /* EDIT */
@@ -97,7 +101,7 @@
   .sectlab.mt{margin-top:26px}
   .scene{display:flex; align-items:center; gap:14px; padding:13px 14px; border:1px solid var(--line); border-radius:10px;
     background:var(--panel); margin-bottom:9px; cursor:pointer; transition:.15s}
-  .scene:hover{border-color:var(--muted2)}
+  @media (hover:hover){ .scene:hover{border-color:var(--muted2)} }
   .scene.sel{border-color:var(--active); background:#141d2a}
   .scene.islive{box-shadow:inset 3px 0 0 var(--live)}
   .scene.isarmed{box-shadow:inset 3px 0 0 var(--armamber)}
@@ -113,7 +117,8 @@
   .chip .sw{width:9px;height:9px;border-radius:50%;box-shadow:0 0 6px currentColor}
   .fire{font-family:var(--mono); font-size:15px; color:var(--muted); border:1px solid var(--line); background:var(--panel2);
     width:38px;height:38px;border-radius:9px;cursor:pointer;transition:.15s;flex:none}
-  .fire:hover{border-color:var(--live);color:var(--live)}
+  @media (hover:hover){ .fire:hover{border-color:var(--live);color:var(--live)} }
+  .fire:active{border-color:var(--live);color:var(--live)}
   .insp .nm{font-size:22px;font-weight:600;margin-bottom:2px}
   .insp .sub{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:20px}
   .field{margin-bottom:16px}
@@ -166,9 +171,34 @@
   .out .nm{color:var(--ink);font-weight:600;letter-spacing:.06em}
   .out .addr{color:var(--muted);margin-left:auto}
   .hidden{display:none!important}
+  /* Narrow / portrait: the desktop shell is a fixed 100vh with overflow hidden, which
+     leaves the EDIT view unreachable on a phone. Let the page scroll instead of trying
+     to fit two panes into a screen that cannot hold them. */
   @media (max-width:860px){
-    .show{grid-template-columns:1fr} .stack.deck{border-left:0;border-top:1px solid var(--line)}
-    .edit{grid-template-columns:1fr} .col.right{border-left:0;border-top:1px solid var(--line)}
+    html,body{height:auto; overflow:auto; -webkit-text-size-adjust:100%}
+    .app{height:auto; min-height:100dvh}
+    header{flex-wrap:wrap; gap:10px 14px; padding:12px 14px; position:sticky; top:0; z-index:5;
+      background:var(--void); padding-top:max(12px, env(safe-area-inset-top))}
+    .show-id{order:3; width:100%; font-size:11px}
+    .spacer{display:none}
+    .toggle{margin-left:auto}
+    .clock{display:none}
+    .show,.edit{grid-template-columns:1fr; min-height:0}
+    .stack{padding:16px 14px; gap:12px; justify-content:flex-start}
+    .stack.deck{border-left:0; border-top:1px solid var(--line)}
+    .col{overflow:visible; padding:14px}
+    .col.right{border-left:0; border-top:1px solid var(--line)}
+    .statusbar{padding:10px 14px; gap:7px}
+    .pill{padding:6px 10px 6px 9px; font-size:11px}
+    /* transport becomes a sticky footer bar — GO must always be reachable */
+    .transport{position:sticky; bottom:0; z-index:5; flex-wrap:wrap; gap:8px; padding:10px 14px;
+      padding-bottom:max(10px, env(safe-area-inset-bottom))}
+    .transport .btn{flex:1 1 auto; min-width:0; padding:13px 10px}
+    .transport .btn.go{flex:1 1 100%; order:-1; padding:15px 10px}
+    .log{order:5; flex:1 1 100%; white-space:normal}
+    .foot-note{display:none}
+    .row2{grid-template-columns:1fr}
+    .miniring{width:clamp(56px,18vw,90px)}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -176,7 +206,7 @@
 <body>
 <div class="app">
   <header>
-    <div class="wordmark"><span class="dot" id="conn"></span>SHOW&nbsp;BRAIN <small id="mode">demo</small></div>
+    <div class="wordmark"><span class="dot" id="conn"></span>VizRock <small id="mode">connecting…</small></div>
     <div class="show-id" id="showId">// —</div>
     <div class="spacer"></div>
     <div class="toggle">

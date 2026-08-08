@@ -65,6 +65,14 @@ every output degrades to a no-op and the web UI still drives the full state mach
   `paths.py` resolves `REPO_DIR` to the clone, wherever it is, and the running user can write
   there. A non-editable install would silently break UI scene edits.
 - **Never hardcode a path.** Everything resolves through `constants/paths.py`.
+- **`broadcast` must schedule, not call.** `WebSocketResponse.send_str` is a coroutine;
+  calling it from the synchronous `push_state` path only creates one. Every push after the
+  initial snapshot silently vanished until this was fixed.
+- **Gate every `:hover` behind `@media (hover:hover)`.** On touch, `:hover` latches after a
+  tap, which made the transport buttons look stuck on. Pair each one with `:active`.
+- **The narrow layout lets the page scroll.** The desktop shell is a fixed `100vh` with
+  `overflow:hidden`, which puts the EDIT view out of reach on a phone. Below 860px the shell
+  becomes `height:auto` and the transport sticks to the bottom so GO is always reachable.
 - **The UI ships no external assets.** No CDN fonts, scripts or styles — the venue has no
   internet, and a render-blocking fetch delays first paint until it times out. Everything
   `index.html` needs must be inline or served from `interface/web/`.

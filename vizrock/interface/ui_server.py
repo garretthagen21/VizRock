@@ -9,6 +9,7 @@
 # @date    2026-08-03
 #
 
+import asyncio
 import json
 import logging
 
@@ -45,12 +46,24 @@ class UiServer:
         logger.info('UI on http://0.0.0.0:%s  (open :%s from your phone)', port, port)
 
     def broadcast(self, snapshot):
+        """
+        send_str is a coroutine, so calling it from this synchronous caller only
+        creates one — it has to be scheduled on the loop or nothing is ever sent.
+        push_state is sync by design, so scheduling is the only option.
+        """
         payload = json.dumps(snapshot)
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return                                  # no loop (tests) — nothing to send on
         for client in list(self.clients):
-            try:
-                client.send_str(payload)
-            except Exception:
-                self.clients.discard(client)
+            loop.create_task(self._send(client, payload))
+
+    async def _send(self, client, payload):
+        try:
+            await client.send_str(payload)
+        except Exception:
+            self.clients.discard(client)
 
     async def _websocket(self, request):
         websocket = web.WebSocketResponse()
