@@ -16,19 +16,37 @@ import vizrock.constants.paths as vizrock_paths
 
 logger = logging.getLogger(__name__)
 
-BLACKOUT_SCENE_ID = 0
+HOME_SCENE_ID = 0
+
+# Blackout is not content — it is every output off, which needs no ring or dmx
+# settings because they are zero by definition. Keeping it out of scenes.json frees
+# id 0 for the main loop and keeps the setlist file purely about the show.
+BLACKOUT_SCENE = {'name': 'Blackout',
+                  'resolume': {'clear': True},
+                  'dmx': {'cue': 'off'},
+                  'ring': {'mode': 'off'},
+                  'audio': False}
 
 
 class SceneLibrary:
-    """Scene lookup plus the steppable setlist order, which excludes Blackout."""
+    """
+    Scene lookup plus the steppable setlist order.
+
+    The main loop named by `meta.home_scene` (default 0) sits outside that order: it
+    is the default state you drop back into, not something to step onto by accident.
+    """
 
     def __init__(self):
         self.load(json.loads(vizrock_paths.ensure_seeded(vizrock_paths.Files.SCENES_FILE).read_text()))
 
     def load(self, data):
         self.scenes = {scene['id']: scene for scene in data['scenes']}
-        self.order = [scene['id'] for scene in data['scenes'] if scene['id'] != BLACKOUT_SCENE_ID]
         self.meta = data.get('meta', {})
+        # the main loop is the default state, not a step in the set — like Blackout it
+        # is reachable only by its own action, so PREV/NEXT never land on it
+        self.home = self.meta.get('home_scene', HOME_SCENE_ID)
+        # the main loop is the default state, not a step in the set — PREV/NEXT never land on it
+        self.order = [scene['id'] for scene in data['scenes'] if scene['id'] != self.home]
 
     def save(self):
         data = {'meta': self.meta,

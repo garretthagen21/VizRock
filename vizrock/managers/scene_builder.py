@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 import vizrock.constants.paths as vizrock_paths
-from vizrock.managers.scene_library import BLACKOUT_SCENE_ID
+from vizrock.managers.scene_library import HOME_SCENE_ID
 
 VIDEO_SUFFIXES = {'.mov', '.mp4', '.m4v', '.avi', '.mkv'}
 CLIP_PATTERN = re.compile(r'^(\d+)[\s_-]+(.+)$')
@@ -66,14 +66,15 @@ def merge(existing, clips, layer):
         scene = by_id.get(number, {'id': number, 'ring': dict(DEFAULT_RING),
                                    'dmx': {'cue': 'off'}, 'audio': False})
         scene['name'] = name
-        scene['resolume'] = {'layer': layer, 'clip': number}
         by_id[number] = scene
-    if BLACKOUT_SCENE_ID not in by_id:
-        by_id[BLACKOUT_SCENE_ID] = {'id': BLACKOUT_SCENE_ID, 'name': 'Blackout',
-                                    'resolume': {'clear': True}, 'dmx': {'cue': 'off'},
-                                    'ring': {'mode': 'off'}, 'audio': False}
-    return {'meta': existing.get('meta', {}),
-            'scenes': [by_id[i] for i in sorted(by_id)]}
+    # Resolume slots are 1-based and scene ids start at 0, so assign slots in scene
+    # order rather than reusing the id. The tool owns this translation so nobody has
+    # to remember an off-by-one at load-in.
+    for slot, number in enumerate(sorted(by_id), start=1):
+        by_id[number]['resolume'] = {'layer': layer, 'clip': slot}
+    meta = dict(existing.get('meta', {}))
+    meta.setdefault('home_scene', HOME_SCENE_ID)
+    return {'meta': meta, 'scenes': [by_id[i] for i in sorted(by_id)]}
 
 
 def problems(existing, clips, ignored, duplicates=()):
@@ -85,12 +86,12 @@ def problems(existing, clips, ignored, duplicates=()):
     for name in ignored:
         issues.append(f'ignored (does not look like NN_name.mov): {name}')
     if clips:
-        expected = set(range(1, max(clips) + 1))
+        expected = set(range(min(clips), max(clips) + 1))
         for missing in sorted(expected - set(clips)):
             issues.append(f'gap: no file for clip {missing} — Resolume slot {missing} is empty')
     for scene in existing.get('scenes', []):
         number = scene['id']
-        if number == BLACKOUT_SCENE_ID or scene.get('resolume', {}).get('clear'):
+        if scene.get('resolume', {}).get('clear'):
             continue
         if number not in clips:
             issues.append(f'scene {number} "{scene.get("name", "?")}" points at a clip with no file')
@@ -116,8 +117,9 @@ def main(argv=None):
     existing = json.loads(scenes_file.read_text())
 
     print(f'{len(clips)} clip(s) in {folder}')
-    for number, (name, filename) in sorted(clips.items()):
-        print(f'  {number:02d}  {name:<28} {filename}')
+    for slot, (number, (name, filename)) in enumerate(sorted(clips.items()), start=1):
+        home = '  (home)' if number == HOME_SCENE_ID else ''
+        print(f'  scene {number:02d} -> Resolume clip {slot:<3} {name:<24} {filename}{home}')
 
     issues = problems(existing, clips, ignored, duplicates)
     for issue in issues:

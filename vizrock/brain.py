@@ -12,7 +12,7 @@
 import logging
 
 from vizrock.configurations.settings import vizrock_settings
-from vizrock.managers.scene_library import BLACKOUT_SCENE_ID, SceneLibrary
+from vizrock.managers.scene_library import BLACKOUT_SCENE, SceneLibrary
 from vizrock.outputs import build_output
 from vizrock.managers.updater import Updater
 
@@ -46,8 +46,18 @@ class Brain:
             self._commit(self.armed)
         elif action == 'goto':
             self._commit(scene, rearm=True)
+        elif action == 'home':
+            if self.scene_library.home is None:
+                logger.warning('no home_scene set in scenes.json meta')
+            else:
+                # like blackout, deliberately does not re-arm: bouncing out to the
+                # main loop must leave whatever you had queued still queued
+                self._commit(self.scene_library.home, rearm=False)
         elif action == 'blackout':
-            self._commit(BLACKOUT_SCENE_ID, rearm=False)
+            self._dispatch(BLACKOUT_SCENE)
+            self.live = None
+            self.last_event = 'LIVE → blackout'
+            self.push_state()
         else:
             logger.warning('unknown action: %s', action)
 
@@ -116,6 +126,14 @@ class Brain:
         return replacement is not None
 
     # MARK: - Private
+    def _dispatch(self, scene):
+        """Fan a scene out to every output, each isolated so one failure cannot spread."""
+        for output in self.outputs:
+            try:
+                output.apply(scene)
+            except Exception as error:
+                logger.warning('output %s failed: %s', output.name, error)
+
     def _arm_step(self, delta):
         stepped = self.scene_library.step_from(self.armed, delta)
         if stepped is None:
@@ -129,12 +147,7 @@ class Brain:
             logger.warning('commit to missing scene %s', scene_id)
             return
         self.live = scene_id
-        scene = self.scene_library.scenes[scene_id]
-        for output in self.outputs:
-            try:
-                output.apply(scene)
-            except Exception as error:
-                logger.warning('output %s failed: %s', output.name, error)
+        self._dispatch(self.scene_library.scenes[scene_id])
         # auto-arm the next scene so a linear set is just GO, GO, GO
         if rearm and scene_id in self.scene_library.order:
             self.armed = self.scene_library.step_from(scene_id, +1)

@@ -58,8 +58,16 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **State changes happen on the asyncio loop only.** MIDI arrives on a rtmidi callback thread;
   `__main__` hands `MidiInterface` a handler that hops via `call_soon_threadsafe`. There are
   no locks and there shouldn't need to be.
-- **Scene id `0` is Blackout** and is excluded from `SceneLibrary.order`. Anything that steps
-  the setlist must keep skipping it.
+- **Scene `0` is the main loop**, named by `meta.home_scene`, and is excluded from
+  `SceneLibrary.order` — PREV/NEXT must never land on it. It is the default state you drop
+  back into, not a step in the set.
+- **`home` and `blackout` deliberately do not re-arm.** Bouncing out to the main loop has to
+  leave whatever was queued still queued, or you lose your place mid-set.
+- **Blackout is an action, not a scene.** `BLACKOUT_SCENE` is a constant dispatched directly —
+  it needs no ring or dmx settings because they are zero by definition, and keeping it out of
+  `scenes.json` leaves that file purely about the show.
+- **Resolume slots are 1-based, scene ids start at 0.** `vizrock_scenes` assigns slots in scene
+  order and prints the mapping. Never assume slot == id.
 - **`configs/scenes.json` is not source of truth** — the UI overwrites it. Committed values
   are defaults for a fresh Pi. This works because the install is editable (`pip install -e .`):
   `paths.py` resolves `REPO_DIR` to the clone, wherever it is, and the running user can write

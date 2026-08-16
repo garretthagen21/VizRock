@@ -87,6 +87,9 @@
   .btn.go{background:#12271c; border-color:#2f6b48; color:var(--live); font-weight:700; padding:11px 26px}
   .btn.go:active{background:#173626; border-color:var(--live)}
   @media (hover:hover){ .btn.go:hover{background:#173626; border-color:var(--live)} }
+  .btn.home{border-color:#2f4a6b; color:var(--active)}
+  .btn.home:active{background:#12202f; border-color:var(--active)}
+  @media (hover:hover){ .btn.home:hover{background:#12202f; border-color:var(--active)} }
   .btn.blackout{border-color:#3a2530; color:#ff8a8a}
   .btn.blackout:active{background:#2a1720; border-color:#ff8a8a}
   @media (hover:hover){ .btn.blackout:hover{background:#2a1720; border-color:#ff8a8a} }
@@ -248,11 +251,12 @@
       </div>
     </div>
     <div class="transport">
+      <button class="btn go" onclick="act('go')">GO ▸</button>
       <button class="btn" onclick="act('arm_prev')">◄ PREV</button>
       <button class="btn" onclick="act('arm_next')">NEXT ►</button>
-      <button class="btn go" onclick="act('go')">GO ▸</button>
+      <button class="btn home" onclick="act('home')">⌂ HOME</button>
       <div class="log" id="log"><span class="t">[--:--:--]</span> connecting…</div>
-      <span class="foot-note">FM3 + Chocolate feed these</span>
+      <span class="foot-note">Chocolate: GO · PREV · NEXT · HOME</span>
       <button class="btn blackout" onclick="act('blackout')">BLACKOUT</button>
     </div>
   </div>
@@ -276,6 +280,7 @@
 // ---- demo fallback state (used only if the brain WS isn't reachable) ----
 const DEMO = {
   live:1, armed:2, last_event:"demo mode · no brain connected",
+  meta:{show:"THC 2026-09-12", home_scene:0},
   outputs:{resolume:"sending", dmx:"off", rings:"retrying", oled:"ok"},
   addresses:{resolume:"thc-resolume.local→10.0.0.7+169.254.9.2, my-laptop.local (unresolved)", dmx:"", rings:"/dev/ring_tx (searching)", oled:"i2c 0x3C"},
   output_config:{resolume:{type:"osc",hosts:["thc-resolume.local","my-laptop.local"],port:7000},
@@ -298,7 +303,7 @@ let selected = 1, ws = null, online = false;
 const H = h => Math.round(h/255*360);
 const now = () => new Date().toTimeString().slice(0,8);
 const scene = id => state.scenes.find(s=>s.id===id);
-const order = () => state.scenes.filter(s=>s.id!==0).map(s=>s.id);
+const order = () => state.scenes.filter(s=>s.id!==(state.meta?.home_scene??0)).map(s=>s.id);
 
 // ---- websocket to the brain (graceful demo fallback) ----
 function connect(){
@@ -320,6 +325,7 @@ function demoAct(action, sceneId){
   else if(action==="arm_next"){ let i=ord.indexOf(state.armed); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`armed → ${lbl(state.armed)}`; }
   else if(action==="go"){ state.live=state.armed; let i=ord.indexOf(state.live); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`LIVE → ${lbl(state.live)} · dispatched`; }
   else if(action==="goto"){ state.live=sceneId; state.last_event=`LIVE → ${lbl(sceneId)}`; }
+  else if(action==="home"){ const h=state.meta?.home_scene??0; state.live=h; state.last_event=`LIVE → ${lbl(h)}`; }
   else if(action==="blackout"){ state.live=0; state.last_event=`LIVE → 00 Blackout`; }
   blip(); render();
 }

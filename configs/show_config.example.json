@@ -17,10 +17,10 @@
   },
 
   "triggers": [
-    { "midi": { "kind": "note", "note": 60 }, "do": "arm_prev" },
-    { "midi": { "kind": "note", "note": 61 }, "do": "arm_next" },
-    { "midi": { "kind": "note", "note": 62 }, "do": "go" },
-    { "midi": { "kind": "note", "note": 63 }, "do": "blackout" },
+    { "midi": { "kind": "note", "note": 60 }, "do": "go" },
+    { "midi": { "kind": "note", "note": 61 }, "do": "arm_prev" },
+    { "midi": { "kind": "note", "note": 62 }, "do": "arm_next" },
+    { "midi": { "kind": "note", "note": 63 }, "do": "home" },
 
     { "midi": { "kind": "pc", "program": 1 }, "do": "goto", "scene": 2 },
     { "midi": { "kind": "pc", "program": 2 }, "do": "goto", "scene": 3 }

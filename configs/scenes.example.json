@@ -1,37 +1,62 @@
 {
   "meta": {
     "show": "THC 2026-09-12",
-    "board": { "width": 384, "height": 256, "fps": 30 }
+    "home_scene": 0
   },
   "scenes": [
-    { "id": 1, "name": "Intro",
-      "resolume": { "layer": 1, "clip": 1 },
-      "dmx": { "cue": "blackout" },
-      "ring": { "mode": "pulse", "hue": 200, "bright": 80, "speed": 2 },
-      "audio": true },
-
-    { "id": 2, "name": "Song A - verse",
-      "resolume": { "layer": 1, "clip": 2 },
-      "dmx": { "cue": "warm_low" },
-      "ring": { "mode": "solid", "hue": 20, "bright": 120, "speed": 0 },
-      "audio": false },
-
-    { "id": 3, "name": "Song A - drop",
-      "resolume": { "layer": 1, "clip": 3 },
-      "dmx": { "cue": "strobe_cool" },
-      "ring": { "mode": "strobe", "hue": 150, "bright": 200, "speed": 8 },
-      "audio": false },
-
-    { "id": 4, "name": "Interlude",
-      "resolume": { "layer": 1, "clip": 4 },
-      "dmx": { "cue": "warm_low" },
-      "ring": { "mode": "chase", "hue": 280, "bright": 100, "speed": 4 },
-      "audio": true },
-
-    { "id": 0, "name": "Blackout",
-      "resolume": { "clear": true },
-      "dmx": { "cue": "off" },
-      "ring": { "mode": "off" },
-      "audio": false }
+    {
+      "id": 0,
+      "name": "Main loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 1
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "ring": {
+        "mode": "pulse",
+        "hue": 200,
+        "bright": 80,
+        "speed": 2
+      },
+      "audio": false
+    },
+    {
+      "id": 1,
+      "name": "Song A - drop",
+      "resolume": {
+        "layer": 1,
+        "clip": 2
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "ring": {
+        "mode": "strobe",
+        "hue": 150,
+        "bright": 200,
+        "speed": 8
+      },
+      "audio": false
+    },
+    {
+      "id": 2,
+      "name": "Interlude",
+      "resolume": {
+        "layer": 1,
+        "clip": 3
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "ring": {
+        "mode": "chase",
+        "hue": 280,
+        "bright": 100,
+        "speed": 4
+      },
+      "audio": true
+    }
   ]
 }
