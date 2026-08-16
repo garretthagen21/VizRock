@@ -15,7 +15,8 @@ setup(name='VizRock',
       entry_points={
           "console_scripts": [
               "vizrock_run = vizrock.__main__:run",
-              "vizrock_test = vizrock.test.test_runner:main"
+              "vizrock_test = vizrock.test.test_runner:main",
+              "vizrock_scenes = vizrock.managers.scene_builder:main"
           ]
       },
       # lower bounds, not pins: the exact pins forced a source build on any newer

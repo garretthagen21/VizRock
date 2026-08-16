@@ -109,6 +109,13 @@ Chromium against `localhost`. It is **not** called by `install.sh` and touches n
 screen is a browser client like any other. The unit uses `After=`/`Wants=` and never
 `Requires=`, so the kiosk can fail without affecting the show. Keep it that way.
 
+## Setlist tooling
+
+`vizrock_scenes <folder>` builds `configs/scenes.json` from clips named `NN_name.mov`. Two
+rules it must keep: **nothing is written without `--write`**, and **merging preserves ring,
+dmx and audio on existing scenes** — the file only drives name and clip number. Wiping tuned
+cues on a regenerate would be worse than no tool at all.
+
 ## Tests
 
 ```bash

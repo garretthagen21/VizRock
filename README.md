@@ -145,6 +145,21 @@ Cable goes in **HDMI0**, the port nearest the USB-C power input; HDMI1 stays dar
 Touch panels usually need a `dtoverlay` line in `/boot/firmware/config.txt` — check the
 panel's own docs.
 
+## Building the setlist from clips
+
+```bash
+./venv/bin/vizrock_scenes ~/clips            # report only, writes nothing
+./venv/bin/vizrock_scenes ~/clips --write    # apply
+```
+
+Scans a folder of clips named `01_intro.mov`, `02_verse.mov`, … and folds them into
+`configs/scenes.json`. Names and clip numbers follow the files; **ring, DMX and audio settings
+on existing scenes are preserved**, so regenerating never wipes cues tuned in the UI.
+
+It reports what would bite at showtime: gaps (`no file for clip 3`), duplicates (two files
+claiming one slot), scenes pointing at clips that no longer exist, and files that do not match
+the naming pattern. Exits non-zero if it found any.
+
 ## Tests
 
 ```bash
