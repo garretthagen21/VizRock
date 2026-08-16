@@ -66,12 +66,10 @@ def merge(existing, clips, layer):
         scene = by_id.get(number, {'id': number, 'ring': dict(DEFAULT_RING),
                                    'dmx': {'cue': 'off'}, 'audio': False})
         scene['name'] = name
+        # scene ids and Resolume slots are both 1-based, so they are the same number.
+        # Nothing to translate at load-in.
+        scene['resolume'] = {'layer': layer, 'clip': number}
         by_id[number] = scene
-    # Resolume slots are 1-based and scene ids start at 0, so assign slots in scene
-    # order rather than reusing the id. The tool owns this translation so nobody has
-    # to remember an off-by-one at load-in.
-    for slot, number in enumerate(sorted(by_id), start=1):
-        by_id[number]['resolume'] = {'layer': layer, 'clip': slot}
     meta = dict(existing.get('meta', {}))
     meta.setdefault('home_scene', HOME_SCENE_ID)
     return {'meta': meta, 'scenes': [by_id[i] for i in sorted(by_id)]}
@@ -86,7 +84,7 @@ def problems(existing, clips, ignored, duplicates=()):
     for name in ignored:
         issues.append(f'ignored (does not look like NN_name.mov): {name}')
     if clips:
-        expected = set(range(min(clips), max(clips) + 1))
+        expected = set(range(1, max(clips) + 1))
         for missing in sorted(expected - set(clips)):
             issues.append(f'gap: no file for clip {missing} — Resolume slot {missing} is empty')
     for scene in existing.get('scenes', []):
@@ -117,9 +115,9 @@ def main(argv=None):
     existing = json.loads(scenes_file.read_text())
 
     print(f'{len(clips)} clip(s) in {folder}')
-    for slot, (number, (name, filename)) in enumerate(sorted(clips.items()), start=1):
+    for number, (name, filename) in sorted(clips.items()):
         home = '  (home)' if number == HOME_SCENE_ID else ''
-        print(f'  scene {number:02d} -> Resolume clip {slot:<3} {name:<24} {filename}{home}')
+        print(f'  {number:02d}  {name:<26} {filename}{home}')
 
     issues = problems(existing, clips, ignored, duplicates)
     for issue in issues:

@@ -16,7 +16,7 @@ import vizrock.constants.paths as vizrock_paths
 
 logger = logging.getLogger(__name__)
 
-HOME_SCENE_ID = 0
+HOME_SCENE_ID = 1
 
 # Blackout is not content — it is every output off, which needs no ring or dmx
 # settings because they are zero by definition. Keeping it out of scenes.json frees
@@ -32,7 +32,7 @@ class SceneLibrary:
     """
     Scene lookup plus the steppable setlist order.
 
-    The main loop named by `meta.home_scene` (default 0) sits outside that order: it
+    The main loop named by `meta.home_scene` (default 1) sits outside that order: it
     is the default state you drop back into, not something to step onto by accident.
     """
 

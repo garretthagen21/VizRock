@@ -1,11 +1,11 @@
 {
   "meta": {
     "show": "THC 2026-09-12",
-    "home_scene": 0
+    "home_scene": 1
   },
   "scenes": [
     {
-      "id": 0,
+      "id": 1,
       "name": "Main loop",
       "resolume": {
         "layer": 1,
@@ -23,7 +23,7 @@
       "audio": false
     },
     {
-      "id": 1,
+      "id": 2,
       "name": "Song A - drop",
       "resolume": {
         "layer": 1,
@@ -41,7 +41,7 @@
       "audio": false
     },
     {
-      "id": 2,
+      "id": 3,
       "name": "Interlude",
       "resolume": {
         "layer": 1,

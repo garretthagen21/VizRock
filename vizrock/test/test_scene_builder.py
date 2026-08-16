@@ -69,7 +69,6 @@ def _merge_preserves_tuning():
          'ring': {'mode': 'strobe', 'hue': 150, 'bright': 200, 'speed': 8},
          'dmx': {'cue': 'strobe_cool'}, 'audio': True}]}
     clips = {1: ('Intro', '01_Intro.mov'), 3: ('Drop', '03_Drop.mov')}
-    # slots are assigned in scene order: scene 1 -> clip 1, scene 3 -> clip 2
 
     merged = scene_builder.merge(existing, clips, layer=1)
     scenes = {scene['id']: scene for scene in merged['scenes']}
@@ -79,11 +78,10 @@ def _merge_preserves_tuning():
     assert scenes[3]['ring']['hue'] == 150
     assert scenes[3]['dmx']['cue'] == 'strobe_cool', 'dmx cue was wiped'
     assert scenes[3]['audio'] is True, 'audio flag was wiped'
-    assert scenes[3]['resolume'] == {'layer': 1, 'clip': 2}, \
-        'Resolume slots are assigned 1-based in scene order, not copied from the id'
+    assert scenes[3]['resolume'] == {'layer': 1, 'clip': 3}, 'clip number is the scene id'
     assert scenes[1]['name'] == 'Intro', 'new scene not added'
     assert merged['meta']['show'] == 'THC', 'meta must survive'
-    assert merged['meta']['home_scene'] == 0, 'home_scene should default to 0'
+    assert merged['meta']['home_scene'] == 1, 'home_scene should default to 1'
 
 
 def _write_is_opt_in():
