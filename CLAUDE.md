@@ -84,6 +84,12 @@ every output degrades to a no-op and the web UI still drives the full state mach
   initial snapshot silently vanished until this was fixed.
 - **Gate every `:hover` behind `@media (hover:hover)`.** On touch, `:hover` latches after a
   tap, which made the transport buttons look stuck on. Pair each one with `:active`.
+- **Tapping a cue arms; it does not fire.** `ui.tap_fires` opts into firing straight from a
+  tap and defaults **off**. A mis-tap that only changes what is queued costs nothing; one that
+  fires a visual costs the song. `arm` is display-only and must never reach an output.
+- **CUES density is per device, not a fixed count.** Roughly 8 big targets on the 5" panel and
+  on a phone, everything at once on a laptop. A partly visible row is the only affordance
+  saying there is more below — do not tidy it away.
 - **Three views: SHOW, CUES, EDIT.** SHOW is a heads-up display — glanceable, not a control
   surface. CUES is the live surface: a tappable grid of every scene, for the mounted
   touchscreen. EDIT is config. The status pills and transport are shared by SHOW and CUES and

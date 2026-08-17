@@ -43,6 +43,8 @@ class Brain:
             self._arm_step(+1)
         elif action == 'arm_prev':
             self._arm_step(-1)
+        elif action == 'arm':
+            self._arm(scene)
         elif action == 'go':
             self._commit(self.armed)
         elif action == 'goto':
@@ -72,6 +74,7 @@ class Brain:
             'outputs': {output.name: output.status() for output in self.outputs},
             'addresses': {output.name: output.address_label() for output in self.outputs},
             'output_config': vizrock_settings.outputs,
+            'tap_fires': vizrock_settings.tap_fires,
             'update': self.updater.snapshot() if self.updater else None,
             'network': {'hostname': vizrock_system.hostname(),
                         'addresses': vizrock_system.local_addresses()},
@@ -130,6 +133,15 @@ class Brain:
         return replacement is not None
 
     # MARK: - Private
+    def _arm(self, scene_id):
+        """Queue a specific scene. Display-only, exactly like arm_prev/arm_next."""
+        if scene_id not in self.scene_library.scenes:
+            logger.warning('arm to missing scene %s', scene_id)
+            return
+        self.armed = scene_id
+        self.last_event = f'armed → {self.scene_library.label(scene_id)}'
+        self.push_state()
+
     def _dispatch(self, scene):
         """Fan a scene out to every output, each isolated so one failure cannot spread."""
         for output in self.outputs:

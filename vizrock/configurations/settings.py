@@ -25,10 +25,18 @@ class VizRockSettings:
 
     def __init__(self):
         self.raw = json.loads(vizrock_paths.ensure_seeded(vizrock_paths.Files.SHOW_CONFIG_FILE).read_text())
-        self.ui_port = self.raw.get('ui', {}).get('port', 8080)
+        ui = self.raw.get('ui', {})
+        self.ui_port = ui.get('port', 8080)
+        # tapping a cue arms it by default; firing straight away is opt-in
+        self.tap_fires = bool(ui.get('tap_fires', False))
         self.midi_inputs = self.raw.get('midi_inputs', [])
         self.triggers = self.raw.get('triggers', [])
         self.outputs = self.raw.setdefault('outputs', {})
+
+    def set_tap_fires(self, value):
+        self.tap_fires = bool(value)
+        self.raw.setdefault('ui', {})['tap_fires'] = self.tap_fires
+        self.save()
 
     def update_output(self, name, spec):
         """Merge into one output. The caller must rebuild it for this to take effect."""

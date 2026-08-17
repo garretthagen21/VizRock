@@ -174,6 +174,8 @@
   .out .nm{color:var(--ink);font-weight:600;letter-spacing:.06em}
   .out .addr{color:var(--muted);margin-left:auto}
   /* CUES — the live control surface. Touch-sized targets, wraps to any scene count. */
+  .cuehint{font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:var(--muted2);
+    padding:8px 16px 0; text-transform:uppercase}
   .cuegrid{flex:1; min-height:0; overflow:auto; display:grid; gap:10px; padding:14px 16px;
     grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); align-content:start}
   .cue{display:flex; flex-direction:column; gap:4px; text-align:left; cursor:pointer;
@@ -228,6 +230,8 @@
   }
   /* Portrait phone: stack LIVE over ON DECK, since there is no room side by side. */
   @media (max-width:860px) and (orientation:portrait){
+    .cuegrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); grid-auto-rows:118px}
+    .cue .cn{font-size:19px}
     .show{grid-template-columns:1fr}
     .stack{justify-content:flex-start}
     .stack.deck{border-left:0; border-top:1px solid var(--line)}
@@ -253,12 +257,13 @@
     .transport{padding:7px 12px; gap:7px; padding-bottom:max(7px, env(safe-area-inset-bottom))}
     .transport .btn{padding:11px 9px}
     .transport .btn.go{flex:1 1 auto; order:0; padding:11px 18px}
-    /* 15 scenes should fit 5 across x 3 rows at 800x480 with no scrolling */
-    .cuegrid{gap:8px; padding:10px 12px; grid-template-columns:repeat(auto-fill,minmax(138px,1fr))}
-    .cue{min-height:0; padding:9px 10px; gap:3px}
-    .cue .cn{font-size:17px}
-    .cue .cname{font-size:12.5px}
-    .cue .cmeta{font-size:9px; letter-spacing:.08em}
+    /* Roughly 8 visible with big targets; the rest scrolls. A partly visible third
+       row is deliberate — it is the only affordance saying there is more below. */
+    .cuegrid{gap:10px; padding:12px; grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+      grid-auto-rows:148px}
+    .cue{min-height:0; padding:12px 13px}
+    .cue .cn{font-size:22px}
+    .cue .cname{font-size:15px}
     .log{order:0; flex:1 1 auto; white-space:nowrap}
     .clock,.foot-note{display:none}
   }
@@ -314,6 +319,7 @@
   </div>
 
   <div id="viewCues" class="hidden">
+    <div class="cuehint" id="cueHint">tap arms · GO fires</div>
     <div class="cuegrid" id="cueGrid"></div>
   </div>
 
@@ -338,6 +344,11 @@
         <div class="learn"><span>SW1 <b>prev</b> · SW2 <b>next</b> · SW3 <b>GO</b> · SW4 <b>blackout</b></span>
           <button class="learnbtn" onclick="learn(this)">MIDI LEARN</button></div>
         <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
+        <div class="sectlab mt">CUES</div>
+        <div class="upd"><div class="learn" style="margin:0;border-style:solid">
+          <span>Tapping a cue <b id="tapWhat">arms it</b></span>
+          <button class="learnbtn" id="tapBtn" onclick="toggleTapFires()">TOGGLE</button>
+        </div></div>
         <div class="sectlab mt">CONNECT</div><div id="netBox"></div>
         <div class="sectlab mt">SOFTWARE</div><div id="updBox"></div>
       </div>
@@ -354,6 +365,7 @@ const DEMO = {
   addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", dmx:"", rings:"/dev/ring_tx (searching)", oled:"i2c 0x3c ssd1306"},
   output_config:{resolume:{type:"osc",hosts:["Garretts-M2-MacBook-Pro.local"],port:38200},
                  dmx:{type:"artnet",host:"192.168.4.60"}, rings:{type:"serial"}, oled:{type:"oled"}},
+  tap_fires:false,
   network:{hostname:"vizrock-box", addresses:["10.42.1.1","10.42.0.1"]},
   update:{online:true,current:"f20083c",subject:"Show every reachable URL in the UI",
           behind:1,incoming:[{sha:"a1b2c3d",subject:"Add the CUES view"}],busy:false,
@@ -432,6 +444,7 @@ function render(){
   if(!document.getElementById('viewCues').classList.contains('hidden')) renderCues();
   if(!document.getElementById('viewEdit').classList.contains('hidden')){
     renderList();
+    renderTapMode();
     renderNetwork();
     renderUpdate();
     // a server echo must not yank the input out from under the operator
@@ -545,6 +558,16 @@ function sendSceneEdit(){
   const tag=document.getElementById('savedTag');
   if(tag){ tag.classList.add('on'); setTimeout(()=>tag.classList.remove('on'),900); }
 }
+function renderTapMode(){
+  const what=document.getElementById('tapWhat'); if(!what) return;
+  what.textContent = state.tap_fires ? "fires it immediately" : "arms it";
+  const btn=document.getElementById('tapBtn');
+  if(btn) btn.textContent = state.tap_fires ? "MAKE IT ARM" : "MAKE IT FIRE";
+}
+function toggleTapFires(){
+  if(online && ws && ws.readyState===1)
+    ws.send(JSON.stringify({type:"set_tap_fires", value:!state.tap_fires}));
+}
 function renderNetwork(){
   const box=document.getElementById('netBox'); if(!box) return;
   const n=state.network;
@@ -590,12 +613,16 @@ function askUpdate(){
 function renderCues(){
   const grid=document.getElementById('cueGrid'); if(!grid) return;
   const home=state.meta?.home_scene??1;
+  const hint=document.getElementById('cueHint');
+  if(hint) hint.textContent = state.tap_fires ? "tap fires immediately" : "tap arms · GO fires";
   grid.innerHTML="";
   (state.scenes||[]).forEach(s=>{
     const el=document.createElement('button');
     const isLive=s.id===state.live, isArmed=s.id===state.armed;
     el.className="cue"+(isLive?" live":"")+(isArmed?" armed":"")+(s.id===home?" home":"");
-    el.onclick=()=>act('goto', s.id);
+    // arming is the safe default; firing straight from a tap is opt-in, because a
+    // mis-tap that only changes what is queued costs nothing
+    el.onclick=()=>act(state.tap_fires ? 'goto' : 'arm', s.id);
     const ring=s.ring||{mode:"off"};
     const flag = isLive?'<span class="cueflag l">LIVE</span>'
                : isArmed?'<span class="cueflag a">ARMED</span>' : '';
@@ -657,13 +684,13 @@ function setView(v){
   document.getElementById('sharedTransport').classList.toggle('hidden', v==='edit');
   if(v==='show') renderShow();
   else if(v==='cues') renderCues();
-  else { renderList(); renderInsp(); renderOuts(); renderNetwork(); renderUpdate(); }
+  else { renderList(); renderInsp(); renderOuts(); renderTapMode(); renderNetwork(); renderUpdate(); }
 }
 setInterval(()=>document.getElementById('clock').textContent=now(),1000);
 document.getElementById('clock').textContent=now();
 render(); connect();
 window.act=act; window.setView=setView; window.testFire=testFire; window.learn=learn;
-window.applyOutput=applyOutput; window.renderCues=renderCues; window.askUpdate=askUpdate;
+window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>

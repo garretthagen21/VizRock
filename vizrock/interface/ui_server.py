@@ -16,6 +16,7 @@ import logging
 from aiohttp import WSMsgType, web
 
 import vizrock.constants.paths as vizrock_paths
+from vizrock.configurations.settings import vizrock_settings
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ class UiServer:
                        {type:'edit_scene', scene:{...}}
                        {type:'edit_config', name:'resolume', spec:{...}}
                        {type:'update', to:'<sha>'}
+                       {type:'set_tap_fires', value:bool}
     """
 
     def __init__(self, brain):
@@ -87,6 +89,9 @@ class UiServer:
             self.brain.push_state()
         elif data.get('type') == 'edit_config':
             self.brain.apply_output_config(data['name'], data['spec'])
+        elif data.get('type') == 'set_tap_fires':
+            vizrock_settings.set_tap_fires(data.get('value'))
+            self.brain.push_state()
         elif data.get('type') == 'update' and self.brain.updater:
             started, message = self.brain.updater.apply(data.get('to'))
             logger.info('update requested: %s', message)
