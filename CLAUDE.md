@@ -66,8 +66,10 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **Blackout is an action, not a scene.** `BLACKOUT_SCENE` is a constant dispatched directly —
   it needs no ring or dmx settings because they are zero by definition, and keeping it out of
   `scenes.json` leaves that file purely about the show.
-- **Scene ids and Resolume clip slots are both 1-based and identical.** Scene 3 is clip 3.
-  Keep it that way — an off-by-one here fires the wrong visual on stage.
+- **Scene id and clip number are the same by convention, not by rule.** `vizrock_scenes`
+  derives the clip from the filename number, so scene 3 is clip 3 — but `resolume.clip` is
+  explicit per scene and the runtime never assumes identity. Two scenes may deliberately share
+  one clip with different ring or DMX looks. Do not add code that infers one from the other.
 - **`configs/scenes.json` is not source of truth** — the UI overwrites it. Committed values
   are defaults for a fresh Pi. This works because the install is editable (`pip install -e .`):
   `paths.py` resolves `REPO_DIR` to the clone, wherever it is, and the running user can write
