@@ -220,7 +220,7 @@
     .transport{position:sticky; bottom:0; z-index:5; flex-wrap:wrap; gap:8px; padding:10px 14px;
       padding-bottom:max(10px, env(safe-area-inset-bottom))}
     .transport .btn{flex:1 1 auto; min-width:0; padding:13px 10px}
-    .transport .btn.go{flex:1 1 100%; order:-1; padding:15px 10px}
+    .transport .btn.go{flex:1 1 100%; order:1; padding:15px 10px}
     .log{order:5; flex:1 1 100%; white-space:normal}
     .foot-note{display:none}
     .row2{grid-template-columns:1fr}
@@ -313,12 +313,12 @@
 
   <div id="sharedTransport">
     <div class="transport">
-      <button class="btn go" onclick="act('go')">GO ▸</button>
+      <button class="btn home" onclick="act('home')">⌂ HOME</button>
       <button class="btn" onclick="act('arm_prev')">◄ PREV</button>
       <button class="btn" onclick="act('arm_next')">NEXT ►</button>
-      <button class="btn home" onclick="act('home')">⌂ HOME</button>
+      <button class="btn go" onclick="act('go')">GO ▸</button>
       <div class="log" id="log"><span class="t">[--:--:--]</span> connecting…</div>
-      <span class="foot-note">Chocolate: GO · PREV · NEXT · HOME</span>
+      <span class="foot-note">Chocolate: HOME · PREV · NEXT · GO</span>
       <button class="btn blackout" onclick="act('blackout')">BLACKOUT</button>
     </div>
   </div>

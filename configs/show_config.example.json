@@ -55,7 +55,7 @@
         "kind": "pc",
         "program": 0
       },
-      "do": "go"
+      "do": "home"
     },
     {
       "midi": {
@@ -76,7 +76,7 @@
         "kind": "pc",
         "program": 3
       },
-      "do": "home"
+      "do": "go"
     }
   ]
 }

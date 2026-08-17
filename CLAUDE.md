@@ -164,7 +164,9 @@ They cover logic, not hardware: no MIDI device, ring, OLED or Pi is involved any
   Skipped ports are logged, so a filter that matches nothing is visible.
 - Triggers match `note` / `pc` / `cc`. The M-VAVE Chocolate ships sending **Program Change
   0-3**, one message per press, left to right — confirmed on hardware. The map matches the
-  pedal rather than requiring CubeSuite: `0→go · 1→arm_prev · 2→arm_next · 3→home`.
+  pedal rather than requiring CubeSuite: `0→home · 1→arm_prev · 2→arm_next · 3→go`, i.e.
+  **HOME · PREV · NEXT · GO** left to right. The UI transport uses the same order — there
+  must be nothing to translate between the pedal and the screen.
 - **`midi_inputs` names `SINCO` deliberately.** An FM3 also sends Program Change, so an open
   filter would let its preset changes fire show cues.
 - **Resolume OSC is on 38200, not the default 7000.** Logic Pro squats on 7000 *and* 7001, and
