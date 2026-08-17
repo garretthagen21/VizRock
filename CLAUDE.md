@@ -84,6 +84,10 @@ every output degrades to a no-op and the web UI still drives the full state mach
   initial snapshot silently vanished until this was fixed.
 - **Gate every `:hover` behind `@media (hover:hover)`.** On touch, `:hover` latches after a
   tap, which made the transport buttons look stuck on. Pair each one with `:active`.
+- **Three views: SHOW, CUES, EDIT.** SHOW is a heads-up display — glanceable, not a control
+  surface. CUES is the live surface: a tappable grid of every scene, for the mounted
+  touchscreen. EDIT is config. The status pills and transport are shared by SHOW and CUES and
+  hidden in EDIT, because the transport is a live control and EDIT is not a live place.
 - **Three layouts, switched on shape not just width.** Portrait phone stacks LIVE over ON
   DECK. Short-and-wide (`max-height:560px` — the 5" 800x480 kiosk panel, or a phone on its
   side) keeps them side by side, compacts the chrome and **disables scrolling**: a HUD you

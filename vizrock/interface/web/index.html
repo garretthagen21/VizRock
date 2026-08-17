@@ -173,6 +173,30 @@
   .out.retrying .led{background:var(--warn);box-shadow:0 0 8px var(--warn)}
   .out .nm{color:var(--ink);font-weight:600;letter-spacing:.06em}
   .out .addr{color:var(--muted);margin-left:auto}
+  /* CUES — the live control surface. Touch-sized targets, wraps to any scene count. */
+  .cuegrid{flex:1; min-height:0; overflow:auto; display:grid; gap:10px; padding:14px 16px;
+    grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); align-content:start}
+  .cue{display:flex; flex-direction:column; gap:4px; text-align:left; cursor:pointer;
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:13px 14px; min-height:82px; color:var(--ink); font-family:inherit;
+    transition:border-color .12s, background .12s}
+  .cue .cn{font-family:var(--mono); font-size:20px; font-weight:700; letter-spacing:.02em}
+  .cue .cname{font-size:14px; font-weight:600; line-height:1.25;
+    overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical}
+  .cue .cmeta{margin-top:auto; display:flex; align-items:center; gap:7px;
+    font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--muted)}
+  .cue .swatch{width:10px;height:10px;border-radius:50%;flex:none}
+  .cue.live{border-color:var(--live); background:#0f2119}
+  .cue.live .cn{color:var(--live)}
+  .cue.armed{border-color:var(--armamber)}
+  .cue.armed .cn{color:var(--armamber)}
+  .cue.home{border-style:dashed}
+  .cue:active{border-color:var(--active)}
+  @media (hover:hover){ .cue:hover{border-color:var(--active)} }
+  .cueflag{font-family:var(--mono);font-size:9px;letter-spacing:.12em;padding:2px 6px;
+    border-radius:4px;font-weight:700}
+  .cueflag.l{background:var(--live);color:#06121f}
+  .cueflag.a{background:var(--armamber);color:#06121f}
   .hidden{display:none!important}
   /* Narrow / portrait: the desktop shell is a fixed 100vh with overflow hidden, which
      leaves the EDIT view unreachable on a phone. Let the page scroll instead of trying
@@ -243,13 +267,15 @@
     <div class="spacer"></div>
     <div class="toggle">
       <button id="tShow" class="on" onclick="setView('show')">SHOW</button>
+      <button id="tCues" onclick="setView('cues')">CUES</button>
       <button id="tEdit" onclick="setView('edit')">EDIT</button>
     </div>
     <div class="clock" id="clock">--:--:--</div>
   </header>
 
+  <div class="statusbar" id="pills"></div>
+
   <div id="viewShow">
-    <div class="statusbar" id="pills"></div>
     <div class="show">
       <div class="stack live">
         <div class="eyebrow"><span class="tag">●</span> LIVE</div>
@@ -279,6 +305,13 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div id="viewCues" class="hidden">
+    <div class="cuegrid" id="cueGrid"></div>
+  </div>
+
+  <div id="sharedTransport">
     <div class="transport">
       <button class="btn go" onclick="act('go')">GO ▸</button>
       <button class="btn" onclick="act('arm_prev')">◄ PREV</button>
@@ -309,23 +342,25 @@
 <script>
 // ---- demo fallback state (used only if the brain WS isn't reachable) ----
 const DEMO = {
-  live:1, armed:2, last_event:"demo mode · no brain connected",
-  meta:{show:"THC 2026-09-12", home_scene:0},
+  live:3, armed:4, last_event:"demo mode · no brain connected",
+  meta:{show:"THC Halloween 2026-10-30", home_scene:1},
   outputs:{resolume:"sending", dmx:"off", rings:"retrying", oled:"ok"},
-  addresses:{resolume:"thc-resolume.local→10.0.0.7+169.254.9.2, my-laptop.local (unresolved)", dmx:"", rings:"/dev/ring_tx (searching)", oled:"i2c 0x3C"},
-  output_config:{resolume:{type:"osc",hosts:["thc-resolume.local","my-laptop.local"],port:7000},
+  addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", dmx:"", rings:"/dev/ring_tx (searching)", oled:"i2c 0x3c ssd1306"},
+  output_config:{resolume:{type:"osc",hosts:["Garretts-M2-MacBook-Pro.local"],port:38200},
                  dmx:{type:"artnet",host:"192.168.4.60"}, rings:{type:"serial"}, oled:{type:"oled"}},
   network:{hostname:"vizrock-box", addresses:["10.42.1.1","10.42.0.1"]},
-  update:{online:true,current:"8da0852",subject:"Drop the show-brain name everywhere",
-          behind:1,incoming:[{sha:"a1b2c3d",subject:"Add MIDI learn"}],busy:false,
+  update:{online:true,current:"f20083c",subject:"Show every reachable URL in the UI",
+          behind:1,incoming:[{sha:"a1b2c3d",subject:"Add the CUES view"}],busy:false,
           can_update:true,message:"1 update(s) available"},
-  meta:{show:"THC 2026-09-12 (demo)"},
   scenes:[
-    {id:1,name:"Intro",resolume:{layer:1,clip:1},dmx:{cue:"blackout"},ring:{mode:"pulse",hue:200,bright:80,speed:2},audio:true},
-    {id:2,name:"Song A - verse",resolume:{layer:1,clip:2},dmx:{cue:"warm_low"},ring:{mode:"solid",hue:20,bright:120,speed:0},audio:false},
-    {id:3,name:"Song A - drop",resolume:{layer:1,clip:3},dmx:{cue:"strobe_cool"},ring:{mode:"strobe",hue:150,bright:200,speed:8},audio:false},
-    {id:4,name:"Interlude",resolume:{layer:1,clip:4},dmx:{cue:"warm_low"},ring:{mode:"chase",hue:280,bright:100,speed:4},audio:true},
-    {id:0,name:"Blackout",resolume:{clear:true},dmx:{cue:"off"},ring:{mode:"off"},audio:false},
+    {id:1,name:"Main loop",resolume:{layer:1,clip:1},dmx:{cue:"off"},ring:{mode:"pulse",hue:200,bright:80,speed:2},audio:false},
+    {id:2,name:"Opening \u2014 fog",resolume:{layer:1,clip:2},dmx:{cue:"off"},ring:{mode:"solid",hue:180,bright:90,speed:0},audio:false},
+    {id:3,name:"Graveyard",resolume:{layer:1,clip:3},dmx:{cue:"off"},ring:{mode:"chase",hue:100,bright:110,speed:3},audio:false},
+    {id:4,name:"Jump scare",resolume:{layer:1,clip:4},dmx:{cue:"off"},ring:{mode:"strobe",hue:0,bright:255,speed:9},audio:false},
+    {id:5,name:"Song B \u2014 drop",resolume:{layer:1,clip:5},dmx:{cue:"off"},ring:{mode:"strobe",hue:150,bright:200,speed:8},audio:false},
+    {id:6,name:"Blood moon",resolume:{layer:1,clip:6},dmx:{cue:"off"},ring:{mode:"pulse",hue:0,bright:160,speed:2},audio:false},
+    {id:7,name:"Interlude",resolume:{layer:1,clip:7},dmx:{cue:"off"},ring:{mode:"chase",hue:280,bright:100,speed:4},audio:true},
+    {id:8,name:"Finale",resolume:{layer:1,clip:8},dmx:{cue:"off"},ring:{mode:"strobe",hue:40,bright:220,speed:7},audio:false}
   ]
 };
 let state = structuredClone(DEMO);
@@ -386,7 +421,9 @@ const capOf = r => r.mode==="off" ? "OFF" : `${r.mode.toUpperCase()} · H${r.hue
 // ---- render ----
 function render(){
   document.getElementById('showId').textContent = "// "+(state.meta?.show||"—");
-  renderPills(); renderShow();
+  renderPills();
+  if(!document.getElementById('viewShow').classList.contains('hidden')) renderShow();
+  if(!document.getElementById('viewCues').classList.contains('hidden')) renderCues();
   if(!document.getElementById('viewEdit').classList.contains('hidden')){
     renderList();
     renderNetwork();
@@ -544,6 +581,25 @@ function askUpdate(){
   if(online && ws && ws.readyState===1) ws.send(JSON.stringify({type:"update", to:u.incoming[0].sha}));
   renderUpdate();
 }
+function renderCues(){
+  const grid=document.getElementById('cueGrid'); if(!grid) return;
+  const home=state.meta?.home_scene??1;
+  grid.innerHTML="";
+  (state.scenes||[]).forEach(s=>{
+    const el=document.createElement('button');
+    const isLive=s.id===state.live, isArmed=s.id===state.armed;
+    el.className="cue"+(isLive?" live":"")+(isArmed?" armed":"")+(s.id===home?" home":"");
+    el.onclick=()=>act('goto', s.id);
+    const ring=s.ring||{mode:"off"};
+    const flag = isLive?'<span class="cueflag l">LIVE</span>'
+               : isArmed?'<span class="cueflag a">ARMED</span>' : '';
+    el.innerHTML=`<div class="cn">${String(s.id).padStart(2,'0')} ${flag}</div>
+      <div class="cname">${esc(s.name)}</div>
+      <div class="cmeta"><span class="swatch" style="background:${ringColor(ring)}"></span>
+        ${esc(capOf(ring))}${s.id===home?" · HOME":""}</div>`;
+    grid.appendChild(el);
+  });
+}
 function renderOuts(){
   const wrap=document.getElementById('outList'); if(!wrap) return;
   if(wrap.contains(document.activeElement)) return;   // don't clobber a field mid-edit
@@ -582,23 +638,26 @@ function flashApply(btn,text){
   const was=btn.textContent; btn.textContent=text; btn.disabled=true;
   setTimeout(()=>{btn.textContent=was; btn.disabled=false;},1200);
 }
-function testFire(id){ setView('show'); act(online?"goto":"goto", id); }
+function testFire(id){ setView('show'); act("goto", id); }
 function learn(b){ b.textContent="LISTENING…"; b.style.color="var(--warn)"; b.style.borderColor="var(--warn)";
   setTimeout(()=>{ b.textContent="CAPTURED"; b.style.color="var(--live)"; b.style.borderColor="var(--live)"; },1400); }
 function blip(){ const b=document.getElementById('blip'); if(!b)return; b.classList.add('hit'); setTimeout(()=>b.classList.remove('hit'),120); }
 function setView(v){
-  const show=v==='show';
-  document.getElementById('viewShow').classList.toggle('hidden',!show);
-  document.getElementById('viewEdit').classList.toggle('hidden',show);
-  document.getElementById('tShow').classList.toggle('on',show);
-  document.getElementById('tEdit').classList.toggle('on',!show);
-  if(show) renderShow(); else { renderList(); renderInsp(); renderOuts(); }
+  ['show','cues','edit'].forEach(name=>{
+    document.getElementById('view'+name[0].toUpperCase()+name.slice(1)).classList.toggle('hidden', name!==v);
+    document.getElementById('t'+name[0].toUpperCase()+name.slice(1)).classList.toggle('on', name===v);
+  });
+  // the transport is a live control; EDIT is config and does not need it
+  document.getElementById('sharedTransport').classList.toggle('hidden', v==='edit');
+  if(v==='show') renderShow();
+  else if(v==='cues') renderCues();
+  else { renderList(); renderInsp(); renderOuts(); renderNetwork(); renderUpdate(); }
 }
 setInterval(()=>document.getElementById('clock').textContent=now(),1000);
 document.getElementById('clock').textContent=now();
 render(); connect();
 window.act=act; window.setView=setView; window.testFire=testFire; window.learn=learn;
-window.applyOutput=applyOutput; window.askUpdate=askUpdate;
+window.applyOutput=applyOutput; window.renderCues=renderCues; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>
