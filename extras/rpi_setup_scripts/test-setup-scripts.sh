@@ -25,6 +25,14 @@ EOF
     chmod +x "$FAKE/$cmd"
 done
 printf '#!/bin/bash\nexit 0\n' > "$FAKE/chromium-browser"; chmod +x "$FAKE/chromium-browser"
+# nmcli needs to answer the profile lookup, otherwise the wired branch is skipped
+cat > "$FAKE/nmcli" <<'EOF'
+#!/bin/bash
+{ echo "CMD nmcli"; for a in "$@"; do echo "ARG $a"; done; } >> "$MOCKLOG"
+if [ "$1" = "-g" ]; then echo "Wired connection 1:802-3-ethernet"; fi
+exit 0
+EOF
+chmod +x "$FAKE/nmcli"
 cat > "$FAKE/id" <<'EOF'
 #!/bin/bash
 echo "${FAKE_UID:-0}"
@@ -64,6 +72,8 @@ check "hotspot is an AP"       "$(has '802-11-wireless.mode ap')" yes
 check "shares ipv4"            "$(arg 'ipv4.method')" yes
 check "password is set"        "$(arg 'vizrockpw')" yes
 check "wired beats hotspot"    "$(grep -qxF 'ARG 100' "$MOCKLOG" && grep -qxF 'ARG 10' "$MOCKLOG" && echo yes || echo no)" yes
+check "wired profile found by type" "$(arg '-g')" yes
+check "link-local fallback set"     "$(arg 'ipv4.link-local')" yes
 check "profile name is ONE arg" "$(arg 'Wired connection 1')" yes
 check "no empty arguments"     "$(grep -qx 'ARG ' "$MOCKLOG" && echo bad || echo good)" good
 # the generated unit lives in a mktemp file whose name differs every run; that is

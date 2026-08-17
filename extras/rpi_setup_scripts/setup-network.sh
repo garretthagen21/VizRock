@@ -35,11 +35,28 @@ apt-get install -y avahi-daemon libnss-mdns avahi-utils
 systemctl enable --now avahi-daemon
 
 echo "==> wired connection takes priority when a cable is present"
-# link-local so a direct Pi-to-laptop cable works with no DHCP server anywhere
-nmcli connection modify "Wired connection 1" \
-    connection.autoconnect yes \
-    connection.autoconnect-priority 100 \
-    ipv4.may-fail yes 2>/dev/null || echo "    (no wired profile yet — created on first plug-in)"
+# Find the profile by type, not by name. NetworkManager auto-creates it as
+# "Wired connection 1" but that is only a default — hardcoding the name meant this
+# whole step could silently do nothing.
+WIRED="$(nmcli -g NAME,TYPE connection show | awk -F: '$2 ~ /ethernet/ {print $1; exit}')"
+if [ -z "$WIRED" ]; then
+    echo "    no wired profile yet — plug a cable in once, then re-run this script" >&2
+else
+    echo "    profile: $WIRED"
+    # ipv4.link-local=fallback is the important one: on a direct Pi-to-laptop cable
+    # there is no DHCP server, and without it NetworkManager gives up with no address
+    # at all rather than self-assigning 169.254.x.x. That is the venue path.
+    nmcli connection modify "$WIRED" \
+        connection.autoconnect yes \
+        connection.autoconnect-priority 100 \
+        ipv4.may-fail yes \
+        ipv4.link-local fallback 2>/dev/null \
+      || nmcli connection modify "$WIRED" \
+            connection.autoconnect yes \
+            connection.autoconnect-priority 100 \
+            ipv4.may-fail yes \
+            ipv4.link-local 3          # older NetworkManager: 3 == enabled
+fi
 
 echo "==> VIZROCK hotspot as the fallback"
 nmcli connection delete VIZROCK 2>/dev/null || true
