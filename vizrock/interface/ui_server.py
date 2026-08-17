@@ -29,6 +29,7 @@ class UiServer:
                        {type:'edit_config', name:'resolume', spec:{...}}
                        {type:'update', to:'<sha>'}
                        {type:'set_tap_fires', value:bool}
+                       {type:'reorder', order:[ids in new running order]}
     """
 
     def __init__(self, brain):
@@ -89,6 +90,8 @@ class UiServer:
             self.brain.push_state()
         elif data.get('type') == 'edit_config':
             self.brain.apply_output_config(data['name'], data['spec'])
+        elif data.get('type') == 'reorder':
+            self.brain.reorder(data.get('order') or [])
         elif data.get('type') == 'set_tap_fires':
             vizrock_settings.set_tap_fires(data.get('value'))
             self.brain.push_state()

@@ -54,6 +54,38 @@ class SceneLibrary:
         vizrock_paths.Files.SCENES_FILE.write_text(json.dumps(data, indent=2))
         logger.info('scenes.json saved')
 
+    def reorder(self, ordered_ids):
+        """
+        Renumber the setlist to match a new running order.
+
+        Scene ids are positions in the set, so reordering renumbers them — a grid you
+        scan with your foot has to read 01, 02, 03. Each scene keeps its own
+        `resolume.clip`, so the video it plays travels with it and id/clip diverge
+        deliberately from here on.
+
+        The home scene keeps id 1 and is never part of the order. Returns {old: new}
+        so callers can follow LIVE and ARMED to the same scene rather than the same
+        number.
+        """
+        home = self.home
+        wanted = [i for i in ordered_ids if i in self.scenes and i != home]
+        # anything the caller forgot keeps its relative position at the end
+        wanted += [i for i in sorted(self.scenes) if i != home and i not in wanted]
+
+        mapping = {home: home}
+        for position, old_id in enumerate(wanted, start=home + 1):
+            mapping[old_id] = position
+
+        renumbered = {}
+        for old_id, new_id in mapping.items():
+            scene = dict(self.scenes[old_id])
+            scene['id'] = new_id
+            renumbered[new_id] = scene
+        self.load({'meta': self.meta,
+                   'scenes': [renumbered[i] for i in sorted(renumbered)]})
+        self.save()
+        return mapping
+
     def upsert(self, scene):
         self.scenes[scene['id']] = scene
         self.load({'meta': self.meta, 'scenes': list(self.scenes.values())})

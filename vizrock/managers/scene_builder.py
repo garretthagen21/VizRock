@@ -62,14 +62,22 @@ def merge(existing, clips, layer):
     the files.
     """
     by_id = {scene['id']: dict(scene) for scene in existing.get('scenes', [])}
+    # Match on the clip a scene already plays, not on its id. Ids are set positions
+    # and drift once the setlist is reordered, so keying on them would silently undo
+    # someone's running order the next time this ran.
+    by_clip = {s.get('resolume', {}).get('clip'): s['id']
+               for s in by_id.values() if s.get('resolume', {}).get('clip')}
+    next_id = max(by_id, default=0) + 1
     for number, (name, _) in sorted(clips.items()):
-        scene = by_id.get(number, {'id': number, 'ring': dict(DEFAULT_RING),
-                                   'dmx': {'cue': 'off'}, 'audio': False})
-        scene['name'] = name
-        # scene ids and Resolume slots are both 1-based, so they are the same number.
-        # Nothing to translate at load-in.
-        scene['resolume'] = {'layer': layer, 'clip': number}
-        by_id[number] = scene
+        existing_id = by_clip.get(number)
+        if existing_id is not None:
+            by_id[existing_id]['name'] = name
+            continue
+        scene = {'id': next_id, 'name': name, 'ring': dict(DEFAULT_RING),
+                 'dmx': {'cue': 'off'}, 'audio': False,
+                 'resolume': {'layer': layer, 'clip': number}}
+        by_id[next_id] = scene
+        next_id += 1
     meta = dict(existing.get('meta', {}))
     meta.setdefault('home_scene', HOME_SCENE_ID)
     return {'meta': meta, 'scenes': [by_id[i] for i in sorted(by_id)]}
@@ -91,8 +99,10 @@ def problems(existing, clips, ignored, duplicates=()):
         number = scene['id']
         if scene.get('resolume', {}).get('clear'):
             continue
-        if number not in clips:
-            issues.append(f'scene {number} "{scene.get("name", "?")}" points at a clip with no file')
+        clip = scene.get('resolume', {}).get('clip')
+        if clip is not None and clip not in clips:
+            issues.append(f'scene {number} "{scene.get("name", "?")}" plays clip {clip}, '
+                          f'which has no file')
     return issues
 
 

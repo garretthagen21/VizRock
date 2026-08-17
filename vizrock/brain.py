@@ -92,6 +92,16 @@ class Brain:
         if self.ui_server:
             self.ui_server.broadcast(snapshot)
 
+    def reorder(self, ordered_ids):
+        """Renumber the setlist, keeping LIVE and ARMED on the same scenes."""
+        mapping = self.scene_library.reorder(ordered_ids)
+        self.live = mapping.get(self.live, self.live)
+        self.armed = mapping.get(self.armed, self.armed)
+        if self.armed not in self.scene_library.scenes:
+            self.armed = self.scene_library.order[0] if self.scene_library.order else None
+        self.last_event = 'setlist reordered'
+        self.push_state()
+
     def apply_output_config(self, name, spec):
         """
         Rebuild before persisting: a spec that cannot come up is rolled back and

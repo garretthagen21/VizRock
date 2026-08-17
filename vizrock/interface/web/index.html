@@ -108,6 +108,13 @@
   .scene.sel{border-color:var(--active); background:#141d2a}
   .scene.islive{box-shadow:inset 3px 0 0 var(--live)}
   .scene.isarmed{box-shadow:inset 3px 0 0 var(--armamber)}
+  .scene.ishome{border-style:dashed}
+  .scene.dragging{opacity:.4}
+  .scene.dropinto{border-color:var(--active); box-shadow:inset 0 2px 0 var(--active)}
+  .scene .grip{font-family:var(--mono); font-size:16px; color:var(--muted2); cursor:grab;
+    padding:0 4px; user-select:none}
+  .scene .grip:active{cursor:grabbing}
+  .flag.home{background:var(--line);color:var(--muted)}
   .scene .id{font-family:var(--mono); font-weight:700; font-size:19px; width:34px; text-align:center}
   .scene.sel .id{color:var(--active)}
   .scene .body{flex:1; min-width:0}
@@ -176,6 +183,20 @@
   /* CUES — the live control surface. Touch-sized targets, wraps to any scene count. */
   .cuehint{font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:var(--muted2);
     padding:8px 16px 0; text-transform:uppercase}
+  /* The main loop is the default state, not a step in the set — pinned above the
+     sequence rather than buried in it, and always reachable without scrolling. */
+  .homecue{margin:10px 16px 0; display:flex; align-items:center; gap:14px; cursor:pointer;
+    background:linear-gradient(90deg,#101922,var(--panel)); border:1px dashed var(--line);
+    border-radius:12px; padding:12px 16px; color:var(--ink); font-family:inherit; width:calc(100% - 32px)}
+  .homecue .cn{font-family:var(--mono); font-size:22px; font-weight:700}
+  .homecue .cname{font-size:15px; font-weight:600; text-align:left}
+  .homecue .tagline{margin-left:auto; font-family:var(--mono); font-size:10px;
+    letter-spacing:.16em; color:var(--muted)}
+  .homecue .swatch{width:12px;height:12px;border-radius:50%;flex:none}
+  .homecue.live{border-style:solid; border-color:var(--live); background:#0f2119}
+  .homecue.live .cn{color:var(--live)}
+  .homecue:active{border-color:var(--active)}
+  @media (hover:hover){ .homecue:hover{border-color:var(--active)} }
   .cuegrid{flex:1; min-height:0; overflow:auto; display:grid; gap:10px; padding:14px 16px;
     grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); align-content:start}
   .cue{display:flex; flex-direction:column; gap:4px; text-align:left; cursor:pointer;
@@ -320,6 +341,7 @@
 
   <div id="viewCues" class="hidden">
     <div class="cuehint" id="cueHint">tap arms · GO fires</div>
+    <div id="homeCue"></div>
     <div class="cuegrid" id="cueGrid"></div>
   </div>
 
@@ -476,23 +498,54 @@ function renderShow(){
   paintRing(document.getElementById('aRing'),A.ring); document.getElementById('aCap').textContent=capOf(A.ring);
 }
 function ringColor(r){ return r.mode==="off"?"#3a4657":`hsl(${H(r.hue)} 85% ${45+r.bright/255*20}%)`; }
+let dragId = null;
 function renderList(){
   const wrap=document.getElementById('sceneList'); wrap.innerHTML="";
+  const home=state.meta?.home_scene??1;
+  // Reordering is desktop-only: dragging with a finger fights scrolling, and a
+  // pedalboard is not where you rearrange a setlist.
+  const canDrag = matchMedia('(hover:hover) and (pointer:fine)').matches;
   state.scenes.forEach(s=>{
     const el=document.createElement('div');
-    el.className="scene"+(s.id===selected?" sel":"")+(s.id===state.live?" islive":"")+(s.id===state.armed?" isarmed":"");
+    const isHome = s.id===home;
+    el.className="scene"+(s.id===selected?" sel":"")+(s.id===state.live?" islive":"")
+                +(s.id===state.armed?" isarmed":"")+(isHome?" ishome":"");
     el.onclick=()=>{ selected=s.id; renderList(); renderInsp(); };
-    const flags=(s.id===state.live?`<span class="flag live">LIVE</span>`:"")+(s.id===state.armed?`<span class="flag armed">ARMED</span>`:"");
+    if(canDrag && !isHome){
+      el.draggable=true;
+      el.ondragstart=e=>{ dragId=s.id; el.classList.add('dragging');
+                          e.dataTransfer.effectAllowed='move'; };
+      el.ondragend=()=>{ dragId=null; renderList(); };
+      el.ondragover=e=>{ if(dragId!==null && dragId!==s.id){ e.preventDefault(); el.classList.add('dropinto'); } };
+      el.ondragleave=()=>el.classList.remove('dropinto');
+      el.ondrop=e=>{ e.preventDefault(); el.classList.remove('dropinto'); dropOn(s.id); };
+    }
+    const flags=(s.id===state.live?`<span class="flag live">LIVE</span>`:"")
+               +(s.id===state.armed?`<span class="flag armed">ARMED</span>`:"")
+               +(isHome?`<span class="flag home">HOME</span>`:"");
     el.innerHTML=`<div class="id">${String(s.id).padStart(2,'0')}</div>
-      <div class="body"><div class="nm">${s.name} ${flags}</div>
+      <div class="body"><div class="nm">${esc(s.name)} ${flags}</div>
       <div class="chips">
         <span class="chip">▚ ${s.resolume?.clear?"clear":("L"+s.resolume.layer+"·C"+s.resolume.clip)}</span>
         <span class="chip">✦ ${s.dmx?.cue||"—"}</span>
         <span class="chip" style="color:${ringColor(s.ring)}"><span class="sw" style="background:${ringColor(s.ring)}"></span>${s.ring.mode}</span>
         <span class="chip">${s.audio?"♪ audio":"muted"}</span></div></div>
+      ${canDrag && !isHome?`<span class="grip" title="drag to reorder">⠿</span>`:""}
       <button class="fire" title="test-fire" onclick="event.stopPropagation(); testFire(${s.id})">▸</button>`;
     wrap.appendChild(el);
   });
+}
+// Ids are set positions, so a reorder renumbers. Each scene keeps its own clip, so
+// the video travels with it.
+function dropOn(targetId){
+  const home=state.meta?.home_scene??1;
+  if(dragId===null || dragId===targetId) return;
+  const order=state.scenes.filter(s=>s.id!==home).map(s=>s.id);
+  const from=order.indexOf(dragId), to=order.indexOf(targetId);
+  if(from<0 || to<0) return;
+  order.splice(to, 0, order.splice(from, 1)[0]);
+  if(online && ws && ws.readyState===1) ws.send(JSON.stringify({type:"reorder", order}));
+  dragId=null;
 }
 const RING_MODES = ["off","solid","pulse","chase","strobe"];
 function renderInsp(){
@@ -616,10 +669,27 @@ function renderCues(){
   const hint=document.getElementById('cueHint');
   if(hint) hint.textContent = state.tap_fires ? "tap fires immediately" : "tap arms · GO fires";
   grid.innerHTML="";
-  (state.scenes||[]).forEach(s=>{
+  // the main loop is pinned above and excluded from the sequence grid
+  const homeBox=document.getElementById('homeCue');
+  if(homeBox){
+    const h=(state.scenes||[]).find(s=>s.id===home);
+    homeBox.innerHTML="";
+    if(h){
+      const ring=h.ring||{mode:"off"};
+      const el=document.createElement('button');
+      el.className="homecue"+(h.id===state.live?" live":"");
+      el.onclick=()=>act('home');
+      el.innerHTML=`<span class="cn">${String(h.id).padStart(2,'0')}</span>
+        <span class="swatch" style="background:${ringColor(ring)}"></span>
+        <span class="cname">${esc(h.name)}</span>
+        <span class="tagline">${h.id===state.live?"LIVE · ":""}HOME</span>`;
+      homeBox.appendChild(el);
+    }
+  }
+  (state.scenes||[]).filter(s=>s.id!==home).forEach(s=>{
     const el=document.createElement('button');
     const isLive=s.id===state.live, isArmed=s.id===state.armed;
-    el.className="cue"+(isLive?" live":"")+(isArmed?" armed":"")+(s.id===home?" home":"");
+    el.className="cue"+(isLive?" live":"")+(isArmed?" armed":"");
     // arming is the safe default; firing straight from a tap is opt-in, because a
     // mis-tap that only changes what is queued costs nothing
     el.onclick=()=>act(state.tap_fires ? 'goto' : 'arm', s.id);
@@ -629,7 +699,7 @@ function renderCues(){
     el.innerHTML=`<div class="cn">${String(s.id).padStart(2,'0')} ${flag}</div>
       <div class="cname">${esc(s.name)}</div>
       <div class="cmeta"><span class="swatch" style="background:${ringColor(ring)}"></span>
-        ${esc(capOf(ring))}${s.id===home?" · HOME":""}</div>`;
+        ${esc(capOf(ring))}</div>`;
     grid.appendChild(el);
   });
 }
@@ -690,7 +760,7 @@ setInterval(()=>document.getElementById('clock').textContent=now(),1000);
 document.getElementById('clock').textContent=now();
 render(); connect();
 window.act=act; window.setView=setView; window.testFire=testFire; window.learn=learn;
-window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
+window.dropOn=dropOn; window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>

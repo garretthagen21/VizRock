@@ -45,7 +45,7 @@ def _scan_and_report():
     existing = {'scenes': [{'id': 3, 'name': 'Orphan', 'resolume': {'layer': 1, 'clip': 3}}]}
     issues = ' | '.join(scene_builder.problems(existing, clips, ignored, duplicates))
     assert 'gap: no file for clip 3' in issues, issues
-    assert 'points at a clip with no file' in issues, issues
+    assert 'plays clip 3, which has no file' in issues, issues
     assert 'notes.txt' in issues, issues
 
 
@@ -63,23 +63,33 @@ def _duplicates_are_reported():
 
 
 def _merge_preserves_tuning():
-    """Regenerating must never wipe ring or DMX settings someone tuned in the UI."""
+    """
+    Regenerating must never wipe ring or DMX settings someone tuned in the UI, and
+    must match on the clip a scene plays rather than its id — ids are set positions
+    and drift once the setlist is reordered.
+    """
     existing = {'meta': {'show': 'THC'}, 'scenes': [
-        {'id': 3, 'name': 'Old name', 'resolume': {'layer': 1, 'clip': 3},
+        {'id': 3, 'name': 'Old name', 'resolume': {'layer': 1, 'clip': 2},
          'ring': {'mode': 'strobe', 'hue': 150, 'bright': 200, 'speed': 8},
          'dmx': {'cue': 'strobe_cool'}, 'audio': True}]}
-    clips = {1: ('Intro', '01_Intro.mov'), 3: ('Drop', '03_Drop.mov')}
+    clips = {2: ('Drop', '02_Drop.mov'), 5: ('New thing', '05_New thing.mov')}
 
     merged = scene_builder.merge(existing, clips, layer=1)
     scenes = {scene['id']: scene for scene in merged['scenes']}
 
+    # matched by clip 2, not by id
     assert scenes[3]['name'] == 'Drop', 'name should follow the file'
+    assert scenes[3]['resolume']['clip'] == 2, 'the scene keeps the clip it plays'
     assert scenes[3]['ring']['mode'] == 'strobe', 'ring tuning was wiped'
     assert scenes[3]['ring']['hue'] == 150
     assert scenes[3]['dmx']['cue'] == 'strobe_cool', 'dmx cue was wiped'
     assert scenes[3]['audio'] is True, 'audio flag was wiped'
-    assert scenes[3]['resolume'] == {'layer': 1, 'clip': 3}, 'clip number is the scene id'
-    assert scenes[1]['name'] == 'Intro', 'new scene not added'
+
+    # an unseen clip becomes a new scene appended after the highest id
+    added = [s for s in merged['scenes'] if s['resolume']['clip'] == 5]
+    assert len(added) == 1 and added[0]['name'] == 'New thing', merged['scenes']
+    assert added[0]['id'] == 4, f"should append, not reuse a position: {added[0]['id']}"
+
     assert merged['meta']['show'] == 'THC', 'meta must survive'
     assert merged['meta']['home_scene'] == 1, 'home_scene should default to 1'
 
@@ -98,6 +108,6 @@ def _write_is_opt_in():
 
         scene_builder.main([folder, '--write'])
         after = json.loads(scenes_file.read_text())
-        assert any(s['id'] == 1 and s['name'] == 'Only' for s in after['scenes'])
+        assert any(s['name'] == 'Only' for s in after['scenes']), after['scenes']
     finally:
         shutil.copy(backup, scenes_file)

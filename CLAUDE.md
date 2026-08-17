@@ -66,6 +66,18 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **Blackout is an action, not a scene.** `BLACKOUT_SCENE` is a constant dispatched directly —
   it needs no ring or dmx settings because they are zero by definition, and keeping it out of
   `scenes.json` leaves that file purely about the show.
+- **Scene ids are set positions and get renumbered on reorder.** Dragging in EDIT renumbers
+  scenes 2..N so the CUES grid always reads 01, 02, 03 — a grid you scan with a foot has to be
+  in order. Each scene keeps its own `resolume.clip`, so the video travels with the scene and
+  id/clip diverge on purpose. `Brain.reorder` remaps LIVE and ARMED so they follow the *scene*,
+  not the number.
+- **The generator matches on clip, never on id.** `vizrock_scenes` keys existing scenes by the
+  clip they play, because ids drift after a reorder and keying on them would silently undo
+  someone's running order.
+- **The main loop is pinned, not listed.** In CUES it sits above the grid and is excluded from
+  it; in EDIT it is not draggable. It is the default state, not a step in the set.
+- **Reordering is desktop-only** (`hover:hover and pointer:fine`). Dragging with a finger
+  fights scrolling, and a pedalboard is not where you rearrange a setlist.
 - **Scene id and clip number are the same by convention, not by rule.** `vizrock_scenes`
   derives the clip from the filename number, so scene 3 is clip 3 — but `resolume.clip` is
   explicit per scene and the runtime never assumes identity. Two scenes may deliberately share
