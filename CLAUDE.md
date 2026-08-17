@@ -156,7 +156,10 @@ They cover logic, not hardware: no MIDI device, ring, OLED or Pi is involved any
   Chocolate reports as **`SINCO`**, so a filter of `["Chocolate"]` silently ignored it. Ports
   containing "through" are always skipped; that is ALSA's loopback, never a controller.
   Skipped ports are logged, so a filter that matches nothing is visible.
-- Triggers match `note` / `pc` / `cc`. Default map: `60→arm_prev · 61→arm_next · 62→go ·
-  63→blackout`, plus PC `1`/`2` → `goto` scenes 2/3.
+- Triggers match `note` / `pc` / `cc`. The M-VAVE Chocolate ships sending **Program Change
+  0-3**, one message per press, left to right — confirmed on hardware. The map matches the
+  pedal rather than requiring CubeSuite: `0→go · 1→arm_prev · 2→arm_next · 3→home`.
+- **`midi_inputs` names `SINCO` deliberately.** An FM3 also sends Program Change, so an open
+  filter would let its preset changes fire show cues.
 - DMX cues are named channel maps; an unknown cue name resolves to an all-zero frame, so a typo
   blacks out rather than crashing.

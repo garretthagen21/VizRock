@@ -48,15 +48,17 @@ def run():
     brain.handle('goto', 99)
     assert brain.live == 3, 'commit to a missing scene must be a no-op'
 
+    # The M-VAVE Chocolate ships sending Program Change 0-3, one per press, left to
+    # right. Confirmed on hardware — the trigger map matches the pedal rather than
+    # making the operator reprogram it.
     midi = MidiInterface(lambda action, scene: None)
-    assert midi.match_trigger(message(type='note_on', note=60, velocity=100)) == ('go', None)
-    assert midi.match_trigger(message(type='note_on', note=61, velocity=100)) == ('arm_prev', None)
-    assert midi.match_trigger(message(type='note_on', note=62, velocity=100)) == ('arm_next', None)
-    assert midi.match_trigger(message(type='note_on', note=63, velocity=100)) == ('home', None)
-    assert midi.match_trigger(message(type='note_on', note=60, velocity=0)) is None, \
-        'note-off must not fire'
-    assert midi.match_trigger(message(type='program_change', program=1)) == ('goto', 2)
-    assert midi.match_trigger(message(type='note_on', note=99, velocity=100)) is None
+    assert midi.match_trigger(message(type='program_change', program=0)) == ('go', None)
+    assert midi.match_trigger(message(type='program_change', program=1)) == ('arm_prev', None)
+    assert midi.match_trigger(message(type='program_change', program=2)) == ('arm_next', None)
+    assert midi.match_trigger(message(type='program_change', program=3)) == ('home', None)
+    assert midi.match_trigger(message(type='program_change', program=9)) is None
+    assert midi.match_trigger(message(type='note_on', note=60, velocity=100)) is None, \
+        'notes are not mapped on this pedal'
 
     snapshot = brain.snapshot()
     assert 'addresses' in snapshot and 'output_config' in snapshot
