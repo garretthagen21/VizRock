@@ -10,12 +10,18 @@
 #
 
 import logging
+import time
 
 import mido
 
 from vizrock.configurations.settings import vizrock_settings
 
 logger = logging.getLogger(__name__)
+
+# clock/sensing traffic would drown the log and is never a trigger
+IGNORED_MESSAGE_TYPES = {'clock', 'active_sensing', 'start', 'stop', 'continue',
+                         'songpos', 'reset'}
+UNMATCHED_REPEAT_SECONDS = 1.0
 
 
 class MidiInterface:
@@ -28,6 +34,8 @@ class MidiInterface:
     def __init__(self, handler):
         self.handler = handler
         self.open_ports = []
+        self._last_unmatched = None
+        self._last_unmatched_at = 0.0
 
     def open(self):
         wanted = vizrock_settings.midi_inputs
@@ -70,7 +78,26 @@ class MidiInterface:
     def _on_message(self, message, source=''):
         match = self.match_trigger(message)
         if not match:
+            self._log_unmatched(message, source)
             return
         action, scene = match
         logger.info('MIDI %s (%s) -> %s', message, source, action)
         self.handler(action, scene)
+
+    def _log_unmatched(self, message, source):
+        """
+        Say what arrived but matched nothing. Without this an unmapped switch is
+        completely invisible — you cannot tell a dead pedal from an unmapped one,
+        which is exactly the question you have at soundcheck.
+
+        Clock and sensing traffic is skipped, and repeats are collapsed, so a chatty
+        device cannot flood the log.
+        """
+        if message.type in IGNORED_MESSAGE_TYPES:
+            return
+        signature = str(message)
+        now = time.monotonic()
+        if signature == self._last_unmatched and now - self._last_unmatched_at < UNMATCHED_REPEAT_SECONDS:
+            return
+        self._last_unmatched, self._last_unmatched_at = signature, now
+        logger.info('MIDI %s (%s) -> no trigger mapped', message, source)
