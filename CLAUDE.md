@@ -121,6 +121,14 @@ Chromium against `localhost`. It is **not** called by `install.sh` and touches n
 screen is a browser client like any other. The unit uses `After=`/`Wants=` and never
 `Requires=`, so the kiosk can fail without affecting the show. Keep it that way.
 
+## Utilities
+
+`utilities/system.py` reports the hostname and IPv4 addresses so the UI's CONNECT panel can
+tell you where to point a phone without SSHing in. `local_addresses()` shells out to
+`hostname -I` and **caches for 15s** — state is pushed on every ARM move, and forking a
+process per button press would be daft. It returns `[]` rather than raising on any platform
+without that flag.
+
 ## Setlist tooling
 
 `vizrock_scenes <folder>` builds `configs/scenes.json` from clips named `NN_name.mov`. Two

@@ -31,6 +31,7 @@ class _DeadClient:
 def run():
     asyncio.run(_delivers())
     _outside_a_loop_is_safe()
+    _addresses_are_reported()
 
 
 async def _delivers():
@@ -56,3 +57,18 @@ def _outside_a_loop_is_safe():
     server = UiServer.__new__(UiServer)
     server.clients = {_Client()}
     server.broadcast({'x': 1})          # must not raise
+
+
+def _addresses_are_reported():
+    """The UI must be able to tell you where to point a phone."""
+    import vizrock.utilities.system as vizrock_system
+
+    assert isinstance(vizrock_system.hostname(), str) and vizrock_system.hostname()
+    addresses = vizrock_system.local_addresses()
+    assert isinstance(addresses, list), addresses
+    assert all(':' not in a for a in addresses), 'ipv6 should be filtered out'
+
+    # cached: a state push happens on every ARM move, so this must not fork per call
+    before = vizrock_system._cache['at']
+    vizrock_system.local_addresses()
+    assert vizrock_system._cache['at'] == before or not addresses, 'result was not cached'

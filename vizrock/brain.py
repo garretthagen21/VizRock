@@ -14,6 +14,7 @@ import logging
 from vizrock.configurations.settings import vizrock_settings
 from vizrock.managers.scene_library import BLACKOUT_SCENE, SceneLibrary
 from vizrock.outputs import build_output
+import vizrock.utilities.system as vizrock_system
 from vizrock.managers.updater import Updater
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,8 @@ class Brain:
             'addresses': {output.name: output.address_label() for output in self.outputs},
             'output_config': vizrock_settings.outputs,
             'update': self.updater.snapshot() if self.updater else None,
+            'network': {'hostname': vizrock_system.hostname(),
+                        'addresses': vizrock_system.local_addresses()},
             'scenes': self.scene_library.sorted_scenes(),
             'meta': self.scene_library.meta,
         }

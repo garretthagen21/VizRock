@@ -299,6 +299,7 @@
         <div class="learn"><span>SW1 <b>prev</b> · SW2 <b>next</b> · SW3 <b>GO</b> · SW4 <b>blackout</b></span>
           <button class="learnbtn" onclick="learn(this)">MIDI LEARN</button></div>
         <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
+        <div class="sectlab mt">CONNECT</div><div id="netBox"></div>
         <div class="sectlab mt">SOFTWARE</div><div id="updBox"></div>
       </div>
     </div>
@@ -314,6 +315,7 @@ const DEMO = {
   addresses:{resolume:"thc-resolume.local→10.0.0.7+169.254.9.2, my-laptop.local (unresolved)", dmx:"", rings:"/dev/ring_tx (searching)", oled:"i2c 0x3C"},
   output_config:{resolume:{type:"osc",hosts:["thc-resolume.local","my-laptop.local"],port:7000},
                  dmx:{type:"artnet",host:"192.168.4.60"}, rings:{type:"serial"}, oled:{type:"oled"}},
+  network:{hostname:"vizrock-box", addresses:["10.42.1.1","10.42.0.1"]},
   update:{online:true,current:"8da0852",subject:"Drop the show-brain name everywhere",
           behind:1,incoming:[{sha:"a1b2c3d",subject:"Add MIDI learn"}],busy:false,
           can_update:true,message:"1 update(s) available"},
@@ -387,6 +389,7 @@ function render(){
   renderPills(); renderShow();
   if(!document.getElementById('viewEdit').classList.contains('hidden')){
     renderList();
+    renderNetwork();
     renderUpdate();
     // a server echo must not yank the input out from under the operator
     if(!document.getElementById('insp')?.contains(document.activeElement)) renderInsp();
@@ -498,6 +501,16 @@ function sendSceneEdit(){
   else { state.scenes=state.scenes.map(x=>x.id===edited.id?edited:x); renderList(); }
   const tag=document.getElementById('savedTag');
   if(tag){ tag.classList.add('on'); setTimeout(()=>tag.classList.remove('on'),900); }
+}
+function renderNetwork(){
+  const box=document.getElementById('netBox'); if(!box) return;
+  const n=state.network;
+  if(!n){ box.innerHTML=`<div class="upd"><div class="msg">unavailable</div></div>`; return; }
+  const urls=[`${n.hostname}.local`, ...(n.addresses||[])]
+    .map(h=>`<li><span class="ver">http://${esc(h)}:8080</span></li>`).join("");
+  box.innerHTML=`<div class="upd">
+      <div class="msg">Open any of these from a phone or laptop on the same network</div>
+      <ul class="list">${urls}</ul></div>`;
 }
 let confirmingUpdate = false;
 function renderUpdate(){
