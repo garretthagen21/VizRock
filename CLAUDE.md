@@ -151,8 +151,11 @@ They cover logic, not hardware: no MIDI device, ring, OLED or Pi is involved any
 
 ## Config notes
 
-- `midi_inputs` are **substring** filters against port names (`["Chocolate", "FM3"]`); empty
-  list means open everything.
+- `midi_inputs` is a **substring** filter on ALSA port names, and defaults to `[]` — open
+  everything. Naming a device you do not have is worse than naming nothing: the M-VAVE
+  Chocolate reports as **`SINCO`**, so a filter of `["Chocolate"]` silently ignored it. Ports
+  containing "through" are always skipped; that is ALSA's loopback, never a controller.
+  Skipped ports are logged, so a filter that matches nothing is visible.
 - Triggers match `note` / `pc` / `cc`. Default map: `60→arm_prev · 61→arm_next · 62→go ·
   63→blackout`, plus PC `1`/`2` → `goto` scenes 2/3.
 - DMX cues are named channel maps; an unknown cue name resolves to an all-zero frame, so a typo

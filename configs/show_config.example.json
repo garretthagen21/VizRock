@@ -1,7 +1,7 @@
 {
   "ui": { "port": 8080 },
 
-  "midi_inputs": ["Chocolate", "FM3"],
+  "midi_inputs": [],
 
   "outputs": {
     "resolume": { "type": "osc",    "hosts": ["thc-resolume.local", "my-laptop.local"], "port": 7000, "enabled": true },

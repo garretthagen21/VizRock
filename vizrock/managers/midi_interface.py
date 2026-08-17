@@ -32,7 +32,10 @@ class MidiInterface:
     def open(self):
         wanted = vizrock_settings.midi_inputs
         for name in mido.get_input_names():
+            if 'through' in name.lower():
+                continue                      # ALSA's virtual loopback, never a controller
             if wanted and not any(w.lower() in name.lower() for w in wanted):
+                logger.info('skipping MIDI input (not in midi_inputs): %s', name)
                 continue
             try:
                 self.open_ports.append(
