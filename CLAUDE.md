@@ -161,5 +161,11 @@ They cover logic, not hardware: no MIDI device, ring, OLED or Pi is involved any
   pedal rather than requiring CubeSuite: `0→go · 1→arm_prev · 2→arm_next · 3→home`.
 - **`midi_inputs` names `SINCO` deliberately.** An FM3 also sends Program Change, so an open
   filter would let its preset changes fire show cues.
+- **Resolume OSC is on 38200, not the default 7000.** Logic Pro squats on 7000 *and* 7001, and
+  when Resolume cannot bind its OSC port it fails **silently** — the monitor just stays empty,
+  which looks exactly like a network fault. 38200 has no registered service, is clear of the
+  7000-9000 audio neighbourhood, and sits below macOS's 49152 ephemeral range so nothing can
+  claim it at random. If OSC ever looks dead, check who owns the port (`lsof -nP -iUDP:38200`)
+  before suspecting the network.
 - DMX cues are named channel maps; an unknown cue name resolves to an all-zero frame, so a typo
   blacks out rather than crashing.
