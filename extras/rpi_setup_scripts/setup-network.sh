@@ -43,19 +43,18 @@ if [ -z "$WIRED" ]; then
     echo "    no wired profile yet — plug a cable in once, then re-run this script" >&2
 else
     echo "    profile: $WIRED"
-    # ipv4.link-local=fallback is the important one: on a direct Pi-to-laptop cable
-    # there is no DHCP server, and without it NetworkManager gives up with no address
-    # at all rather than self-assigning 169.254.x.x. That is the venue path.
     nmcli connection modify "$WIRED" \
         connection.autoconnect yes \
         connection.autoconnect-priority 100 \
-        ipv4.may-fail yes \
-        ipv4.link-local fallback 2>/dev/null \
-      || nmcli connection modify "$WIRED" \
-            connection.autoconnect yes \
-            connection.autoconnect-priority 100 \
-            ipv4.may-fail yes \
-            ipv4.link-local 3          # older NetworkManager: 3 == enabled
+        ipv4.may-fail yes
+    # The important one. On a direct Pi-to-laptop cable there is no DHCP server, and
+    # without this NetworkManager gives up with no address at all rather than
+    # self-assigning 169.254.x.x — the exact path the show depends on at the venue.
+    # 'enabled' always adds a link-local address alongside any DHCP one, so it covers
+    # both the direct cable and being plugged into a router. Older NetworkManager
+    # (Bookworm) does not accept 'fallback'.
+    nmcli connection modify "$WIRED" ipv4.link-local enabled \
+      || nmcli connection modify "$WIRED" ipv4.link-local fallback
 fi
 
 echo "==> VIZROCK hotspot as the fallback"
