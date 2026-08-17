@@ -55,6 +55,7 @@ class Brain:
                 # main loop must leave whatever you had queued still queued
                 self._commit(self.scene_library.home, rearm=False)
         elif action == 'blackout':
+            logger.info('LIVE -> blackout (all outputs off)')
             self._dispatch(BLACKOUT_SCENE)
             self.live = None
             self.last_event = 'LIVE → blackout'
@@ -150,7 +151,16 @@ class Brain:
             logger.warning('commit to missing scene %s', scene_id)
             return
         self.live = scene_id
-        self._dispatch(self.scene_library.scenes[scene_id])
+        scene = self.scene_library.scenes[scene_id]
+        # say what was actually targeted — "which clip did it fire?" is the first
+        # question when visuals look wrong, and the action alone does not answer it
+        resolume = scene.get('resolume') or {}
+        target = 'clear' if resolume.get('clear') else \
+            f"layer {resolume.get('layer')} clip {resolume.get('clip')}"
+        logger.info('LIVE -> %s  (resolume: %s, ring: %s)',
+                    self.scene_library.label(scene_id), target,
+                    (scene.get('ring') or {}).get('mode', 'off'))
+        self._dispatch(scene)
         # auto-arm the next scene so a linear set is just GO, GO, GO
         if rearm and scene_id in self.scene_library.order:
             self.armed = self.scene_library.step_from(scene_id, +1)
