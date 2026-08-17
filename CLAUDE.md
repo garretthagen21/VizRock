@@ -74,6 +74,10 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **The generator matches on clip, never on id.** `vizrock_scenes` keys existing scenes by the
   clip they play, because ids drift after a reorder and keying on them would silently undo
   someone's running order.
+- **The main loop is always the home scene, and always scene 1.** `meta.home_scene` exists,
+  but if it ever names a scene that does not exist the library falls back to the lowest id
+  rather than leaving HOME inert — a dead HOME button is the worst failure available, since it
+  is the one thing you press to get out of trouble. Reordering never moves it.
 - **The main loop is pinned, not listed.** In CUES it sits above the grid and is excluded from
   it; in EDIT it is not draggable. It is the default state, not a step in the set.
 - **Reordering is desktop-only** (`hover:hover and pointer:fine`). Dragging with a finger

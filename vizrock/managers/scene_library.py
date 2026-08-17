@@ -44,7 +44,14 @@ class SceneLibrary:
         self.meta = data.get('meta', {})
         # the main loop is the default state, not a step in the set — like Blackout it
         # is reachable only by its own action, so PREV/NEXT never land on it
+        # The main loop is always the home scene. If meta names one that does not
+        # exist, fall back to the lowest id rather than leaving HOME inert — a dead
+        # HOME button is the worst possible failure for the one thing you press to
+        # get out of trouble.
         self.home = self.meta.get('home_scene', HOME_SCENE_ID)
+        if self.home not in self.scenes and self.scenes:
+            self.home = min(self.scenes)
+            self.meta['home_scene'] = self.home
         # the main loop is the default state, not a step in the set — PREV/NEXT never land on it
         self.order = [scene['id'] for scene in data['scenes'] if scene['id'] != self.home]
 

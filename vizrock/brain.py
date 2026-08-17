@@ -51,7 +51,7 @@ class Brain:
             self._commit(scene, rearm=True)
         elif action == 'home':
             if self.scene_library.home is None:
-                logger.warning('no home_scene set in scenes.json meta')
+                logger.warning('no scenes, so nowhere to go home to')
             else:
                 # like blackout, deliberately does not re-arm: bouncing out to the
                 # main loop must leave whatever you had queued still queued

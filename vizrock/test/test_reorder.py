@@ -27,6 +27,7 @@ def run():
         _renumbers_and_keeps_clips()
         _follows_live_and_armed()
         _generator_does_not_undo_it()
+        _home_always_resolves()
     finally:
         shutil.copy(backup, vizrock_paths.Files.SCENES_FILE)
 
@@ -76,3 +77,23 @@ def _generator_does_not_undo_it():
     assert by_id[2]['resolume']['clip'] == 3, 'the generator renumbered back'
     assert by_id[3]['resolume']['clip'] == 2
     assert len(merged['scenes']) == 3, 'it should not have invented duplicates'
+
+
+def _home_always_resolves():
+    """
+    A dead HOME button is the worst failure available — it is the one thing you
+    press to get out of trouble. If meta names a scene that does not exist, fall
+    back rather than leaving it inert.
+    """
+    from vizrock.managers.scene_library import SceneLibrary
+
+    library = SceneLibrary()
+    library.load({'meta': {'home_scene': 99}, 'scenes': [
+        {'id': 4, 'name': 'Main loop', 'resolume': {'layer': 1, 'clip': 1}},
+        {'id': 5, 'name': 'Special', 'resolume': {'layer': 1, 'clip': 2}}]})
+    assert library.home == 4, f'should fall back to the lowest id, got {library.home}'
+    assert library.order == [5], 'home must still be excluded from stepping'
+
+    library.load({'meta': {}, 'scenes': [
+        {'id': 1, 'name': 'Main loop', 'resolume': {'layer': 1, 'clip': 1}}]})
+    assert library.home == 1, 'default is 1'
