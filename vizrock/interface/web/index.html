@@ -253,6 +253,12 @@
     .transport{padding:7px 12px; gap:7px; padding-bottom:max(7px, env(safe-area-inset-bottom))}
     .transport .btn{padding:11px 9px}
     .transport .btn.go{flex:1 1 auto; order:0; padding:11px 18px}
+    /* 15 scenes should fit 5 across x 3 rows at 800x480 with no scrolling */
+    .cuegrid{gap:8px; padding:10px 12px; grid-template-columns:repeat(auto-fill,minmax(138px,1fr))}
+    .cue{min-height:0; padding:9px 10px; gap:3px}
+    .cue .cn{font-size:17px}
+    .cue .cname{font-size:12.5px}
+    .cue .cmeta{font-size:9px; letter-spacing:.08em}
     .log{order:0; flex:1 1 auto; white-space:nowrap}
     .clock,.foot-note{display:none}
   }
