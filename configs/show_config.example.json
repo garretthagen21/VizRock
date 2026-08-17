@@ -9,8 +9,7 @@
     "resolume": {
       "type": "osc",
       "hosts": [
-        "thc-resolume.local",
-        "my-laptop.local"
+        "Garretts-M2-MacBook-Pro.local"
       ],
       "port": 7000,
       "enabled": true
