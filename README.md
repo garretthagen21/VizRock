@@ -1,4 +1,4 @@
-# Show Brain
+# VizRock
 
 A headless Raspberry Pi appliance that turns footswitch triggers into a synced show:
 Resolume visuals (over the network) + optional DMX + wearable LED rings, driven by an

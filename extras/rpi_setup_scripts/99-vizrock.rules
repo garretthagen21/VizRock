@@ -1,10 +1,10 @@
-# Stable device names for Show Brain hardware.
+# Stable device names for VizRock hardware.
+#
+# Only the ring transmitter needs one: RingSerial opens a serial port by path. The
+# footswitch does not — MIDI devices are found by ALSA port name, so no rule and no
+# VID:PID guess is involved, and any USB-MIDI controller works.
 # Install:  sudo cp 99-vizrock.rules /etc/udev/rules.d/  &&  sudo udevadm control --reload
 #
-# M-VAVE Chocolate (USB-MIDI foot controller). VID:PID from community reports
-# (Jieli/SINCO 4353:4b4d) — verify yours with:  lsusb  and  udevadm info -a /dev/...
-SUBSYSTEM=="usb", ATTRS{idVendor}=="4353", ATTRS{idProduct}=="4b4d", SYMLINK+="chocolate", TAG+="vizrock"
-
 # ESP32 ring transmitter (CP210x / CH340 USB-serial). Adjust VID:PID to your board.
 # Silicon Labs CP210x:
 SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="ring_tx"

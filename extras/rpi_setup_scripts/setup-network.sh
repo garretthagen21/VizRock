@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Show Brain network setup. Run once on the Pi, as root.
+# VizRock network setup. Run once on the Pi, as root.
 #
 #   sudo ./setup-network.sh [hotspot-password]
 #

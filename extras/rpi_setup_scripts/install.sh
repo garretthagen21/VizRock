@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Show Brain — one-shot install on a fresh Raspberry Pi OS Lite (Bookworm).
+# VizRock — one-shot install on a fresh Raspberry Pi OS Lite (Bookworm).
 #
 #   git clone https://github.com/garretthagen21/VizRock.git
 #   cd VizRock && sudo extras/rpi_setup_scripts/install.sh <hotspot-password>
