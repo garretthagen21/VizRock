@@ -3,15 +3,13 @@
     "show": "THC Halloween 2026-10-30",
     "home_scene": 1,
     "board": {
-      "inches": [
-        119,
-        79
-      ],
-      "pixels": [
-        384,
-        256
-      ],
-      "note": "3:2 LED wall, ~7.85mm pitch"
+      "orientation": "landscape",
+      "width_inches": 119,
+      "height_inches": 79,
+      "width_pixels": 384,
+      "height_pixels": 256,
+      "aspect": "3:2",
+      "note": "~7.85mm pitch, derived from both dimensions independently. Compose 1620x1080."
     }
   },
   "scenes": [
