@@ -1,7 +1,18 @@
 {
   "meta": {
     "show": "THC Halloween 2026-10-30",
-    "home_scene": 1
+    "home_scene": 1,
+    "board": {
+      "inches": [
+        119,
+        79
+      ],
+      "pixels": [
+        384,
+        256
+      ],
+      "note": "3:2 LED wall, ~7.85mm pitch"
+    }
   },
   "scenes": [
     {
