@@ -22,7 +22,8 @@ class _Directories:
     def CONFIG_DIR(self):
         # VIZROCK_CONFIG_DIR keeps the tests off the live show config — running them
         # on the Pi would otherwise write to the scenes file the set depends on.
-        # Resolved on each read so no import can be ordered ahead of it.
+        # Resolved on each read, so setting the variable late still takes effect
+        # anywhere the path is not captured into a module-level constant.
         return Path(os.environ.get('VIZROCK_CONFIG_DIR') or self.REPO_DIR / 'configs')
 
 

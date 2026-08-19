@@ -591,8 +591,13 @@ function paintRing(el, r){
              : r.mode==="strobe" ? `rstrobe ${(0.62-speed*0.05).toFixed(2)}s linear infinite`
              : "none";
   // Only restart when the timing actually changed — dragging the hue slider
-  // repaints the colour every frame and must not keep resetting the cycle.
-  if(el.style.animation !== anim){ el.style.animation="none"; void el.offsetWidth; el.style.animation=anim; }
+  // repaints the colour every frame and must not keep resetting the cycle. Compare
+  // against our own copy: the browser re-serializes the shorthand, so "2.40s" would
+  // read back as "2.4s" and never match.
+  if(el.dataset.anim !== anim){
+    el.dataset.anim = anim;
+    el.style.animation="none"; void el.offsetWidth; el.style.animation=anim;
+  }
 }
 const kf=document.createElement('style');
 kf.textContent=`@keyframes rpulse{0%,100%{opacity:calc(var(--peak,1)*.28)}50%{opacity:var(--peak,1)}}`
