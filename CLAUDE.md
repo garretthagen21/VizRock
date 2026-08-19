@@ -107,6 +107,12 @@ every output degrades to a no-op and the web UI still drives the full state mach
   initial snapshot silently vanished until this was fixed.
 - **Gate every `:hover` behind `@media (hover:hover)`.** On touch, `:hover` latches after a
   tap, which made the transport buttons look stuck on. Pair each one with `:active`.
+- **Boot dark with the main loop queued.** `Brain.boot()` comes up with blackout on and the
+  restore target primed to the main loop. Powering on must never throw a visual at a screen
+  nobody is ready for, but releasing blackout has to land somewhere rather than nothing.
+- **Never reuse the word "live" for anything but the playing scene.** The connection indicator
+  said `live` when it meant "websocket connected", which is exactly the overload that makes a
+  glanceable UI unreadable. It says `connected` / `no brain`.
 - **Blackout is a held toggle, not a one-way trip.** Turning it off restores whatever was
   playing, so killing the screen mid-song does not also lose your place. Committing any scene
   clears it. It lives in the header, deliberately away from the transport, because a stray tap

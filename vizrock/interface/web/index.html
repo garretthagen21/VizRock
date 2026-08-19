@@ -33,7 +33,7 @@
      half way down. .show and .cuegrid have flex:1 but that only works if the parent
      is a flex container that actually fills the space. */
   #viewShow,#viewCues,#viewEdit{flex:1 1 auto; min-height:0; display:flex; flex-direction:column}
-  header{position:relative; display:flex; align-items:center; gap:20px; padding:10px 18px; padding-top:max(10px, env(safe-area-inset-top)); border-bottom:1px solid var(--line);
+  header{position:relative; display:flex; align-items:center; gap:20px; padding:14px 22px; padding-top:max(14px, env(safe-area-inset-top)); border-bottom:1px solid var(--line);
     background:rgba(11,14,19,.7); backdrop-filter:blur(6px)}
   .wordmark{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.14em; font-size:13px}
   .wordmark .dot{width:9px;height:9px;border-radius:50%;background:var(--warn);box-shadow:0 0 10px var(--warn)}
@@ -42,8 +42,9 @@
   /* Absolutely centred so it takes no room in the flex row — on a 480px-tall panel
      the header giving it its own line was costing real estate the grid needed. */
   .show-id{position:absolute; left:50%; transform:translateX(-50%); pointer-events:none;
-    font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.04em;
-    max-width:38%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center}
+    font-family:var(--disp); font-size:14px; font-weight:700; color:var(--ink);
+    letter-spacing:.06em; max-width:38%; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; text-align:center}
   .spacer{flex:1}
   .toggle{display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden}
   .toggle button{font-family:var(--mono); font-size:12px; letter-spacing:.12em; font-weight:600; background:transparent;
@@ -257,9 +258,9 @@
   @media (max-width:860px){
     html,body{height:auto; overflow:auto; -webkit-text-size-adjust:100%}
     .app{height:auto; min-height:100dvh}
-    header{flex-wrap:nowrap; gap:10px; padding:8px 12px; position:sticky; top:0; z-index:5;
+    header{flex-wrap:nowrap; gap:10px; padding:11px 14px; position:sticky; top:0; z-index:5;
       background:var(--void); padding-top:max(12px, env(safe-area-inset-top))}
-    .show-id{font-size:11px; max-width:34%}
+    .show-id{font-size:13px; max-width:34%}
     .spacer{display:none}
     .toggle{margin-left:auto}
     .clock{display:none}
@@ -293,10 +294,10 @@
   @media (max-height:560px){
     html,body{height:100%; overflow:hidden}
     .app{height:100dvh}
-    header{padding:5px 10px; padding-top:max(5px, env(safe-area-inset-top)); gap:8px}
-    .show-id{font-size:10px; max-width:30%}
-    .blackoutbtn{padding:7px 10px; font-size:10px}
-    .toggle button{padding:7px 10px; font-size:11px}
+    header{padding:10px 12px; padding-top:max(10px, env(safe-area-inset-top)); gap:8px}
+    .show-id{font-size:13px; max-width:32%}
+    .blackoutbtn{padding:8px 11px; font-size:10px}
+    .toggle button{padding:8px 11px; font-size:11px}
     .statusbar{padding:5px 12px; gap:6px}
     .pill{padding:4px 9px 4px 8px; font-size:10px}
     .show{grid-template-columns:60fr 40fr}
@@ -338,7 +339,7 @@
 <body>
 <div class="app">
   <header>
-    <div class="wordmark"><span class="dot" id="conn"></span>VizRock <small id="mode">connecting…</small></div>
+    <div class="wordmark"><span class="dot" id="conn"></span>VizRock <small id="mode" title="websocket to the brain, not the playing scene">connecting…</small></div>
     <div class="show-id" id="showId">—</div>
     <div class="spacer"></div>
     <div class="toggle">
@@ -459,10 +460,11 @@ const order = () => state.scenes.filter(s=>s.id!==(state.meta?.home_scene??0)).m
 function connect(){
   try{ ws = new WebSocket(`ws://${location.host}/ws`); }catch(e){ return; }
   ws.onopen = ()=>{ online=true; document.getElementById('conn').classList.add('online');
-    document.getElementById('mode').textContent="live"; };
+    // not "live" — LIVE means the playing scene everywhere else in this UI
+    document.getElementById('mode').textContent="connected"; };
   ws.onmessage = e => { const d=JSON.parse(e.data); if(d.type==="state"){ state=d; blip(); render(); } };
   ws.onclose = ()=>{ online=false; document.getElementById('conn').classList.remove('online');
-    document.getElementById('mode').textContent="demo"; setTimeout(connect, 2000); };
+    document.getElementById('mode').textContent="no brain"; setTimeout(connect, 2000); };
   ws.onerror = ()=>{ try{ws.close();}catch(_){} };
 }
 function act(action, sceneId){

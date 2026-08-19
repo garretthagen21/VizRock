@@ -63,6 +63,21 @@ class Brain:
         else:
             logger.warning('unknown action: %s', action)
 
+    def boot(self):
+        """
+        Come up dark with the main loop queued.
+
+        Powering on should never throw a visual at a screen nobody is ready for — but
+        releasing blackout should land on the main loop rather than nothing, so the
+        restore target is primed rather than left empty. Call once outputs exist.
+        """
+        self.blackout = True
+        self._restore_to = self.scene_library.home
+        self.live = None
+        self._dispatch(BLACKOUT_SCENE)
+        self.last_event = 'booted dark · main loop queued'
+        logger.info('booted with blackout on, main loop (%s) queued', self._restore_to)
+
     def snapshot(self):
         return {
             'type': 'state',

@@ -37,6 +37,7 @@ async def _serve():
     midi = MidiInterface(lambda action, scene: loop.call_soon_threadsafe(brain.handle, action, scene))
     midi.open()
 
+    brain.boot()
     brain.push_state()
 
     stop = asyncio.Event()

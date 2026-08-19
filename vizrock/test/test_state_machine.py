@@ -63,6 +63,7 @@ def run():
 
     _arm_is_display_only()
     _blackout_is_a_toggle()
+    _boots_dark_with_main_queued()
 
     snapshot = brain.snapshot()
     assert 'addresses' in snapshot and 'output_config' in snapshot
@@ -134,3 +135,40 @@ def _blackout_is_a_toggle():
     fresh.handle('blackout')
     assert fresh.live == fresh.scene_library.home, f'should land on home, got {fresh.live}'
     assert fresh.blackout is False
+
+
+def _boots_dark_with_main_queued():
+    """
+    Powering on must not throw a visual at a screen nobody is ready for, but
+    releasing blackout has to land on the main loop rather than nothing.
+    """
+    brain = Brain()
+    sent = []
+
+    class Spy:
+        name = 'spy'
+
+        def apply(self, scene):
+            sent.append(scene.get('name'))
+
+        def on_state(self, snapshot):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    brain.outputs = [Spy()]
+    brain.boot()
+
+    assert brain.blackout is True, 'should come up dark'
+    assert brain.live is None, 'nothing is playing at boot'
+    assert sent == ['Blackout'], f'boot should dispatch all-off, got {sent}'
+    assert brain.armed == brain.scene_library.order[0], 'first special should be queued'
+
+    brain.handle('blackout')
+    assert brain.blackout is False
+    assert brain.live == brain.scene_library.home, \
+        f'releasing blackout should land on the main loop, got {brain.live}'
