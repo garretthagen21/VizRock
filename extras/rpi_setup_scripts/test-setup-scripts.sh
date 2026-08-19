@@ -143,6 +143,16 @@ check "unit restarts on crash"      "$(grep -c '^Restart=always' "$HERE/vizrock-
 check "kiosk points at localhost"   "$(grep -c 'http://localhost' "$HERE/vizrock-kiosk.service")" 1
 check "no python package touched"   "$(grep -rc 'kiosk' "$HERE/../../vizrock" 2>/dev/null | grep -v ':0' | wc -l | tr -d ' ')" 0
 
+# --console must take the cage path even on a desktop image
+rm -rf "$WORK/home/.config"
+FAKE_TARGET=graphical.target FAKE_LIGHTDM=0 rc=$(run "$HERE/setup-kiosk.sh" --console)
+check "console mode completes"     "$rc" 0
+check "switches boot behaviour"    "$(has 'raspi-config nonint do_boot_behaviour B2')" yes
+check "disables lightdm"           "$(has 'systemctl disable lightdm')" yes
+check "targets multi-user"         "$(has 'set-default multi-user.target')" yes
+check "installs cage anyway"       "$(has 'apt-get install -y cage seatd')" yes
+check "no desktop autostart left"  "$([ -f "$WORK/home/.config/autostart/vizrock-kiosk.desktop" ] && echo yes || echo no)" no
+
 echo "--- unit matches the package ---"
 check "ExecStart is the console script" \
       "$(grep ExecStart "$HERE/vizrock.service" | sed 's/.*bin\///')" "vizrock_run"

@@ -2,7 +2,8 @@
 #
 # Optional: show the VizRock UI on a screen plugged into the Pi.
 #
-#   sudo ./setup-kiosk.sh [port]        # port defaults to 8080
+#   sudo ./setup-kiosk.sh [port]              # use whatever the image already boots to
+#   sudo ./setup-kiosk.sh --console [port]    # drop the desktop, cage owns the display
 #
 # This is entirely independent of the show. It installs a Wayland kiosk
 # compositor (cage) running Chromium against http://localhost, so the screen is
@@ -13,13 +14,33 @@
 #
 set -euo pipefail
 
-PORT="${1:-8080}"
+CONSOLE=0
+ARGS=()
+for a in "$@"; do
+    case "$a" in
+        --console) CONSOLE=1 ;;
+        *) ARGS+=("$a") ;;
+    esac
+done
+PORT="${ARGS[0]:-8080}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUN_USER="${SUDO_USER:-pi}"
 
 if [ "$(id -u)" -ne 0 ]; then echo "run me with sudo" >&2; exit 1; fi
 if ! [ "$PORT" -eq "$PORT" ] 2>/dev/null; then
     echo "port must be a number, got '$PORT'" >&2; exit 1
+fi
+
+# --console drops the desktop entirely: boot to a console, stop lightdm, and let
+# cage own the display. Same card, none of the desktop baggage — no display
+# manager, no session keyring, no notifications. Reversible with
+#   sudo raspi-config nonint do_boot_behaviour B4
+if [ "$CONSOLE" = "1" ]; then
+    echo "==> switching to console boot (no desktop)"
+    raspi-config nonint do_boot_behaviour B2      # console, autologin
+    systemctl disable lightdm 2>/dev/null || true
+    systemctl set-default multi-user.target
+    rm -f "$(getent passwd "$RUN_USER" | cut -d: -f6)/.config/autostart/vizrock-kiosk.desktop"
 fi
 
 # Two very different situations, so detect rather than assume:
@@ -29,7 +50,7 @@ fi
 #                    inside the existing session instead.
 #   Lite image     — nothing owns the display, so cage is the whole compositor.
 #
-if systemctl is-active --quiet lightdm || [ "$(systemctl get-default)" = "graphical.target" ]; then
+if [ "$CONSOLE" != "1" ] && { systemctl is-active --quiet lightdm || [ "$(systemctl get-default)" = "graphical.target" ]; }; then
     MODE="desktop"
 else
     MODE="cage"
