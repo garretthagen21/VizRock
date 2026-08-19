@@ -98,7 +98,16 @@ else
     echo "==> cage compositor (no desktop present)"
     apt-get install -y cage seatd
     systemctl enable --now seatd
-    usermod -aG video,input,render,seat "$RUN_USER"
+    # Add groups one at a time and skip any that do not exist. Passing a missing
+    # group makes usermod fail outright, which under set -e aborted the whole script
+    # after it had already switched the box to console boot — leaving no kiosk at all.
+    for group in video input render seat; do
+        if getent group "$group" >/dev/null 2>&1; then
+            usermod -aG "$group" "$RUN_USER"
+        else
+            echo "    (no '$group' group on this system — skipping)"
+        fi
+    done
 
     RUN_UID="$(id -u "$RUN_USER")"
     UNIT="$(mktemp)"

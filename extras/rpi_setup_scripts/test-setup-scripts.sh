@@ -42,7 +42,13 @@ exit 0
 EOF
 chmod +x "$FAKE/nmcli"
 # HOME must point somewhere disposable — the desktop branch writes an autostart file
-printf '#!/bin/bash\necho "pi:x:1000:1000::%s:/bin/bash"\n' "$WORK/home" > "$FAKE/getent"
+cat > "$FAKE/getent" <<EOF
+#!/bin/bash
+if [ "\$1" = "passwd" ]; then echo "pi:x:1000:1000::$WORK/home:/bin/bash"; exit 0; fi
+# deliberately no 'seat' group — that is what broke on the real box
+case "\$2" in video|input|render) echo "\$2:x:44:"; exit 0;; esac
+exit 2
+EOF
 chmod +x "$FAKE/getent"
 mkdir -p "$WORK/home"
 printf '#!/bin/bash\nexit 0\n' > "$FAKE/chown"; chmod +x "$FAKE/chown"
@@ -118,7 +124,8 @@ FAKE_TARGET=multi-user.target FAKE_LIGHTDM=1 rc=$(run "$HERE/setup-kiosk.sh")
 check "kiosk completes (lite)"  "$rc" 0
 check "installs cage"           "$(has 'apt-get install -y cage seatd')" yes
 check "enables seatd"           "$(has 'systemctl enable --now seatd')" yes
-check "grants seat access"      "$(has 'usermod -aG video,input,render,seat')" yes
+check "grants group access"     "$(has 'usermod -aG video')" yes
+check "survives a missing group" "$(has 'usermod -aG seat')" no
 check "enables the kiosk unit"  "$(has 'systemctl enable --now vizrock-kiosk')" yes
 
 # --- desktop image: lightdm already owns it, so cage must NOT be installed ---
