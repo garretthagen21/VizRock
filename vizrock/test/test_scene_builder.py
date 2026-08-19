@@ -11,7 +11,6 @@
 
 
 import json
-import shutil
 import tempfile
 from pathlib import Path
 
@@ -97,17 +96,13 @@ def _merge_preserves_tuning():
 def _write_is_opt_in():
     """Without --write nothing on disk may change."""
     scenes_file = vizrock_paths.ensure_seeded(vizrock_paths.Files.SCENES_FILE)
-    backup = tempfile.NamedTemporaryFile(suffix='.json', delete=False).name
-    shutil.copy(scenes_file, backup)
     folder = tempfile.mkdtemp()
     _clips(folder, ['01_Only.mov'])
-    try:
-        before = scenes_file.read_text()
-        scene_builder.main([folder])
-        assert scenes_file.read_text() == before, 'a dry run wrote to disk'
 
-        scene_builder.main([folder, '--write'])
-        after = json.loads(scenes_file.read_text())
-        assert any(s['name'] == 'Only' for s in after['scenes']), after['scenes']
-    finally:
-        shutil.copy(backup, scenes_file)
+    before = scenes_file.read_text()
+    scene_builder.main([folder])
+    assert scenes_file.read_text() == before, 'a dry run wrote to disk'
+
+    scene_builder.main([folder, '--write'])
+    after = json.loads(scenes_file.read_text())
+    assert any(s['name'] == 'Only' for s in after['scenes']), after['scenes']

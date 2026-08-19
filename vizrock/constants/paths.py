@@ -9,13 +9,16 @@
 # @date    2026-08-03
 #
 
+import os
 from pathlib import Path
 
 
 class Directories:
     PACKAGE_DIR = Path(__file__).parents[1]
     REPO_DIR = PACKAGE_DIR.parent
-    CONFIG_DIR = REPO_DIR / 'configs'
+    # VIZROCK_CONFIG_DIR keeps the tests off the live show config — running them on
+    # the Pi would otherwise write to the scenes file the set depends on.
+    CONFIG_DIR = Path(os.environ.get('VIZROCK_CONFIG_DIR') or REPO_DIR / 'configs')
     WEB_DIR = PACKAGE_DIR / 'interface' / 'web'
 
 

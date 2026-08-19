@@ -98,11 +98,11 @@
      said nothing about state */
   .eyebrow .tag{color:var(--live)}
   .deck .eyebrow .tag{color:var(--armamber)}
-  .row{display:flex; align-items:center; gap:26px}
-  /* the ring sits above its caption, so the column has to centre or the circle
-     reads as left-aligned against wider text */
-  .row > div{min-width:0}
-  .row > div:last-child{display:flex; flex-direction:column; align-items:center; text-align:center}
+  /* the number and its light sit side by side, centred on each other; the scene
+     title runs underneath both, where it has the full panel width to breathe */
+  .row{display:flex; flex-direction:column; align-items:center; text-align:center; min-width:0}
+  .rowtop{display:flex; align-items:center; justify-content:center; gap:26px; min-width:0}
+  .ringwrap{display:flex; flex-direction:column; align-items:center; min-width:0}
   .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em}
   .live .num{font-size:clamp(78px,12vw,150px)}
   .deck .num{font-size:clamp(58px,9vw,104px); color:var(--armamber)}
@@ -356,7 +356,7 @@
     .ringcap,.goready{margin-top:4px; font-size:10px}
     .miniring{width:clamp(52px,8.5vw,80px)}
     .live .miniring{width:clamp(64px,10.5vw,96px)}
-    .row{gap:16px}
+    .rowtop{gap:16px}
     .eyebrow{font-size:15px; letter-spacing:.2em}
     .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
       padding-bottom:max(7px, env(safe-area-inset-bottom))}
@@ -412,28 +412,28 @@
       <div class="stack live">
         <div class="eyebrow"><span class="tag">●</span> LIVE <span id="liveMark"></span></div>
         <div class="row">
-          <div>
+          <div class="rowtop">
             <div class="num" id="lNum">--</div>
-            <div class="name" id="lName">—</div>
+            <div class="ringwrap">
+              <div class="miniring" id="lRing"></div>
+              <div class="ringcap" id="lCap"></div>
+            </div>
           </div>
-          <div>
-            <div class="miniring" id="lRing"></div>
-            <div class="ringcap" id="lCap"></div>
-          </div>
+          <div class="name" id="lName">—</div>
         </div>
       </div>
       <div class="stack deck">
         <div class="eyebrow"><span class="tag">◇</span> ON DECK</div>
         <div class="row">
-          <div>
+          <div class="rowtop">
             <div class="num" id="aNum">--</div>
-            <div class="name" id="aName">—</div>
+            <div class="ringwrap">
+              <div class="miniring" id="aRing"></div>
+              <div class="ringcap" id="aCap"></div>
+            </div>
+          </div>
+          <div class="name" id="aName">—</div>
             <div class="goready">GO fires this</div>
-          </div>
-          <div>
-            <div class="miniring" id="aRing"></div>
-            <div class="ringcap" id="aCap"></div>
-          </div>
         </div>
       </div>
     </div>
@@ -554,21 +554,43 @@ const lbl = id => { const s=scene(id); return s?`${String(id).padStart(2,'0')} $
 // ---- ring visualization ----
 function paintRing(el, r){
   if(!el) return;
-  const hue=H(r.hue), light=38+r.bright/255*24, sat=r.mode==="off"?0:85, col=`hsl(${hue} ${sat}% ${light}%)`;
-  el.style.animation="none";
-  if(r.mode==="off"){ el.style.background="conic-gradient(#161b24,#161b24)"; el.style.boxShadow="none"; el.style.opacity=".5"; return; }
-  el.style.opacity="1";
+  r = r || {mode:"off"};
+  // Repainting on every snapshot restarted the animation mid-cycle, so a strobe
+  // never got far enough to look like one. Only touch the element when the light
+  // actually changed, and leave a running animation alone otherwise.
+  const sig = `${r.mode}|${r.hue}|${r.bright}|${r.speed}`;
+  if(el.dataset.sig === sig) return;
+  el.dataset.sig = sig;
+  const bright = Math.min(255, Math.max(0, r.bright||0))/255;
+  // clearing the animation only takes effect after a reflow — without this the
+  // browser coalesces both writes and keeps the old timing
+  el.style.animation="none"; void el.offsetWidth;
+  if(r.mode==="off" || bright===0){
+    el.style.background="radial-gradient(closest-side,#0c1017 55%,#222a36 58%,#222a36 80%,transparent 84%)";
+    el.style.boxShadow="none"; el.style.opacity=".45"; return;
+  }
+  // brightness has to be readable across the room, so it drives lightness, glow
+  // and opacity together instead of nudging just one of them
+  const col=`hsl(${H(r.hue)} 90% ${(30+bright*38).toFixed(0)}%)`;
+  const peak=(0.5+bright*0.5).toFixed(2);
   el.style.background = r.mode==="chase"
     ? `conic-gradient(${col}, transparent 40%, ${col})`
     : `radial-gradient(closest-side,#0c1017 55%,${col} 58%,${col} 80%,transparent 84%)`;
-  const glow=12+r.bright/255*26; el.style.boxShadow=`0 0 ${glow}px ${Math.round(glow/2)}px ${col}`;
-  const dur=Math.max(0.25,2.4-r.speed*0.26)+"s";
-  if(r.mode==="pulse")  el.style.animation=`rpulse ${dur} ease-in-out infinite`;
-  if(r.mode==="strobe") el.style.animation=`rstrobe ${Math.max(0.12,0.5-r.speed*0.04)}s steps(2) infinite`;
-  if(r.mode==="chase")  el.style.animation=`rspin ${dur} linear infinite`;
+  const glow=4+bright*42;
+  el.style.boxShadow=`0 0 ${glow.toFixed(0)}px ${Math.round(glow/2)}px ${col}`;
+  el.style.opacity=peak;
+  el.style.setProperty('--peak', peak);
+  const speed=Math.min(10, Math.max(0, r.speed||0));
+  const dur=(2.4-speed*0.2).toFixed(2);
+  if(r.mode==="pulse")  el.style.animation=`rpulse ${dur}s ease-in-out infinite`;
+  if(r.mode==="chase")  el.style.animation=`rspin ${dur}s linear infinite`;
+  // a square wave, not a fade — a strobe that eases is just a slow pulse
+  if(r.mode==="strobe") el.style.animation=`rstrobe ${(0.62-speed*0.05).toFixed(2)}s linear infinite`;
 }
 const kf=document.createElement('style');
-kf.textContent=`@keyframes rpulse{0%,100%{filter:brightness(.6)}50%{filter:brightness(1.35)}}@keyframes rstrobe{50%{opacity:.15}}@keyframes rspin{to{transform:rotate(360deg)}}`;
+kf.textContent=`@keyframes rpulse{0%,100%{opacity:calc(var(--peak,1)*.28)}50%{opacity:var(--peak,1)}}`
+  +`@keyframes rstrobe{0%,49.9%{opacity:var(--peak,1)}50%,100%{opacity:.05}}`
+  +`@keyframes rspin{to{transform:rotate(360deg)}}`;
 document.head.appendChild(kf);
 const capOf = r => r.mode==="off" ? "OFF" : `${r.mode.toUpperCase()} · H${r.hue} · ${r.bright}`;
 
@@ -611,7 +633,7 @@ function render(){
 }
 const outputKeys = () => Object.keys(state.outputs||{});
 function renderPills(){
-  const labels={resolume:"VISUALS",dmx:"DMX",rings:"RINGS",oled:"DISPLAY"};
+  const labels={resolume:"VISUALS",dmx:"DMX",rings:"LIGHTS",oled:"DISPLAY"};
   const wrap=document.getElementById('pills'); wrap.innerHTML="";
   outputKeys().forEach(k=>{
     const st=state.outputs?.[k]||"off";
@@ -637,7 +659,7 @@ function renderShow(){
   document.getElementById('aName').textContent=A.name;
   paintRing(document.getElementById('aRing'),A.ring); document.getElementById('aCap').textContent=capOf(A.ring);
 }
-function ringColor(r){ return r.mode==="off"?"#3a4657":`hsl(${H(r.hue)} 85% ${45+r.bright/255*20}%)`; }
+function ringColor(r){ return r.mode==="off"?"#3a4657":`hsl(${H(r.hue)} 90% ${(30+Math.min(255,r.bright||0)/255*38).toFixed(0)}%)`; }
 let dragId = null, editShowingDetail = false, detailMode = 'scene';
 function setEditDetail(on){
   editShowingDetail = !!on;
@@ -720,7 +742,7 @@ function renderInsp(){
            <input type="number" id="f_clip" min="1" value="${s.resolume?.clip??1}"></div></div>`}</div>
     <div class="field"><label>DMX CUE</label>
       <input type="text" id="f_cue" value="${(s.dmx?.cue||"").replace(/"/g,'&quot;')}"></div>
-    <div class="field"><label>RING</label>
+    <div class="field"><label>LIGHTS</label>
       <div class="slider"><div class="ringmini" id="mini"></div>
         <div style="flex:1"><select id="f_mode">${opts}</select></div></div>
       <div style="margin-top:12px">

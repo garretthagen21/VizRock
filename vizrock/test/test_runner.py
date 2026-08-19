@@ -9,7 +9,19 @@
 # @date    2026-08-08
 #
 
+import os
+import shutil
+import tempfile
 import traceback
+from pathlib import Path
+
+# Point the config dir at a throwaway copy before anything imports it, so a test
+# run can never touch the real scenes file. Seed it with the committed examples.
+_REAL_CONFIGS = Path(__file__).parents[2] / 'configs'
+_TMP_CONFIGS = Path(tempfile.mkdtemp(prefix='vizrock-test-configs-'))
+for _example in _REAL_CONFIGS.glob('*.example.json'):
+    shutil.copy(_example, _TMP_CONFIGS / _example.name)
+os.environ['VIZROCK_CONFIG_DIR'] = str(_TMP_CONFIGS)
 
 from vizrock.test import stubs
 
