@@ -97,6 +97,6 @@ else
 fi
 
 echo
-echo "If the screen is blank, check the cable is in HDMI0 — the port nearest USB-C."
-echo "Touch panels may need a dtoverlay line in /boot/firmware/config.txt; see the"
-echo "panel's own documentation."
+echo "If the screen is blank:"
+echo "  DSI panel  — check the ribbon is seated; display_auto_detect=1 handles the rest"
+echo "  HDMI panel — use HDMI0, the port nearest USB-C. HDMI1 stays dark during boot"
