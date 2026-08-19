@@ -53,7 +53,8 @@
   .pill.ok .st{color:var(--live)} .pill.retrying .st{color:var(--warn)}
   .pill.sending .st{color:var(--active)}
   @keyframes blink{50%{opacity:.35}}
-  .midiblip{margin-left:auto; display:flex; align-items:center; gap:9px; font-family:var(--mono);
+  .midiblip{margin-left:auto; display:flex; align-items:center; gap:9px; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:46%; font-family:var(--mono);
     font-size:11px; letter-spacing:.1em; color:var(--muted); font-weight:600}
   .midiblip .sq{width:11px;height:11px;border-radius:2px;border:1px solid var(--muted2);transition:.05s}
   .midiblip.hit .sq{background:var(--active);border-color:var(--active);box-shadow:0 0 12px var(--active)}
@@ -275,9 +276,17 @@
     .name{font-size:clamp(14px,2vw,20px); margin-top:4px}
     .ringcap,.goready{margin-top:4px; font-size:10px}
     .miniring{width:clamp(44px,7vw,64px)}
-    .transport{padding:7px 12px; gap:7px; padding-bottom:max(7px, env(safe-area-inset-bottom))}
-    .transport .btn{padding:11px 9px}
-    .transport .btn.go{flex:1 1 auto; order:0; padding:11px 18px}
+    .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
+      padding-bottom:max(7px, env(safe-area-inset-bottom))}
+    /* every button shares the width equally — no dead space in the bar */
+    .transport .btn{flex:1 1 0; min-width:0; padding:12px 4px; font-size:11px; letter-spacing:.06em}
+    .transport .btn.go{flex:1 1 0; order:0; padding:12px 4px}
+    /* the event log is not worth width on a 5in panel; desktop keeps it */
+    .log{display:none}
+    /* EDIT has to scroll on a short screen, or the inspector is unreachable */
+    #viewEdit{flex:1; min-height:0; overflow:auto; -webkit-overflow-scrolling:touch}
+    .edit{grid-template-columns:1fr; min-height:0}
+    .col{overflow:visible; padding:12px 14px}
     /* Roughly 8 visible with big targets; the rest scrolls. A partly visible third
        row is deliberate — it is the only affordance saying there is more below. */
     .cuegrid{gap:10px; padding:12px; grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
@@ -484,7 +493,9 @@ function renderPills(){
     el.innerHTML=`<span class="led"></span>${labels[k]||k.toUpperCase()} <span class="st">${st}</span>`;
     wrap.appendChild(el);
   });
-  const b=document.createElement('div'); b.className="midiblip"; b.id="blip"; b.innerHTML=`<span class="sq"></span>MIDI IN`;
+  const b=document.createElement('div'); b.className="midiblip"; b.id="blip";
+  b.title="flashes when the brain pushes new state";
+  b.innerHTML=`<span class="sq"></span>${esc(state.last_event||"")}`;
   wrap.appendChild(b);
 }
 function renderShow(){
