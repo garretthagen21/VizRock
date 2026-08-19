@@ -22,7 +22,7 @@
     --void:#0B0E13; --panel:#141922; --panel2:#1B222E; --line:#232C3A;
     --ink:#E6EDF5; --muted:#6B7A90; --muted2:#48566B;
     --live:#35E08A; --warn:#FFB347; --idle:#3A4657; --active:#4EA8FF; --armamber:#FFCB6B;
-    --home:#9B8CFF; --mono:'IBM Plex Mono',ui-monospace,monospace; --disp:'Space Grotesk',system-ui,sans-serif;
+    --home:#4EA8FF; --mono:'IBM Plex Mono',ui-monospace,monospace; --disp:'Space Grotesk',system-ui,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -88,7 +88,7 @@
   .show{flex:1; display:grid; grid-template-columns:60fr 40fr; min-height:0}
   .stack{display:flex; flex-direction:column; justify-content:center; padding:8px 32px; gap:14px; min-width:0; min-height:0; height:100%}
   .stack.deck{border-left:1px solid var(--line); background:linear-gradient(180deg,#0e131b, var(--void))}
-  .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.3em; color:var(--muted); display:flex; align-items:center; gap:10px}
+  .eyebrow{font-family:var(--mono); font-size:15px; font-weight:600; letter-spacing:.26em; color:var(--muted); display:flex; align-items:center; gap:10px}
   .eyebrow .tag{color:var(--active)}
   .deck .eyebrow .tag{color:var(--armamber)}
   .row{display:flex; align-items:center; gap:26px}
@@ -102,8 +102,8 @@
   .name{font-size:clamp(20px,2.6vw,34px); font-weight:600; margin-top:10px}
   .deck .name{color:#f0e2c4}
   .miniring{width:clamp(74px,10vw,120px); aspect-ratio:1; border-radius:50%; flex:none}
-  .ringcap{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--muted); margin-top:10px; text-align:center}
-  .goready{font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:var(--armamber); margin-top:6px}
+  .ringcap{font-family:var(--mono); font-size:13px; letter-spacing:.12em; color:var(--muted); margin-top:10px; text-align:center}
+  .goready{font-family:var(--mono); font-size:13px; letter-spacing:.16em; color:var(--armamber); margin-top:6px}
   .goready::before{content:"▸ "; }
 
   .transport{display:flex; align-items:center; gap:12px; padding:14px 22px; border-top:1px solid var(--line); background:var(--panel)}
@@ -218,15 +218,15 @@
   /* The main loop is a different kind of thing from the setlist, so it should not
      look like a slightly different cue. Own colour, own glyph, own shape. */
   .homecue{margin:10px 16px 0; display:flex; align-items:center; gap:14px; cursor:pointer;
-    background:linear-gradient(90deg, rgba(155,140,255,.16), var(--panel));
-    border:1px solid rgba(155,140,255,.42); border-left:5px solid var(--home);
+    background:linear-gradient(90deg, rgba(78,168,255,.16), var(--panel));
+    border:1px solid rgba(78,168,255,.42); border-left:5px solid var(--home);
     border-radius:12px; padding:14px 16px; color:var(--ink); font-family:inherit;
     width:calc(100% - 32px)}
   .homecue .glyph{font-size:26px; line-height:1; color:var(--home); flex:none}
   .homecue .cn{font-family:var(--mono); font-size:22px; font-weight:700; color:var(--home)}
   .homecue .cname{font-size:17px; font-weight:700; text-align:left; letter-spacing:.01em}
   .homecue .tagline{margin-left:auto; font-family:var(--mono); font-size:11px; font-weight:700;
-    letter-spacing:.18em; color:var(--home); border:1px solid rgba(155,140,255,.42);
+    letter-spacing:.18em; color:var(--home); border:1px solid rgba(78,168,255,.42);
     border-radius:6px; padding:5px 9px}
   .homecue .swatch{width:12px;height:12px;border-radius:50%;flex:none}
   .homecue.live{border-style:solid; border-color:var(--live); background:#0f2119}
@@ -263,9 +263,9 @@
   .blackedout .stack.live .num{color:#ff8a8a}
   .stack.live.ismain .num{color:var(--home)}
   .blackedout .live .eyebrow .tag{color:#ff8a8a}
-  .blackoutmark{font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:#ff8a8a;
+  .blackoutmark{font-family:var(--mono); font-size:14px; letter-spacing:.16em; color:#ff8a8a;
     font-weight:700}
-  .mainmark{font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:var(--home);
+  .mainmark{font-family:var(--mono); font-size:14px; letter-spacing:.16em; color:var(--home);
     font-weight:700; margin-left:8px}
   .hidden{display:none!important}
   /* Narrow / portrait: the desktop shell is a fixed 100vh with overflow hidden, which
@@ -327,7 +327,7 @@
     .ringcap,.goready{margin-top:4px; font-size:10px}
     .miniring{width:clamp(52px,8.5vw,80px)}
     .row{gap:16px}
-    .eyebrow{font-size:11px; letter-spacing:.22em}
+    .eyebrow{font-size:15px; letter-spacing:.2em}
     .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
       padding-bottom:max(7px, env(safe-area-inset-bottom))}
     /* every button shares the width equally — no dead space in the bar */
