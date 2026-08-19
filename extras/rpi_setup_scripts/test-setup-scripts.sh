@@ -129,6 +129,8 @@ check "does NOT install cage"     "$(has 'apt-get install -y cage seatd')" no
 check "no competing unit"         "$(has 'enable --now vizrock-kiosk')" no
 check "writes an autostart entry" "$([ -f "$WORK/home/.config/autostart/vizrock-kiosk.desktop" ] && echo yes || echo no)" yes
 check "autostart runs chromium"   "$(grep -c '^Exec=.*--kiosk' "$WORK/home/.config/autostart/vizrock-kiosk.desktop" 2>/dev/null)" 1
+# the keyring prompt on every boot is a real showstopper on an autologin box
+check "no keyring prompt"         "$(grep -c 'password-store=basic' "$WORK/home/.config/autostart/vizrock-kiosk.desktop" 2>/dev/null)" 1
 check "disables screen blanking"  "$(has 'raspi-config nonint do_blanking 1')" yes
 FAKE_UID=1000 rc=$(run "$HERE/setup-kiosk.sh"); check "kiosk refuses non-root" "$rc" 1
 FAKE_UID=0
