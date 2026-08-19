@@ -71,12 +71,15 @@ class Brain:
         releasing blackout should land on the main loop rather than nothing, so the
         restore target is primed rather than left empty. Call once outputs exist.
         """
+        home = self.scene_library.home
         self.blackout = True
-        self._restore_to = self.scene_library.home
-        self.live = None
+        self._restore_to = home
+        # LIVE shows the main loop so you can see what you will get back; the outputs
+        # get all-off, so nothing actually reaches the screen until blackout is released
+        self.live = home if home in self.scene_library.scenes else None
         self._dispatch(BLACKOUT_SCENE)
-        self.last_event = 'booted dark · main loop queued'
-        logger.info('booted with blackout on, main loop (%s) queued', self._restore_to)
+        self.last_event = 'booted blacked out · main loop loaded'
+        logger.info('booted blacked out with the main loop (%s) loaded', home)
 
     def snapshot(self):
         return {

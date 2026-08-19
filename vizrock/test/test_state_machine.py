@@ -164,8 +164,9 @@ def _boots_dark_with_main_queued():
     brain.boot()
 
     assert brain.blackout is True, 'should come up dark'
-    assert brain.live is None, 'nothing is playing at boot'
-    assert sent == ['Blackout'], f'boot should dispatch all-off, got {sent}'
+    assert brain.live == brain.scene_library.home, \
+        'the main loop should be loaded so you can see what you will get back'
+    assert sent == ['Blackout'], f'outputs must still get all-off, got {sent}'
     assert brain.armed == brain.scene_library.order[0], 'first special should be queued'
 
     brain.handle('blackout')

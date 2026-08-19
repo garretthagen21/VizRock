@@ -251,6 +251,14 @@
     border-radius:4px;font-weight:700}
   .cueflag.l{background:var(--live);color:#06121f}
   .cueflag.a{background:var(--armamber);color:#06121f}
+  /* Blacked out means a scene is loaded but nothing is reaching the screen. Show
+     the scene so you know what you will get back, dimmed so you cannot mistake it
+     for something the audience can see. */
+  .blackedout .stack.live{opacity:.42}
+  .blackedout .stack.live .num{color:#ff8a8a}
+  .blackedout .live .eyebrow .tag{color:#ff8a8a}
+  .blackoutmark{font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:#ff8a8a;
+    font-weight:700}
   .hidden{display:none!important}
   /* Narrow / portrait: the desktop shell is a fixed 100vh with overflow hidden, which
      leaves the EDIT view unreachable on a phone. Let the page scroll instead of trying
@@ -273,8 +281,8 @@
     /* transport becomes a sticky footer bar — GO must always be reachable */
     .transport{position:sticky; bottom:0; z-index:5; flex-wrap:wrap; gap:8px; padding:10px 14px;
       padding-bottom:max(10px, env(safe-area-inset-bottom))}
-    .transport .btn{flex:1 1 0; min-width:0; padding:20px 8px}
-    .transport .btn.go{flex:1 1 0; order:1; padding:20px 8px}
+    .transport .btn{flex:1 1 0; min-width:0; padding:26px 8px}
+    .transport .btn.go{flex:1 1 0; order:1; padding:26px 8px}
     .log{order:5; flex:1 1 100%; white-space:normal}
     .foot-note{display:none}
     .row2{grid-template-columns:1fr}
@@ -315,8 +323,8 @@
     .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
       padding-bottom:max(7px, env(safe-area-inset-bottom))}
     /* every button shares the width equally — no dead space in the bar */
-    .transport .btn{flex:1 1 0; min-width:0; padding:21px 4px; font-size:13px; letter-spacing:.06em}
-    .transport .btn.go{flex:1 1 0; order:0; padding:21px 4px}
+    .transport .btn{flex:1 1 0; min-width:0; padding:30px 4px; font-size:14px; letter-spacing:.06em}
+    .transport .btn.go{flex:1 1 0; order:0; padding:30px 4px}
     /* the event log is not worth width on a 5in panel; desktop keeps it */
     .log{display:none}
     /* EDIT has to scroll on a short screen, or the inspector is unreachable */
@@ -356,7 +364,7 @@
   <div id="viewShow">
     <div class="show">
       <div class="stack live">
-        <div class="eyebrow"><span class="tag">●</span> LIVE</div>
+        <div class="eyebrow"><span class="tag">●</span> LIVE <span id="liveMark"></span></div>
         <div class="row">
           <div>
             <div class="num" id="lNum">--</div>
@@ -514,6 +522,9 @@ function flashOutputs(){
 function render(){
   if(lastLive !== undefined && state.live !== lastLive) flashOutputs();
   lastLive = state.live;
+  document.querySelector('.app').classList.toggle('blackedout', !!state.blackout);
+  const lm=document.getElementById('liveMark');
+  if(lm) lm.innerHTML = state.blackout ? '<span class="blackoutmark">· BLACKED OUT</span>' : '';
   const bb=document.getElementById('blackoutBtn');
   if(bb){ bb.classList.toggle('on', !!state.blackout);
           bb.textContent = state.blackout ? "BLACKOUT ON" : "BLACKOUT"; }
