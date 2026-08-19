@@ -45,6 +45,14 @@
   .toggle button{font-family:var(--mono); font-size:12px; letter-spacing:.12em; font-weight:600; background:transparent;
     color:var(--muted); border:0; padding:9px 18px; cursor:pointer; transition:.18s}
   .toggle button.on{background:var(--active); color:#06121f}
+  .blackoutbtn{font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.12em;
+    cursor:pointer; background:transparent; color:#ff8a8a; border:1px solid #3a2530;
+    border-radius:8px; padding:9px 14px; transition:.15s}
+  .blackoutbtn:active{background:#2a1720}
+  @media (hover:hover){ .blackoutbtn:hover{background:#2a1720; border-color:#ff8a8a} }
+  /* a held state has to look held */
+  .blackoutbtn.on{background:#ff8a8a; color:#1a0d12; border-color:#ff8a8a;
+    box-shadow:0 0 16px rgba(255,138,138,.45)}
   .clock{font-family:var(--mono); font-size:13px; color:var(--muted); letter-spacing:.06em; min-width:74px; text-align:right}
 
   .statusbar{display:flex; align-items:center; gap:10px; padding:14px 22px; flex-wrap:wrap}
@@ -70,8 +78,11 @@
   .midiblip.hit .sq{background:var(--active);border-color:var(--active);box-shadow:0 0 12px var(--active)}
 
   /* SHOW: LIVE | ARMED */
-  .show{flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0}
-  .stack{display:flex; flex-direction:column; justify-content:center; padding:8px 40px; gap:18px; min-width:0}
+  /* LIVE is what you glance at, so give it the room: wider, and its type larger than
+     ON DECK. The size difference is the cue — you should know which is which without
+     reading the labels. */
+  .show{flex:1; display:grid; grid-template-columns:60fr 40fr; min-height:0}
+  .stack{display:flex; flex-direction:column; justify-content:center; padding:8px 32px; gap:14px; min-width:0; min-height:0; height:100%}
   .stack.deck{border-left:1px solid var(--line); background:linear-gradient(180deg,#0e131b, var(--void))}
   .eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.3em; color:var(--muted); display:flex; align-items:center; gap:10px}
   .eyebrow .tag{color:var(--active)}
@@ -253,8 +264,8 @@
     /* transport becomes a sticky footer bar — GO must always be reachable */
     .transport{position:sticky; bottom:0; z-index:5; flex-wrap:wrap; gap:8px; padding:10px 14px;
       padding-bottom:max(10px, env(safe-area-inset-bottom))}
-    .transport .btn{flex:1 1 auto; min-width:0; padding:13px 10px}
-    .transport .btn.go{flex:1 1 100%; order:1; padding:15px 10px}
+    .transport .btn{flex:1 1 0; min-width:0; padding:20px 8px}
+    .transport .btn.go{flex:1 1 0; order:1; padding:20px 8px}
     .log{order:5; flex:1 1 100%; white-space:normal}
     .foot-note{display:none}
     .row2{grid-template-columns:1fr}
@@ -277,20 +288,21 @@
     header{padding:6px 12px; padding-top:max(6px, env(safe-area-inset-top))}
     .statusbar{padding:5px 12px; gap:6px}
     .pill{padding:4px 9px 4px 8px; font-size:10px}
-    .show{grid-template-columns:1fr 1fr}
+    .show{grid-template-columns:60fr 40fr}
     .stack{padding:4px 16px; gap:6px; justify-content:center}
     .stack.deck{border-left:1px solid var(--line); border-top:0}
     .eyebrow{font-size:10px; letter-spacing:.2em}
-    .live .num{font-size:clamp(46px,8.5vw,86px)}
-    .deck .num{font-size:clamp(34px,6.5vw,66px)}
-    .name{font-size:clamp(14px,2vw,20px); margin-top:4px}
+    .live .num{font-size:clamp(54px,11vw,104px); line-height:.95}
+    .deck .num{font-size:clamp(30px,5.5vw,58px); line-height:.95}
+    .live .name{font-size:clamp(16px,2.6vw,24px); margin-top:6px}
+    .deck .name{font-size:clamp(13px,1.9vw,18px); margin-top:4px}
     .ringcap,.goready{margin-top:4px; font-size:10px}
     .miniring{width:clamp(44px,7vw,64px)}
     .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
       padding-bottom:max(7px, env(safe-area-inset-bottom))}
     /* every button shares the width equally — no dead space in the bar */
-    .transport .btn{flex:1 1 0; min-width:0; padding:12px 4px; font-size:11px; letter-spacing:.06em}
-    .transport .btn.go{flex:1 1 0; order:0; padding:12px 4px}
+    .transport .btn{flex:1 1 0; min-width:0; padding:21px 4px; font-size:13px; letter-spacing:.06em}
+    .transport .btn.go{flex:1 1 0; order:0; padding:21px 4px}
     /* the event log is not worth width on a 5in panel; desktop keeps it */
     .log{display:none}
     /* EDIT has to scroll on a short screen, or the inspector is unreachable */
@@ -321,6 +333,7 @@
       <button id="tCues" onclick="setView('cues')">CUES</button>
       <button id="tEdit" onclick="setView('edit')">EDIT</button>
     </div>
+    <button class="blackoutbtn" id="blackoutBtn" onclick="act('blackout')">BLACKOUT</button>
     <div class="clock" id="clock">--:--:--</div>
   </header>
 
@@ -366,13 +379,11 @@
 
   <div id="sharedTransport">
     <div class="transport">
-      <button class="btn home" onclick="act('home')">⌂ HOME</button>
+      <button class="btn home" onclick="act('home')">⌂ MAIN</button>
       <button class="btn" onclick="act('arm_prev')">◄ PREV</button>
       <button class="btn" onclick="act('arm_next')">NEXT ►</button>
       <button class="btn go" onclick="act('go')">GO ▸</button>
       <div class="log" id="log"><span class="t">[--:--:--]</span> connecting…</div>
-      <span class="foot-note">Chocolate: HOME · PREV · NEXT · GO</span>
-      <button class="btn blackout" onclick="act('blackout')">BLACKOUT</button>
     </div>
   </div>
 
@@ -407,6 +418,7 @@ const DEMO = {
   output_config:{resolume:{type:"osc",hosts:["Garretts-M2-MacBook-Pro.local"],port:38200},
                  dmx:{type:"artnet",host:"192.168.4.60"}, rings:{type:"serial"}, oled:{type:"oled"}},
   tap_fires:false,
+  blackout:false,
   network:{hostname:"vizrock-box", addresses:["10.42.1.1","10.42.0.1"]},
   update:{online:true,current:"f20083c",subject:"Show every reachable URL in the UI",
           behind:1,incoming:[{sha:"a1b2c3d",subject:"Add the CUES view"}],busy:false,
@@ -487,6 +499,9 @@ function flashOutputs(){
 function render(){
   if(lastLive !== undefined && state.live !== lastLive) flashOutputs();
   lastLive = state.live;
+  const bb=document.getElementById('blackoutBtn');
+  if(bb){ bb.classList.toggle('on', !!state.blackout);
+          bb.textContent = state.blackout ? "BLACKOUT ON" : "BLACKOUT"; }
   document.getElementById('showId').textContent = state.meta?.show || "—";
   renderPills();
   if(!document.getElementById('viewShow').classList.contains('hidden')) renderShow();
@@ -551,7 +566,7 @@ function renderList(){
     }
     const flags=(s.id===state.live?`<span class="flag live">LIVE</span>`:"")
                +(s.id===state.armed?`<span class="flag armed">ARMED</span>`:"")
-               +(isHome?`<span class="flag home">HOME</span>`:"");
+               +(isHome?`<span class="flag home">MAIN</span>`:"");
     el.innerHTML=`<div class="id">${String(s.id).padStart(2,'0')}</div>
       <div class="body"><div class="nm">${esc(s.name)} ${flags}</div>
       <div class="chips">
@@ -711,7 +726,7 @@ function renderCues(){
       el.innerHTML=`<span class="cn">${String(h.id).padStart(2,'0')}</span>
         <span class="swatch" style="background:${ringColor(ring)}"></span>
         <span class="cname">${esc(h.name)}</span>
-        <span class="tagline">${h.id===state.live?"LIVE · ":""}HOME</span>`;
+        <span class="tagline">${h.id===state.live?"LIVE · ":""}MAIN</span>`;
       homeBox.appendChild(el);
     }
   }

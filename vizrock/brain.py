@@ -35,6 +35,8 @@ class Brain:
         self.outputs = []
         self.ui_server = None
         self.updater = None
+        self.blackout = False
+        self._restore_to = None          # what was live when blackout went on
         self.last_event = 'armed · waiting for trigger'
 
     # MARK: - Actions (called from MIDI or the UI)
@@ -57,11 +59,7 @@ class Brain:
                 # main loop must leave whatever you had queued still queued
                 self._commit(self.scene_library.home, rearm=False)
         elif action == 'blackout':
-            logger.info('LIVE -> blackout (all outputs off)')
-            self._dispatch(BLACKOUT_SCENE)
-            self.live = None
-            self.last_event = 'LIVE → blackout'
-            self.push_state()
+            self._toggle_blackout()
         else:
             logger.warning('unknown action: %s', action)
 
@@ -75,6 +73,7 @@ class Brain:
             'addresses': {output.name: output.address_label() for output in self.outputs},
             'output_config': vizrock_settings.outputs,
             'tap_fires': vizrock_settings.tap_fires,
+            'blackout': self.blackout,
             'update': self.updater.snapshot() if self.updater else None,
             'network': {'hostname': vizrock_system.hostname(),
                         'addresses': vizrock_system.local_addresses()},
@@ -143,6 +142,35 @@ class Brain:
         return replacement is not None
 
     # MARK: - Private
+    def _toggle_blackout(self):
+        """
+        Blackout is a held state, not a one-way trip. Turning it off puts back
+        whatever was playing, so killing the screen mid-song does not also lose your
+        place. If nothing was live, fall back to the main loop rather than staying
+        dark — a button that appears to do nothing is worse than one that overshoots.
+        """
+        if not self.blackout:
+            self._restore_to = self.live
+            self.blackout = True
+            logger.info('LIVE -> blackout (all outputs off, will restore %s)', self._restore_to)
+            self._dispatch(BLACKOUT_SCENE)
+            self.live = None
+            self.last_event = 'blackout · press again to restore'
+            self.push_state()
+            return
+
+        self.blackout = False
+        target = self._restore_to
+        if target not in self.scene_library.scenes:
+            target = self.scene_library.home
+        self._restore_to = None
+        if target in self.scene_library.scenes:
+            logger.info('blackout off -> restoring %s', self.scene_library.label(target))
+            self._commit(target, rearm=False)
+        else:
+            self.last_event = 'blackout off'
+            self.push_state()
+
     def _arm(self, scene_id):
         """Queue a specific scene. Display-only, exactly like arm_prev/arm_next."""
         if scene_id not in self.scene_library.scenes:
@@ -173,6 +201,7 @@ class Brain:
             logger.warning('commit to missing scene %s', scene_id)
             return
         self.live = scene_id
+        self.blackout = False
         scene = self.scene_library.scenes[scene_id]
         # say what was actually targeted — "which clip did it fire?" is the first
         # question when visuals look wrong, and the action alone does not answer it

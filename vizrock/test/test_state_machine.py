@@ -62,6 +62,7 @@ def run():
         'notes are not mapped on this pedal'
 
     _arm_is_display_only()
+    _blackout_is_a_toggle()
 
     snapshot = brain.snapshot()
     assert 'addresses' in snapshot and 'output_config' in snapshot
@@ -102,3 +103,34 @@ def _arm_is_display_only():
 
     brain.handle('arm', 99)
     assert brain.armed == 3, 'arming a missing scene must be a no-op'
+
+
+def _blackout_is_a_toggle():
+    """
+    Blackout is a held state, not a one-way trip: turning it off must put back what
+    was playing, or killing the screen mid-song also loses your place.
+    """
+    brain = Brain()
+    brain.handle('goto', 3)
+    assert brain.live == 3 and brain.blackout is False
+
+    brain.handle('blackout')
+    assert brain.blackout is True, 'should be held on'
+    assert brain.live is None, 'nothing is playing during blackout'
+
+    brain.handle('blackout')
+    assert brain.blackout is False, 'should toggle off'
+    assert brain.live == 3, f'should restore what was playing, got {brain.live}'
+
+    # firing anything means you want visuals again
+    brain.handle('blackout')
+    assert brain.blackout is True
+    brain.handle('go')
+    assert brain.blackout is False, 'committing a scene must clear blackout'
+
+    # nothing live beforehand falls back to home rather than staying dark
+    fresh = Brain()
+    fresh.handle('blackout')
+    fresh.handle('blackout')
+    assert fresh.live == fresh.scene_library.home, f'should land on home, got {fresh.live}'
+    assert fresh.blackout is False

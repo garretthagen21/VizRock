@@ -107,6 +107,14 @@ every output degrades to a no-op and the web UI still drives the full state mach
   initial snapshot silently vanished until this was fixed.
 - **Gate every `:hover` behind `@media (hover:hover)`.** On touch, `:hover` latches after a
   tap, which made the transport buttons look stuck on. Pair each one with `:active`.
+- **Blackout is a held toggle, not a one-way trip.** Turning it off restores whatever was
+  playing, so killing the screen mid-song does not also lose your place. Committing any scene
+  clears it. It lives in the header, deliberately away from the transport, because a stray tap
+  next to GO would be expensive.
+- **The transport is exactly the four pedal actions** — MAIN, PREV, NEXT, GO — in pedal order.
+  Nothing else belongs in that bar; it is the one surface where muscle memory has to match.
+- **The action is `home`, the label is MAIN.** Users see MAIN; the code, config and log keep
+  `home`/`home_scene`. Do not rename the action.
 - **Tapping a cue arms; it does not fire.** `ui.tap_fires` opts into firing straight from a
   tap and defaults **off**. A mis-tap that only changes what is queued costs nothing; one that
   fires a visual costs the song. `arm` is display-only and must never reach an output.
