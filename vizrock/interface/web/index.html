@@ -92,13 +92,17 @@
   .eyebrow .tag{color:var(--active)}
   .deck .eyebrow .tag{color:var(--armamber)}
   .row{display:flex; align-items:center; gap:26px}
+  /* the ring sits above its caption, so the column has to centre or the circle
+     reads as left-aligned against wider text */
+  .row > div{min-width:0}
+  .row > div:last-child{display:flex; flex-direction:column; align-items:center; text-align:center}
   .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em}
   .live .num{font-size:clamp(78px,12vw,150px)}
   .deck .num{font-size:clamp(58px,9vw,104px); color:var(--armamber)}
   .name{font-size:clamp(20px,2.6vw,34px); font-weight:600; margin-top:10px}
   .deck .name{color:#f0e2c4}
   .miniring{width:clamp(74px,10vw,120px); aspect-ratio:1; border-radius:50%; flex:none}
-  .ringcap{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--muted); margin-top:12px}
+  .ringcap{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--muted); margin-top:10px; text-align:center}
   .goready{font-family:var(--mono); font-size:11px; letter-spacing:.18em; color:var(--armamber); margin-top:6px}
   .goready::before{content:"▸ "; }
 
@@ -299,12 +303,14 @@
     .stack{padding:4px 16px; gap:6px; justify-content:center}
     .stack.deck{border-left:1px solid var(--line); border-top:0}
     .eyebrow{font-size:10px; letter-spacing:.2em}
-    .live .num{font-size:clamp(54px,11vw,104px); line-height:.95}
-    .deck .num{font-size:clamp(30px,5.5vw,58px); line-height:.95}
-    .live .name{font-size:clamp(16px,2.6vw,24px); margin-top:6px}
-    .deck .name{font-size:clamp(13px,1.9vw,18px); margin-top:4px}
+    .live .num{font-size:clamp(74px,15vw,140px); line-height:.85}
+    .deck .num{font-size:clamp(46px,9vw,84px); line-height:.85}
+    .live .name{font-size:clamp(21px,3.6vw,32px); margin-top:8px; line-height:1.15}
+    .deck .name{font-size:clamp(17px,2.7vw,24px); margin-top:6px; line-height:1.15}
     .ringcap,.goready{margin-top:4px; font-size:10px}
-    .miniring{width:clamp(44px,7vw,64px)}
+    .miniring{width:clamp(52px,8.5vw,80px)}
+    .row{gap:16px}
+    .eyebrow{font-size:11px; letter-spacing:.22em}
     .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
       padding-bottom:max(7px, env(safe-area-inset-bottom))}
     /* every button shares the width equally — no dead space in the bar */
