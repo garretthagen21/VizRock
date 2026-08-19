@@ -219,8 +219,18 @@
   .out .nm{color:var(--ink);font-weight:600;letter-spacing:.06em}
   .out .addr{color:var(--muted);margin-left:auto}
   /* CUES — the live control surface. Touch-sized targets, wraps to any scene count. */
-  .cuehint{font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:var(--muted2);
+  .cuehint{font-family:var(--mono); font-size:11px; letter-spacing:.16em; color:var(--muted2);
     padding:8px 16px 0; text-transform:uppercase}
+  /* Blacked out: say so loudly, but keep the grid readable — loading scenes while
+     dark is the whole point of a master mute. */
+  .cuehint.blacked{color:#ff8a8a; font-weight:700; font-size:13px}
+  .blackedout .cue.live{border-color:#ff8a8a; background:#201116; opacity:.62}
+  .blackedout .cue.live .cn{color:#ff8a8a}
+  .blackedout .cue.live .cueflag.l{background:#ff8a8a; color:#1a0d12}
+  .blackedout .homecue.live{border-color:#ff8a8a; border-left-color:#ff8a8a;
+    background:linear-gradient(90deg, rgba(255,138,138,.14), var(--panel)); opacity:.7}
+  .blackedout .homecue.live .cn,
+  .blackedout .homecue.live .glyph{color:#ff8a8a}
   /* The main loop is the default state, not a step in the set — pinned above the
      sequence rather than buried in it, and always reachable without scrolling. */
   /* The main loop is a different kind of thing from the setlist, so it should not
@@ -554,6 +564,7 @@ function render(){
   document.querySelector('.app').classList.toggle('blackedout', !!state.blackout);
   document.querySelector('.stack.live')?.classList
     .toggle('ismain', state.live === (state.meta?.home_scene ?? 1));
+  if(!document.getElementById('viewCues').classList.contains('hidden')) renderCues();
   const lm=document.getElementById('liveMark');
   const isMain = state.live !== null && state.live === (state.meta?.home_scene ?? 1);
   if(lm) lm.innerHTML = (state.blackout ? '<span class="blackoutmark">· BLACKED OUT</span>' : '')
@@ -777,7 +788,13 @@ function renderCues(){
   const grid=document.getElementById('cueGrid'); if(!grid) return;
   const home=state.meta?.home_scene??1;
   const hint=document.getElementById('cueHint');
-  if(hint) hint.textContent = state.tap_fires ? "tap fires immediately" : "tap arms · GO fires";
+  if(hint){
+    const mode = state.tap_fires ? "tap fires immediately" : "tap arms · GO fires";
+    hint.classList.toggle('blacked', !!state.blackout);
+    hint.textContent = state.blackout
+      ? "⬛ BLACKED OUT · nothing is reaching the screen · " + mode
+      : mode;
+  }
   grid.innerHTML="";
   // the main loop is pinned above and excluded from the sequence grid
   const homeBox=document.getElementById('homeCue');
