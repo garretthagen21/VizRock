@@ -98,18 +98,18 @@
      said nothing about state */
   .eyebrow .tag{color:var(--live)}
   .deck .eyebrow .tag{color:var(--armamber)}
-  /* the number and its light sit side by side, centred on each other; the scene
-     title runs underneath both, where it has the full panel width to breathe */
-  .row,.ringwrap{display:flex; flex-direction:column; align-items:center; min-width:0}
-  .row{text-align:center}
-  .rowtop{display:flex; align-items:center; justify-content:center; gap:26px; min-width:0}
+  /* the light sits above its caption, so that column has to centre or the circle
+     reads as left-aligned against wider text */
+  .row{display:flex; align-items:center; gap:26px}
+  .row > div{min-width:0}
+  .ringwrap{display:flex; flex-direction:column; align-items:center; text-align:center}
   .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em}
   .live .num{font-size:clamp(78px,12vw,150px)}
   .deck .num{font-size:clamp(58px,9vw,104px); color:var(--armamber)}
   .name{font-size:clamp(20px,2.6vw,34px); font-weight:600; margin-top:10px}
   .deck .name{color:#f0e2c4}
   .miniring{width:clamp(74px,10vw,120px); aspect-ratio:1; border-radius:50%; flex:none}
-  .ringcap{font-family:var(--mono); font-size:13px; letter-spacing:.12em; color:var(--muted); margin-top:10px}
+  .ringcap{font-family:var(--mono); font-size:13px; letter-spacing:.12em; color:var(--muted); margin-top:10px; text-align:center}
   .goready{font-family:var(--mono); font-size:13px; letter-spacing:.16em; color:var(--armamber); margin-top:6px}
   .goready::before{content:"▸ "; }
 
@@ -356,7 +356,7 @@
     .ringcap,.goready{margin-top:4px; font-size:10px}
     .miniring{width:clamp(52px,8.5vw,80px)}
     .live .miniring{width:clamp(64px,10.5vw,96px)}
-    .rowtop{gap:16px}
+    .row{gap:16px}
     .eyebrow{font-size:15px; letter-spacing:.2em}
     .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
       padding-bottom:max(7px, env(safe-area-inset-bottom))}
@@ -417,28 +417,28 @@
       <div class="stack live">
         <div class="eyebrow"><span class="tag">●</span> LIVE <span id="liveMark"></span></div>
         <div class="row">
-          <div class="rowtop">
+          <div>
             <div class="num" id="lNum">--</div>
-            <div class="ringwrap">
-              <div class="miniring" id="lRing"></div>
-              <div class="ringcap" id="lCap"></div>
-            </div>
+            <div class="name" id="lName">—</div>
           </div>
-          <div class="name" id="lName">—</div>
+          <div class="ringwrap">
+            <div class="miniring" id="lRing"></div>
+            <div class="ringcap" id="lCap"></div>
+          </div>
         </div>
       </div>
       <div class="stack deck">
         <div class="eyebrow"><span class="tag">◇</span> ON DECK</div>
         <div class="row">
-          <div class="rowtop">
+          <div>
             <div class="num" id="aNum">--</div>
-            <div class="ringwrap">
-              <div class="miniring" id="aRing"></div>
-              <div class="ringcap" id="aCap"></div>
-            </div>
+            <div class="name" id="aName">—</div>
+            <div class="goready">GO fires this</div>
           </div>
-          <div class="name" id="aName">—</div>
-          <div class="goready">GO fires this</div>
+          <div class="ringwrap">
+            <div class="miniring" id="aRing"></div>
+            <div class="ringcap" id="aCap"></div>
+          </div>
         </div>
       </div>
     </div>
