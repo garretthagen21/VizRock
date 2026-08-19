@@ -131,6 +131,11 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **CUES density is per device, not a fixed count.** Roughly 8 big targets on the 5" panel and
   on a phone, everything at once on a laptop. A partly visible row is the only affordance
   saying there is more below — do not tidy it away.
+- **One colour, one meaning. Never reuse one.**
+  green `--live` = playing · amber `--armamber` = armed · purple `--home` = the main loop ·
+  blue `--active` = interactive/addressable · orange `--warn` = the show title ·
+  red = blackout. The main loop was briefly set to the same blue as `--active`, which made the
+  LIVE dot, the ready pills and the main loop all look like the same thing.
 - **EDIT is master → detail.** The scene list and the inspector each scroll on their own; on
   a small screen tapping a scene swaps to the inspector and BACK returns. One long scrolling
   page made the scene table unreachable on the panel.

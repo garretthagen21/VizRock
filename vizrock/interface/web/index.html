@@ -22,7 +22,7 @@
     --void:#0B0E13; --panel:#141922; --panel2:#1B222E; --line:#232C3A;
     --ink:#E6EDF5; --muted:#6B7A90; --muted2:#48566B;
     --live:#35E08A; --warn:#FFB347; --idle:#3A4657; --active:#4EA8FF; --armamber:#FFCB6B;
-    --home:#4EA8FF; --mono:'IBM Plex Mono',ui-monospace,monospace; --disp:'Space Grotesk',system-ui,sans-serif;
+    --home:#A78BFA; --mono:'IBM Plex Mono',ui-monospace,monospace; --disp:'Space Grotesk',system-ui,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -89,7 +89,9 @@
   .stack{display:flex; flex-direction:column; justify-content:center; padding:8px 32px; gap:14px; min-width:0; min-height:0; height:100%}
   .stack.deck{border-left:1px solid var(--line); background:linear-gradient(180deg,#0e131b, var(--void))}
   .eyebrow{font-family:var(--mono); font-size:15px; font-weight:600; letter-spacing:.26em; color:var(--muted); display:flex; align-items:center; gap:10px}
-  .eyebrow .tag{color:var(--active)}
+  /* the LIVE dot should be the LIVE colour — blue was the interactive colour and
+     said nothing about state */
+  .eyebrow .tag{color:var(--live)}
   .deck .eyebrow .tag{color:var(--armamber)}
   .row{display:flex; align-items:center; gap:26px}
   /* the ring sits above its caption, so the column has to centre or the circle
@@ -117,9 +119,9 @@
   .btn.go{background:#12271c; border-color:#2f6b48; color:var(--live); font-weight:700; padding:11px 26px}
   .btn.go:active{background:#173626; border-color:var(--live)}
   @media (hover:hover){ .btn.go:hover{background:#173626; border-color:var(--live)} }
-  .btn.home{border-color:#2f4a6b; color:var(--active)}
-  .btn.home:active{background:#12202f; border-color:var(--active)}
-  @media (hover:hover){ .btn.home:hover{background:#12202f; border-color:var(--active)} }
+  .btn.home{border-color:#4a3d78; color:var(--home)}
+  .btn.home:active{background:#1c1830; border-color:var(--home)}
+  @media (hover:hover){ .btn.home:hover{background:#1c1830; border-color:var(--home)} }
   .btn.blackout{border-color:#3a2530; color:#ff8a8a}
   .btn.blackout:active{background:#2a1720; border-color:#ff8a8a}
   @media (hover:hover){ .btn.blackout:hover{background:#2a1720; border-color:#ff8a8a} }
@@ -224,15 +226,15 @@
   /* The main loop is a different kind of thing from the setlist, so it should not
      look like a slightly different cue. Own colour, own glyph, own shape. */
   .homecue{margin:10px 16px 0; display:flex; align-items:center; gap:14px; cursor:pointer;
-    background:linear-gradient(90deg, rgba(78,168,255,.16), var(--panel));
-    border:1px solid rgba(78,168,255,.42); border-left:5px solid var(--home);
+    background:linear-gradient(90deg, rgba(167,139,250,.16), var(--panel));
+    border:1px solid rgba(167,139,250,.42); border-left:5px solid var(--home);
     border-radius:12px; padding:14px 16px; color:var(--ink); font-family:inherit;
     width:calc(100% - 32px)}
   .homecue .glyph{font-size:26px; line-height:1; color:var(--home); flex:none}
   .homecue .cn{font-family:var(--mono); font-size:22px; font-weight:700; color:var(--home)}
   .homecue .cname{font-size:17px; font-weight:700; text-align:left; letter-spacing:.01em}
   .homecue .tagline{margin-left:auto; font-family:var(--mono); font-size:11px; font-weight:700;
-    letter-spacing:.18em; color:var(--home); border:1px solid rgba(78,168,255,.42);
+    letter-spacing:.18em; color:var(--home); border:1px solid rgba(167,139,250,.42);
     border-radius:6px; padding:5px 9px}
   .homecue .swatch{width:12px;height:12px;border-radius:50%;flex:none}
   .homecue.live{border-style:solid; border-color:var(--live); background:#0f2119}
