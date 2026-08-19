@@ -113,6 +113,10 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **Never reuse the word "live" for anything but the playing scene.** The connection indicator
   said `live` when it meant "websocket connected", which is exactly the overload that makes a
   glanceable UI unreadable. It says `connected` / `no brain`.
+- **Blackout is a master mute, and nothing but blackout clears it.** You can load and change
+  scenes underneath it — GO, MAIN, a cue tap all update LIVE — but `_commit` dispatches
+  **nothing** while it is on, and releasing it reveals whatever ended up loaded. GO silently
+  undoing a blackout someone put on deliberately would be the worst kind of surprise.
 - **Blackout is a held toggle, not a one-way trip.** Turning it off restores whatever was
   playing, so killing the screen mid-song does not also lose your place. Committing any scene
   clears it. It lives in the header, deliberately away from the transport, because a stray tap

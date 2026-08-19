@@ -64,6 +64,7 @@ def run():
     _arm_is_display_only()
     _blackout_is_a_toggle()
     _boots_dark_with_main_queued()
+    _blackout_is_a_master_mute()
 
     snapshot = brain.snapshot()
     assert 'addresses' in snapshot and 'output_config' in snapshot
@@ -123,11 +124,12 @@ def _blackout_is_a_toggle():
     assert brain.blackout is False, 'should toggle off'
     assert brain.live == 3, f'should restore what was playing, got {brain.live}'
 
-    # firing anything means you want visuals again
+    # blackout holds through a commit — see _blackout_is_a_master_mute
     brain.handle('blackout')
     assert brain.blackout is True
     brain.handle('go')
-    assert brain.blackout is False, 'committing a scene must clear blackout'
+    assert brain.blackout is True, 'GO must not clear a deliberate blackout'
+    brain.handle('blackout')
 
     # nothing live beforehand falls back to home rather than staying dark
     fresh = Brain()
@@ -173,3 +175,47 @@ def _boots_dark_with_main_queued():
     assert brain.blackout is False
     assert brain.live == brain.scene_library.home, \
         f'releasing blackout should land on the main loop, got {brain.live}'
+
+
+def _blackout_is_a_master_mute():
+    """
+    Blackout holds until released. You can load and change scenes underneath it, but
+    nothing reaches an output — and GO must never silently undo a blackout someone
+    put on deliberately.
+    """
+    brain = Brain()
+    sent = []
+
+    class Spy:
+        name = 'spy'
+
+        def apply(self, scene):
+            sent.append(scene.get('name'))
+
+        def on_state(self, snapshot):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    brain.outputs = [Spy()]
+    brain.boot()
+    sent.clear()
+
+    brain.handle('go')
+    assert brain.blackout is True, 'GO must not clear blackout'
+    assert brain.live == 2, f'the scene should still load, got {brain.live}'
+    assert sent == [], f'nothing may reach an output while blacked out, got {sent}'
+
+    brain.handle('arm', 3)
+    brain.handle('go')
+    assert brain.blackout is True and brain.live == 3
+    assert sent == [], 'still nothing out'
+
+    brain.handle('blackout')
+    assert brain.blackout is False
+    assert brain.live == 3, 'release should reveal what was loaded'
+    assert sent and sent[-1] == 'Interlude', f'release should dispatch it, got {sent}'

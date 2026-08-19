@@ -178,7 +178,7 @@ class Brain:
             return
 
         self.blackout = False
-        target = self._restore_to
+        target = self._restore_to if self._restore_to in self.scene_library.scenes else self.live
         if target not in self.scene_library.scenes:
             target = self.scene_library.home
         self._restore_to = None
@@ -219,17 +219,23 @@ class Brain:
             logger.warning('commit to missing scene %s', scene_id)
             return
         self.live = scene_id
-        self.blackout = False
         scene = self.scene_library.scenes[scene_id]
         # say what was actually targeted — "which clip did it fire?" is the first
         # question when visuals look wrong, and the action alone does not answer it
         resolume = scene.get('resolume') or {}
         target = 'clear' if resolume.get('clear') else \
             f"layer {resolume.get('layer')} clip {resolume.get('clip')}"
-        logger.info('LIVE -> %s  (resolume: %s, ring: %s)',
+        logger.info('LIVE -> %s  (resolume: %s, ring: %s)%s',
                     self.scene_library.label(scene_id), target,
-                    (scene.get('ring') or {}).get('mode', 'off'))
-        self._dispatch(scene)
+                    (scene.get('ring') or {}).get('mode', 'off'),
+                    ' [held dark]' if self.blackout else '')
+        if self.blackout:
+            # Blackout is a master mute: you can load and change scenes underneath it,
+            # but nothing reaches an output until it is released. GO must not silently
+            # undo a blackout someone put on deliberately.
+            self._restore_to = scene_id
+        else:
+            self._dispatch(scene)
         # auto-arm the next scene so a linear set is just GO, GO, GO
         if rearm and scene_id in self.scene_library.order:
             self.armed = self.scene_library.step_from(scene_id, +1)
