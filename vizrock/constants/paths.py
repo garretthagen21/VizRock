@@ -13,18 +13,31 @@ import os
 from pathlib import Path
 
 
-class Directories:
+class _Directories:
     PACKAGE_DIR = Path(__file__).parents[1]
     REPO_DIR = PACKAGE_DIR.parent
-    # VIZROCK_CONFIG_DIR keeps the tests off the live show config — running them on
-    # the Pi would otherwise write to the scenes file the set depends on.
-    CONFIG_DIR = Path(os.environ.get('VIZROCK_CONFIG_DIR') or REPO_DIR / 'configs')
     WEB_DIR = PACKAGE_DIR / 'interface' / 'web'
 
+    @property
+    def CONFIG_DIR(self):
+        # VIZROCK_CONFIG_DIR keeps the tests off the live show config — running them
+        # on the Pi would otherwise write to the scenes file the set depends on.
+        # Resolved on each read so no import can be ordered ahead of it.
+        return Path(os.environ.get('VIZROCK_CONFIG_DIR') or self.REPO_DIR / 'configs')
 
-class Files:
-    SHOW_CONFIG_FILE = Directories.CONFIG_DIR / 'show_config.json'
-    SCENES_FILE = Directories.CONFIG_DIR / 'scenes.json'
+
+class _Files:
+    @property
+    def SHOW_CONFIG_FILE(self):
+        return Directories.CONFIG_DIR / 'show_config.json'
+
+    @property
+    def SCENES_FILE(self):
+        return Directories.CONFIG_DIR / 'scenes.json'
+
+
+Directories = _Directories()
+Files = _Files()
 
 
 def ensure_seeded(path):

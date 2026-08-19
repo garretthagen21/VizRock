@@ -100,16 +100,16 @@
   .deck .eyebrow .tag{color:var(--armamber)}
   /* the number and its light sit side by side, centred on each other; the scene
      title runs underneath both, where it has the full panel width to breathe */
-  .row{display:flex; flex-direction:column; align-items:center; text-align:center; min-width:0}
+  .row,.ringwrap{display:flex; flex-direction:column; align-items:center; min-width:0}
+  .row{text-align:center}
   .rowtop{display:flex; align-items:center; justify-content:center; gap:26px; min-width:0}
-  .ringwrap{display:flex; flex-direction:column; align-items:center; min-width:0}
   .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em}
   .live .num{font-size:clamp(78px,12vw,150px)}
   .deck .num{font-size:clamp(58px,9vw,104px); color:var(--armamber)}
   .name{font-size:clamp(20px,2.6vw,34px); font-weight:600; margin-top:10px}
   .deck .name{color:#f0e2c4}
   .miniring{width:clamp(74px,10vw,120px); aspect-ratio:1; border-radius:50%; flex:none}
-  .ringcap{font-family:var(--mono); font-size:13px; letter-spacing:.12em; color:var(--muted); margin-top:10px; text-align:center}
+  .ringcap{font-family:var(--mono); font-size:13px; letter-spacing:.12em; color:var(--muted); margin-top:10px}
   .goready{font-family:var(--mono); font-size:13px; letter-spacing:.16em; color:var(--armamber); margin-top:6px}
   .goready::before{content:"▸ "; }
 
@@ -385,7 +385,12 @@
     .log{order:0; flex:1 1 auto; white-space:nowrap}
     .clock,.foot-note{display:none}
   }
-  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  /* Scene lights are status, not decoration: a strobe that cannot strobe tells the
+     operator nothing about what the rig is doing. They stay animated even when
+     everything else holds still. */
+  @media (prefers-reduced-motion:reduce){
+    *:not(.miniring):not(.ringmini){animation:none!important;transition:none!important}
+  }
 </style>
 </head>
 <body>
@@ -433,7 +438,7 @@
             </div>
           </div>
           <div class="name" id="aName">—</div>
-            <div class="goready">GO fires this</div>
+          <div class="goready">GO fires this</div>
         </div>
       </div>
     </div>
@@ -562,16 +567,14 @@ function paintRing(el, r){
   if(el.dataset.sig === sig) return;
   el.dataset.sig = sig;
   const bright = Math.min(255, Math.max(0, r.bright||0))/255;
-  // clearing the animation only takes effect after a reflow — without this the
-  // browser coalesces both writes and keeps the old timing
-  el.style.animation="none"; void el.offsetWidth;
   if(r.mode==="off" || bright===0){
+    el.style.animation="none";
     el.style.background="radial-gradient(closest-side,#0c1017 55%,#222a36 58%,#222a36 80%,transparent 84%)";
     el.style.boxShadow="none"; el.style.opacity=".45"; return;
   }
   // brightness has to be readable across the room, so it drives lightness, glow
   // and opacity together instead of nudging just one of them
-  const col=`hsl(${H(r.hue)} 90% ${(30+bright*38).toFixed(0)}%)`;
+  const col=ringColor(r);
   const peak=(0.5+bright*0.5).toFixed(2);
   el.style.background = r.mode==="chase"
     ? `conic-gradient(${col}, transparent 40%, ${col})`
@@ -582,10 +585,14 @@ function paintRing(el, r){
   el.style.setProperty('--peak', peak);
   const speed=Math.min(10, Math.max(0, r.speed||0));
   const dur=(2.4-speed*0.2).toFixed(2);
-  if(r.mode==="pulse")  el.style.animation=`rpulse ${dur}s ease-in-out infinite`;
-  if(r.mode==="chase")  el.style.animation=`rspin ${dur}s linear infinite`;
   // a square wave, not a fade — a strobe that eases is just a slow pulse
-  if(r.mode==="strobe") el.style.animation=`rstrobe ${(0.62-speed*0.05).toFixed(2)}s linear infinite`;
+  const anim = r.mode==="pulse"  ? `rpulse ${dur}s ease-in-out infinite`
+             : r.mode==="chase"  ? `rspin ${dur}s linear infinite`
+             : r.mode==="strobe" ? `rstrobe ${(0.62-speed*0.05).toFixed(2)}s linear infinite`
+             : "none";
+  // Only restart when the timing actually changed — dragging the hue slider
+  // repaints the colour every frame and must not keep resetting the cycle.
+  if(el.style.animation !== anim){ el.style.animation="none"; void el.offsetWidth; el.style.animation=anim; }
 }
 const kf=document.createElement('style');
 kf.textContent=`@keyframes rpulse{0%,100%{opacity:calc(var(--peak,1)*.28)}50%{opacity:var(--peak,1)}}`
@@ -609,7 +616,6 @@ function render(){
   document.querySelector('.app').classList.toggle('blackedout', !!state.blackout);
   document.querySelector('.stack.live')?.classList
     .toggle('ismain', state.live === (state.meta?.home_scene ?? 1));
-  if(!document.getElementById('viewCues').classList.contains('hidden')) renderCues();
   const lm=document.getElementById('liveMark');
   const isMain = state.live !== null && state.live === (state.meta?.home_scene ?? 1);
   if(lm) lm.innerHTML = (state.blackout ? '<span class="blackoutmark">· BLACKED OUT</span>' : '')
@@ -659,7 +665,11 @@ function renderShow(){
   document.getElementById('aName').textContent=A.name;
   paintRing(document.getElementById('aRing'),A.ring); document.getElementById('aCap').textContent=capOf(A.ring);
 }
-function ringColor(r){ return r.mode==="off"?"#3a4657":`hsl(${H(r.hue)} 90% ${(30+Math.min(255,r.bright||0)/255*38).toFixed(0)}%)`; }
+function ringColor(r){
+  if(!r || r.mode==="off") return "#3a4657";
+  const bright=Math.min(255, Math.max(0, r.bright||0))/255;
+  return `hsl(${H(r.hue)} 90% ${(30+bright*38).toFixed(0)}%)`;
+}
 let dragId = null, editShowingDetail = false, detailMode = 'scene';
 function setEditDetail(on){
   editShowingDetail = !!on;

@@ -17,7 +17,7 @@ from pathlib import Path
 
 # Point the config dir at a throwaway copy before anything imports it, so a test
 # run can never touch the real scenes file. Seed it with the committed examples.
-_REAL_CONFIGS = Path(__file__).parents[2] / 'configs'
+_REAL_CONFIGS = Path(__file__).parents[2] / 'configs'   # the redirect is read lazily
 _TMP_CONFIGS = Path(tempfile.mkdtemp(prefix='vizrock-test-configs-'))
 for _example in _REAL_CONFIGS.glob('*.example.json'):
     shutil.copy(_example, _TMP_CONFIGS / _example.name)

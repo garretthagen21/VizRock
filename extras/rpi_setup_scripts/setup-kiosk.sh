@@ -70,7 +70,7 @@ echo "    browser: $BROWSER"
 # --password-store=basic stops Chromium reaching for the GNOME keyring, which on an
 # autologin box is never unlocked and prompts on every boot. We are incognito and
 # store nothing, so there is no secret to protect.
-FLAGS="--kiosk --noerrdialogs --disable-infobars --incognito --force-prefers-reduced-motion --start-fullscreen --password-store=basic --disable-features=Translate"
+FLAGS="--kiosk --noerrdialogs --disable-infobars --incognito --force-prefers-reduced-motion --start-fullscreen --password-store=basic --disable-features=Translate --user-data-dir=/tmp/vizrock-kiosk"
 URL="http://localhost:$PORT"
 
 echo "==> stop the screen blanking mid-set"
