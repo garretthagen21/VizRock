@@ -137,6 +137,12 @@
   /* Each pane scrolls on its own — the scene list was unreachable when the whole
      page scrolled as one. */
   .col{min-height:0; overflow:auto; -webkit-overflow-scrolling:touch; padding:18px 22px}
+  .settingsbtn{display:block; width:100%; margin-top:16px; font-family:var(--mono);
+    font-size:12px; font-weight:700; letter-spacing:.12em; color:var(--muted);
+    background:var(--panel2); border:1px solid var(--line); border-radius:9px;
+    padding:14px; cursor:pointer; text-align:left}
+  .settingsbtn.on{color:var(--active); border-color:var(--active)}
+  @media (hover:hover){ .settingsbtn:hover{color:var(--ink); border-color:var(--muted2)} }
   .backbtn{display:none; font-family:var(--mono); font-size:12px; font-weight:700;
     letter-spacing:.1em; color:var(--active); background:transparent;
     border:1px solid var(--line); border-radius:8px; padding:11px 14px; margin-bottom:14px;
@@ -453,21 +459,32 @@
     <div class="edit">
       <div class="col master" id="editMaster">
         <div class="sectlab">SCENE TABLE</div><div id="sceneList"></div>
+        <button class="settingsbtn" onclick="openSettings()">⚙ GLOBAL SETTINGS</button>
       </div>
       <div class="col right detail" id="editDetail">
         <button class="backbtn" id="editBack" onclick="setEditDetail(false)">‹ SCENES</button>
-        <div class="sectlab">INSPECTOR</div><div class="insp" id="insp"></div>
-        <div class="sectlab mt">TRIGGERS · M-VAVE CHOCOLATE</div>
-        <div class="learn"><span>SW1 <b>MAIN</b> · SW2 <b>PREV</b> · SW3 <b>NEXT</b> · SW4 <b>GO</b></span>
-          <button class="learnbtn" onclick="learn(this)">MIDI LEARN</button></div>
-        <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
-        <div class="sectlab mt">CUES</div>
-        <div class="upd"><div class="learn" style="margin:0;border-style:solid">
-          <span>Tapping a cue <b id="tapWhat">arms it</b></span>
-          <button class="learnbtn" id="tapBtn" onclick="toggleTapFires()">TOGGLE</button>
-        </div></div>
-        <div class="sectlab mt">CONNECT</div><div id="netBox"></div>
-        <div class="sectlab mt">SOFTWARE</div><div id="updBox"></div>
+
+        <!-- per scene -->
+        <div id="detailScene">
+          <div class="sectlab">INSPECTOR · THIS SCENE ONLY</div>
+          <div class="insp" id="insp"></div>
+        </div>
+
+        <!-- everything below applies to the whole show, not one scene -->
+        <div id="detailSettings" class="hidden">
+          <div class="sectlab">GLOBAL · APPLIES TO EVERY SCENE</div>
+          <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
+          <div class="sectlab mt">CUES</div>
+          <div class="upd"><div class="learn" style="margin:0;border-style:solid">
+            <span>Tapping a cue <b id="tapWhat">arms it</b></span>
+            <button class="learnbtn" id="tapBtn" onclick="toggleTapFires()">TOGGLE</button>
+          </div></div>
+          <div class="sectlab mt">TRIGGERS · M-VAVE CHOCOLATE</div>
+          <div class="learn"><span>SW1 <b>MAIN</b> · SW2 <b>PREV</b> · SW3 <b>NEXT</b> · SW4 <b>GO</b></span>
+            <button class="learnbtn" onclick="learn(this)">MIDI LEARN</button></div>
+          <div class="sectlab mt">CONNECT</div><div id="netBox"></div>
+          <div class="sectlab mt">SOFTWARE</div><div id="updBox"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -621,11 +638,22 @@ function renderShow(){
   paintRing(document.getElementById('aRing'),A.ring); document.getElementById('aCap').textContent=capOf(A.ring);
 }
 function ringColor(r){ return r.mode==="off"?"#3a4657":`hsl(${H(r.hue)} 85% ${45+r.bright/255*20}%)`; }
-let dragId = null, editShowingDetail = false;
+let dragId = null, editShowingDetail = false, detailMode = 'scene';
 function setEditDetail(on){
   editShowingDetail = !!on;
   document.querySelector('.edit')?.classList.toggle('showdetail', editShowingDetail);
 }
+// Per-scene and global settings are different kinds of thing, so they are different
+// screens. Mixing them invites editing a shared host thinking it is per-scene.
+function setDetailMode(mode){
+  detailMode = mode;
+  document.getElementById('detailScene')?.classList.toggle('hidden', mode !== 'scene');
+  document.getElementById('detailSettings')?.classList.toggle('hidden', mode !== 'settings');
+  document.querySelector('.settingsbtn')?.classList.toggle('on', mode === 'settings');
+  const back = document.getElementById('editBack');
+  if(back) back.textContent = '‹ SCENES';
+}
+function openSettings(){ setDetailMode('settings'); setEditDetail(true); }
 function renderList(){
   const wrap=document.getElementById('sceneList'); wrap.innerHTML="";
   const home=state.meta?.home_scene??1;
@@ -637,7 +665,7 @@ function renderList(){
     const isHome = s.id===home;
     el.className="scene"+(s.id===selected?" sel":"")+(s.id===state.live?" islive":"")
                 +(s.id===state.armed?" isarmed":"")+(isHome?" ishome":"");
-    el.onclick=()=>{ selected=s.id; setEditDetail(true); renderList(); renderInsp(); };
+    el.onclick=()=>{ selected=s.id; setDetailMode('scene'); setEditDetail(true); renderList(); renderInsp(); };
     if(canDrag && !isHome){
       el.draggable=true;
       el.ondragstart=e=>{ dragId=s.id; el.classList.add('dragging');
@@ -888,13 +916,13 @@ function setView(v){
   document.getElementById('sharedTransport').classList.toggle('hidden', v==='edit');
   if(v==='show') renderShow();
   else if(v==='cues') renderCues();
-  else { setEditDetail(editShowingDetail); renderList(); renderInsp(); renderOuts(); renderTapMode(); renderNetwork(); renderUpdate(); }
+  else { setEditDetail(editShowingDetail); setDetailMode(detailMode); renderList(); renderInsp(); renderOuts(); renderTapMode(); renderNetwork(); renderUpdate(); }
 }
 setInterval(()=>document.getElementById('clock').textContent=now(),1000);
 document.getElementById('clock').textContent=now();
 render(); connect();
 window.act=act; window.setView=setView; window.testFire=testFire; window.learn=learn;
-window.dropOn=dropOn; window.setEditDetail=setEditDetail; window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
+window.dropOn=dropOn; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>

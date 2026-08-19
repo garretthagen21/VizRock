@@ -136,6 +136,10 @@ every output degrades to a no-op and the web UI still drives the full state mach
   blue `--active` = interactive/addressable · orange `--warn` = the show title ·
   red = blackout. The main loop was briefly set to the same blue as `--active`, which made the
   LIVE dot, the ready pills and the main loop all look like the same thing.
+- **Per-scene and global settings are separate screens, and each says its scope.** The
+  inspector is headed `INSPECTOR · THIS SCENE ONLY`; outputs, cues, triggers, connect and
+  software sit behind `⚙ GLOBAL SETTINGS`, headed `GLOBAL · APPLIES TO EVERY SCENE`. Mixing
+  them invites someone editing a shared Resolume host believing it applies to one scene.
 - **EDIT is master → detail.** The scene list and the inspector each scroll on their own; on
   a small screen tapping a scene swaps to the inspector and BACK returns. One long scrolling
   page made the scene table unreachable on the panel.
