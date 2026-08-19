@@ -305,7 +305,7 @@
     .clock{display:none}
     .edit{grid-template-columns:1fr; min-height:0}
     .stack{padding:16px 14px; gap:12px}
-    .col{overflow:visible; padding:14px}
+    .col{overflow:auto; -webkit-overflow-scrolling:touch; padding:14px}
     .col.right{border-left:0; border-top:1px solid var(--line)}
     .statusbar{padding:10px 14px; gap:7px}
     .pill{padding:6px 10px 6px 9px; font-size:11px}
@@ -362,13 +362,13 @@
     /* EDIT has to scroll on a short screen, or the inspector is unreachable */
     /* master -> detail rather than one long page: the list scrolls, tapping a scene
        swaps to the inspector, back returns. */
-    #viewEdit{overflow:hidden}
-    .edit{grid-template-columns:1fr}
+    #viewEdit{overflow:hidden; min-height:0}
+    .edit{grid-template-columns:1fr; min-height:0}
     .backbtn{display:block}
     .showdetail .col.master{display:none}
     .edit:not(.showdetail) .col.detail{display:none}
     .edit{grid-template-columns:1fr; min-height:0}
-    .col{overflow:visible; padding:12px 14px}
+    .col{overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 14px}
     /* Roughly 8 visible with big targets; the rest scrolls. A partly visible third
        row is deliberate — it is the only affordance saying there is more below. */
     .cuegrid{gap:10px; padding:12px; grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
