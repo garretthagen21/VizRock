@@ -29,6 +29,10 @@
   body{background:var(--void); color:var(--ink); font-family:var(--disp); -webkit-font-smoothing:antialiased;
     overflow:hidden; background-image:radial-gradient(circle at 50% -10%, #131a26 0%, var(--void) 60%);}
   .app{height:100vh; display:flex; flex-direction:column}
+  /* The view wrappers must grow, or everything sizes to content and the page ends
+     half way down. .show and .cuegrid have flex:1 but that only works if the parent
+     is a flex container that actually fills the space. */
+  #viewShow,#viewCues,#viewEdit{flex:1 1 auto; min-height:0; display:flex; flex-direction:column}
   header{display:flex; align-items:center; gap:20px; padding:14px 22px; padding-top:max(14px, env(safe-area-inset-top)); border-bottom:1px solid var(--line);
     background:rgba(11,14,19,.7); backdrop-filter:blur(6px)}
   .wordmark{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.14em; font-size:13px}
@@ -290,7 +294,7 @@
     /* the event log is not worth width on a 5in panel; desktop keeps it */
     .log{display:none}
     /* EDIT has to scroll on a short screen, or the inspector is unreachable */
-    #viewEdit{flex:1; min-height:0; overflow:auto; -webkit-overflow-scrolling:touch}
+    #viewEdit{overflow:auto; -webkit-overflow-scrolling:touch}
     .edit{grid-template-columns:1fr; min-height:0}
     .col{overflow:visible; padding:12px 14px}
     /* Roughly 8 visible with big targets; the rest scrolls. A partly visible third

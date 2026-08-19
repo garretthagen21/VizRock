@@ -117,6 +117,10 @@ every output degrades to a no-op and the web UI still drives the full state mach
   surface. CUES is the live surface: a tappable grid of every scene, for the mounted
   touchscreen. EDIT is config. The status pills and transport are shared by SHOW and CUES and
   hidden in EDIT, because the transport is a live control and EDIT is not a live place.
+- **The view wrappers must carry `flex:1`.** `.show` and `.cuegrid` declare `flex:1`, but that
+  does nothing unless `#viewShow`/`#viewCues`/`#viewEdit` also grow — otherwise the page sizes
+  to content and ends half way down the panel. This broke when the status bar and transport
+  moved out of `viewShow`.
 - **Three layouts, switched on shape not just width.** Portrait phone stacks LIVE over ON
   DECK. Short-and-wide (`max-height:560px` — the 5" 800x480 kiosk panel, or a phone on its
   side) keeps them side by side, compacts the chrome and **disables scrolling**: a HUD you
