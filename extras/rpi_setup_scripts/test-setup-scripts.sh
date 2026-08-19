@@ -16,7 +16,7 @@ MOCKLOG="$WORK/calls.log"
 trap 'rm -rf "$WORK"' EXIT
 
 # stubs log one argument per line so word-splitting bugs are visible
-for cmd in apt-get raspi-config udevadm systemctl nmcli install sudo usermod; do
+for cmd in apt-get raspi-config udevadm nmcli install sudo usermod; do
     cat > "$FAKE/$cmd" <<EOF
 #!/bin/bash
 { echo "CMD $cmd"; for a in "\$@"; do echo "ARG \$a"; done; } >> "\$MOCKLOG"
@@ -26,6 +26,14 @@ EOF
 done
 printf '#!/bin/bash\nexit 0\n' > "$FAKE/chromium-browser"; chmod +x "$FAKE/chromium-browser"
 # nmcli needs to answer the profile lookup, otherwise the wired branch is skipped
+cat > "$FAKE/systemctl" <<'EOF'
+#!/bin/bash
+{ echo "CMD systemctl"; for a in "$@"; do echo "ARG $a"; done; } >> "$MOCKLOG"
+[ "$1" = "get-default" ] && echo "${FAKE_TARGET:-multi-user.target}"
+[ "$1" = "is-active" ] && exit "${FAKE_LIGHTDM:-1}"
+exit 0
+EOF
+chmod +x "$FAKE/systemctl"
 cat > "$FAKE/nmcli" <<'EOF'
 #!/bin/bash
 { echo "CMD nmcli"; for a in "$@"; do echo "ARG $a"; done; } >> "$MOCKLOG"
@@ -33,6 +41,11 @@ if [ "$1" = "-g" ]; then echo "Wired connection 1:802-3-ethernet"; fi
 exit 0
 EOF
 chmod +x "$FAKE/nmcli"
+# HOME must point somewhere disposable — the desktop branch writes an autostart file
+printf '#!/bin/bash\necho "pi:x:1000:1000::%s:/bin/bash"\n' "$WORK/home" > "$FAKE/getent"
+chmod +x "$FAKE/getent"
+mkdir -p "$WORK/home"
+printf '#!/bin/bash\nexit 0\n' > "$FAKE/chown"; chmod +x "$FAKE/chown"
 cat > "$FAKE/id" <<'EOF'
 #!/bin/bash
 echo "${FAKE_UID:-0}"
@@ -45,7 +58,9 @@ check(){ if [ "$2" = "$3" ]; then echo "  ok   $1"; PASS=$((PASS+1));
 flat(){ sed 's/^CMD //; s/^ARG //' "$MOCKLOG" | tr '\n' ' '; }
 has(){ flat | grep -qF "$1" && echo yes || echo no; }
 arg(){ grep -qxF "ARG $1" "$MOCKLOG" && echo yes || echo no; }
-run(){ : > "$MOCKLOG"; export MOCKLOG FAKE_UID="${FAKE_UID:-0}"
+run(){ : > "$MOCKLOG"
+       export MOCKLOG FAKE_UID="${FAKE_UID:-0}"
+       export FAKE_TARGET="${FAKE_TARGET:-multi-user.target}" FAKE_LIGHTDM="${FAKE_LIGHTDM:-1}"
        PATH="$FAKE:$PATH" bash "$@" > "$WORK/out.txt" 2>&1; echo $?; }
 
 echo "--- guards ---"
@@ -98,11 +113,23 @@ check "no stale clone path"    "$(grep -c '/home/pi/vizrock' "$UNIT_OUT")" 0
 echo "--- kiosk is optional and independent ---"
 check "install.sh never calls it" \
       "$(grep -c 'setup-kiosk' "$HERE/install.sh")" 0
-rc=$(run "$HERE/setup-kiosk.sh"); check "kiosk completes" "$rc" 0
-check "installs cage"          "$(has 'apt-get install -y cage seatd')" yes
-check "enables seatd"          "$(has 'systemctl enable --now seatd')" yes
-check "grants seat access"     "$(has 'usermod -aG video,input,render,seat')" yes
-check "enables the kiosk unit" "$(has 'systemctl enable --now vizrock-kiosk')" yes
+# --- headless (Lite): cage owns the display ---
+FAKE_TARGET=multi-user.target FAKE_LIGHTDM=1 rc=$(run "$HERE/setup-kiosk.sh")
+check "kiosk completes (lite)"  "$rc" 0
+check "installs cage"           "$(has 'apt-get install -y cage seatd')" yes
+check "enables seatd"           "$(has 'systemctl enable --now seatd')" yes
+check "grants seat access"      "$(has 'usermod -aG video,input,render,seat')" yes
+check "enables the kiosk unit"  "$(has 'systemctl enable --now vizrock-kiosk')" yes
+
+# --- desktop image: lightdm already owns it, so cage must NOT be installed ---
+rm -rf "$WORK/home/.config"
+FAKE_TARGET=graphical.target FAKE_LIGHTDM=0 rc=$(run "$HERE/setup-kiosk.sh")
+check "kiosk completes (desktop)" "$rc" 0
+check "does NOT install cage"     "$(has 'apt-get install -y cage seatd')" no
+check "no competing unit"         "$(has 'enable --now vizrock-kiosk')" no
+check "writes an autostart entry" "$([ -f "$WORK/home/.config/autostart/vizrock-kiosk.desktop" ] && echo yes || echo no)" yes
+check "autostart runs chromium"   "$(grep -c '^Exec=.*--kiosk' "$WORK/home/.config/autostart/vizrock-kiosk.desktop" 2>/dev/null)" 1
+check "disables screen blanking"  "$(has 'raspi-config nonint do_blanking 1')" yes
 FAKE_UID=1000 rc=$(run "$HERE/setup-kiosk.sh"); check "kiosk refuses non-root" "$rc" 1
 FAKE_UID=0
 rc=$(run "$HERE/setup-kiosk.sh" notaport); check "kiosk rejects a bad port" "$rc" 1

@@ -91,6 +91,13 @@ every output degrades to a no-op and the web UI still drives the full state mach
   `paths.py` resolves `REPO_DIR` to the clone, wherever it is, and the running user can write
   there. A non-editable install would silently break UI scene edits.
 - **Never hardcode a path.** Everything resolves through `constants/paths.py`.
+- **`install.sh` is the only setup path — nothing should need doing by hand.** Every setting we
+  ever configured manually is now scripted: the wired profile, the direct-cable `vizrock-direct`
+  profile, link-local, DHCP timeout, the hotspot, screen blanking, and config migration. If you
+  find yourself running `nmcli` or editing JSON on the box, that is a bug in the script.
+- **`vizrock_migrate` folds new keys from the examples into the live configs.** The live files
+  are untracked so they survive updates — which also means a setting added upstream would never
+  reach an existing box. Merging adds what is missing and **never** overwrites a tuned value.
 - **The live configs are untracked; the `.example` files are the committed ones.** The UI
   rewrites `configs/*.json` at runtime, and a tracked file with local edits makes `git pull`
   fail — which would have broken self-update the first time anyone edited a scene.

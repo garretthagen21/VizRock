@@ -15,7 +15,7 @@ from vizrock.test import stubs
 
 stubs.install()
 
-SUITES = ['test_state_machine', 'test_outputs', 'test_resolver', 'test_config_edit', 'test_updater', 'test_ui_server', 'test_config_seed', 'test_scene_builder', 'test_reorder']
+SUITES = ['test_state_machine', 'test_outputs', 'test_resolver', 'test_config_edit', 'test_updater', 'test_ui_server', 'test_config_seed', 'test_scene_builder', 'test_reorder', 'test_migrate']
 
 
 def main():

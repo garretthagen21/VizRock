@@ -55,7 +55,19 @@ else
     # (Bookworm) does not accept 'fallback'.
     nmcli connection modify "$WIRED" ipv4.link-local enabled \
       || nmcli connection modify "$WIRED" ipv4.link-local fallback
+
+    # Fail over to DHCP quickly rather than the 45s default; that wait is the
+    # difference between a cable that works at load-in and one that seems dead.
+    nmcli connection modify "$WIRED" ipv4.dhcp-timeout 10
 fi
+
+echo "==> direct-cable profile: the Pi hands out addresses when nothing else does"
+# On a Pi-to-laptop cable there is no DHCP server at all. NetworkManager tries,
+# times out and leaves eth0 with no address, so the cable looks broken. This
+# profile is lower priority, so it only wins when the DHCP client above fails.
+nmcli connection delete vizrock-direct 2>/dev/null || true
+nmcli connection add type ethernet ifname eth0 con-name vizrock-direct \
+    ipv4.method shared connection.autoconnect yes connection.autoconnect-priority 50
 
 echo "==> VIZROCK hotspot as the fallback"
 nmcli connection delete VIZROCK 2>/dev/null || true

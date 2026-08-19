@@ -32,6 +32,12 @@ sudo -u "$RUN_USER" python3 -m venv "$REPO/venv"
 sudo -u "$RUN_USER" "$REPO/venv/bin/pip" install --upgrade pip
 sudo -u "$RUN_USER" "$REPO/venv/bin/pip" install -e "$REPO"
 
+echo "==> fold any new settings into the live configs"
+# The live configs are untracked so they survive updates, which also means a new
+# setting added upstream would never reach an existing box. This adds what is
+# missing and never overwrites a value someone tuned.
+sudo -u "$RUN_USER" "$REPO/venv/bin/vizrock_migrate"
+
 echo "==> stable device names"
 install -m 644 "$HERE/99-vizrock.rules" /etc/udev/rules.d/
 udevadm control --reload
