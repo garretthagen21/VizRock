@@ -16,6 +16,8 @@
 <!-- No webfont CDN: the venue has no internet and the fetch would block first paint.
      The font-family stacks below fall back to system faces. -->
 <style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0; padding:0}
   :root{
     --void:#0B0E13; --panel:#141922; --panel2:#1B222E; --line:#232C3A;
     --ink:#E6EDF5; --muted:#6B7A90; --muted2:#48566B;
@@ -52,6 +54,10 @@
   .pill .st{color:var(--muted);font-weight:500}
   .pill.ok .st{color:var(--live)} .pill.retrying .st{color:var(--warn)}
   .pill.sending .st{color:var(--active)}
+  /* UDP gives no delivery confirmation, so the honest signal is "a cue just left",
+     not "it arrived". Flash on dispatch rather than implying a connection. */
+  .pill.hit{border-color:var(--active)}
+  .pill.hit .led{background:var(--active); box-shadow:0 0 14px 3px var(--active)}
   @keyframes blink{50%{opacity:.35}}
   .midiblip{margin-left:auto; display:flex; align-items:center; gap:9px; min-width:0;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:46%; font-family:var(--mono);
@@ -304,7 +310,7 @@
 <div class="app">
   <header>
     <div class="wordmark"><span class="dot" id="conn"></span>VizRock <small id="mode">connecting…</small></div>
-    <div class="show-id" id="showId">// —</div>
+    <div class="show-id" id="showId">—</div>
     <div class="spacer"></div>
     <div class="toggle">
       <button id="tShow" class="on" onclick="setView('show')">SHOW</button>
@@ -468,8 +474,16 @@ document.head.appendChild(kf);
 const capOf = r => r.mode==="off" ? "OFF" : `${r.mode.toUpperCase()} · H${r.hue} · ${r.bright}`;
 
 // ---- render ----
+let lastLive;
+function flashOutputs(){
+  document.querySelectorAll('#pills .pill').forEach(el=>{
+    el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'), 260);
+  });
+}
 function render(){
-  document.getElementById('showId').textContent = "// "+(state.meta?.show||"—");
+  if(lastLive !== undefined && state.live !== lastLive) flashOutputs();
+  lastLive = state.live;
+  document.getElementById('showId').textContent = state.meta?.show || "—";
   renderPills();
   if(!document.getElementById('viewShow').classList.contains('hidden')) renderShow();
   if(!document.getElementById('viewCues').classList.contains('hidden')) renderCues();
