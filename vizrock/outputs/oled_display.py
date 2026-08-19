@@ -15,7 +15,7 @@ from vizrock.outputs.output import Output
 
 logger = logging.getLogger(__name__)
 
-STATUS_SYMBOLS = {'ok': '*', 'sending': '>', 'retrying': '?', 'off': '.'}
+STATUS_SYMBOLS = {'ok': '*', 'ready': '>', 'retrying': '?', 'off': '.'}
 OUTPUT_LABELS = (('resolume', 'VIS'), ('dmx', 'DMX'), ('rings', 'RNG'))
 
 

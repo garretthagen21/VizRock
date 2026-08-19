@@ -71,7 +71,7 @@ class ResolumeOsc(Output):
 
     def status(self):
         # nothing resolved means we cannot even address a target — say so
-        return 'sending' if self.resolved else 'retrying'
+        return 'ready' if self.resolved else 'retrying'
 
     def address_label(self):
         return ', '.join(

@@ -131,6 +131,13 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **CUES density is per device, not a fixed count.** Roughly 8 big targets on the 5" panel and
   on a phone, everything at once on a laptop. A partly visible row is the only affordance
   saying there is more below — do not tidy it away.
+- **EDIT is master → detail.** The scene list and the inspector each scroll on their own; on
+  a small screen tapping a scene swaps to the inspector and BACK returns. One long scrolling
+  page made the scene table unreachable on the panel.
+- **Only outputs with a real connection may say `ok`.** Fire-and-forget UDP says `ready` —
+  addressable, not delivered — and the pill shows `sent` for ~1.4s after a cue actually goes
+  out. A status that never changes tells you nothing, but neither should it claim delivery the
+  protocol cannot confirm.
 - **Three views: SHOW, CUES, EDIT.** SHOW is a heads-up display — glanceable, not a control
   surface. CUES is the live surface: a tappable grid of every scene, for the mounted
   touchscreen. EDIT is config. The status pills and transport are shared by SHOW and CUES and

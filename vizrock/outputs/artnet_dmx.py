@@ -41,7 +41,7 @@ class ArtNetDmx(Output):
         self._send(frame)
 
     def status(self):
-        return 'sending'
+        return 'ready'
 
     def address_label(self):
         return f'{self.address[0]}:{self.address[1]} u{self.universe}'

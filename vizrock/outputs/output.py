@@ -13,11 +13,11 @@ class Output:
     """
     apply(scene)    reflect a committed scene on this output (fired on GO)
     on_state(snap)  react to any state change (fired on ARM moves too)
-    status()        'ok' | 'sending' | 'retrying' | 'off'
+    status()        'ok' | 'ready' | 'retrying' | 'off'
     address_label() where this output points, for the UI
 
-    'sending' means fire-and-forget with no delivery confirmation. Only outputs
-    with a real connection may claim 'ok'.
+    'ready' means addressable and able to send, with no delivery confirmation —
+    fire-and-forget. Only outputs with a real connection may claim 'ok'.
     """
 
     name = 'base'

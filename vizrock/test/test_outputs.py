@@ -76,13 +76,13 @@ def _honest_status():
     osc = ResolumeOsc(hosts=['127.0.0.1'], port=7000)
     osc.is_running = False
     osc.resolved = {'x': [('127.0.0.1', 7000)]}
-    assert osc.status() == 'sending'
+    assert osc.status() == 'ready', 'addressable, but delivery is unknowable'
     osc.resolved = {}
-    assert osc.status() == 'retrying', 'nothing resolved cannot claim to be sending'
+    assert osc.status() == 'retrying', 'nothing resolved cannot claim to be ready'
     osc.close()
 
     dmx = ArtNetDmx(host='127.0.0.1', universe=0, cues={'warm': {'1': 180}})
-    assert dmx.status() == 'sending'
+    assert dmx.status() == 'ready'
     assert dmx.address_label() == '127.0.0.1:6454 u0', dmx.address_label()
     dmx.close()
 
