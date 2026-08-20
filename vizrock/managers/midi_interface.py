@@ -10,6 +10,7 @@
 #
 
 import logging
+import threading
 import time
 
 import mido
@@ -22,6 +23,9 @@ logger = logging.getLogger(__name__)
 IGNORED_MESSAGE_TYPES = {'clock', 'active_sensing', 'start', 'stop', 'continue',
                          'songpos', 'reset'}
 UNMATCHED_REPEAT_SECONDS = 1.0
+# The pedal is often powered up after the Pi, and USB gets knocked out mid-set. A
+# one-shot scan at boot meant either of those cost you the footswitch until restart.
+RESCAN_SECONDS = 2.0
 
 
 class MidiInterface:
@@ -36,27 +40,62 @@ class MidiInterface:
         self.open_ports = []
         self._last_unmatched = None
         self._last_unmatched_at = 0.0
+        self._announced = set()
+        self._watching = False
 
     def open(self):
+        self._scan()
+        if not self.open_ports:
+            logger.warning('no MIDI inputs open yet — UI still works, watching for the pedal')
+        self._watching = True
+        threading.Thread(target=self._watch, daemon=True).start()
+
+    def close(self):
+        self._watching = False
+        for port in self.open_ports:
+            port.close()
+
+    def _watch(self):
+        """Re-scan for inputs so a pedal plugged in later still works."""
+        while self._watching:
+            time.sleep(RESCAN_SECONDS)
+            try:
+                self._scan()
+            except Exception as error:                    # never kill the watcher
+                logger.warning('MIDI rescan failed: %s', error)
+
+    def _scan(self):
         wanted = vizrock_settings.midi_inputs
-        for name in mido.get_input_names():
-            if 'through' in name.lower():
+        present = set(mido.get_input_names())
+
+        # Drop ports whose device vanished, otherwise a replug never re-opens.
+        for port in list(self.open_ports):
+            if port.name not in present:
+                logger.warning('MIDI input went away: %s', port.name)
+                try:
+                    port.close()
+                except Exception:
+                    pass
+                self.open_ports.remove(port)
+                self._announced.discard(port.name)
+
+        already = {port.name for port in self.open_ports}
+        for name in present:
+            if name in already or 'through' in name.lower():
                 continue                      # ALSA's virtual loopback, never a controller
             if wanted and not any(w.lower() in name.lower() for w in wanted):
-                logger.info('skipping MIDI input (not in midi_inputs): %s', name)
+                if name not in self._announced:           # once per device, not every scan
+                    logger.info('skipping MIDI input (not in midi_inputs): %s', name)
+                    self._announced.add(name)
                 continue
             try:
                 self.open_ports.append(
                     mido.open_input(name, callback=lambda m, n=name: self._on_message(m, n)))
                 logger.info('listening on MIDI: %s', name)
             except Exception as error:
-                logger.warning('could not open %s: %s', name, error)
-        if not self.open_ports:
-            logger.warning('no MIDI inputs open — UI still works, footswitches will not')
-
-    def close(self):
-        for port in self.open_ports:
-            port.close()
+                if name not in self._announced:
+                    logger.warning('could not open %s: %s', name, error)
+                    self._announced.add(name)
 
     def match_trigger(self, message):
         """Return (action, scene) for an incoming mido message, or None."""
