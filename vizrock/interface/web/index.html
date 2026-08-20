@@ -979,39 +979,43 @@ function setView(v){
 // the brain loads over localhost; phones and laptops come in by name or IP and
 // already have a keyboard.
 const IS_ONBOX = ['localhost','127.0.0.1'].includes(location.hostname);
-const OSK_ROWS = ["1234567890","qwertyuiop","asdfghjkl","zxcvbnm.-_"];
-let oskTarget = null, oskShift = false;
+const OSK_LETTERS = ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm.-_"];
+const OSK_SYMBOLS = ["1234567890", "!@#$%^&*()", "-_=+[]{}|\\", ":;'\",.<>/?"];
+let oskTarget = null, oskShift = false, oskSymbols = false;
 function buildOsk(){
   const el=document.createElement('div'); el.className="osk hidden"; el.id="osk";
-  el.innerHTML = OSK_ROWS.map((r,i)=>`<div class="krow">${
-      (i===OSK_ROWS.length-1 ? `<button id="oskShift" data-k="SH">&#8679;</button>` : "")
-      + [...r].map(c=>`<button data-k="${c}">${c}</button>`).join("")}</div>`).join("")
-    + `<div class="krow"><button class="wide" data-k=" ">space</button>`
-    + `<button class="wide" data-k="BS">&#9003;</button>`
-    + `<button class="wide done" data-k="OK">done</button></div>`;
   // keep the field focused — a blur would close the keyboard on the first keypress
   el.addEventListener('mousedown', e=>e.preventDefault());
   el.addEventListener('click', e=>{
     const key=e.target.dataset?.k;
     if(key===undefined || !oskTarget) return;
     if(key==="OK"){ oskTarget.blur(); hideOsk(); return; }
-    if(key==="SH"){ oskShift=!oskShift; paintOskKeys(); return; }
+    if(key==="SH"){ oskShift=!oskShift; paintOsk(); return; }
+    if(key==="SY"){ oskSymbols=!oskSymbols; oskShift=false; paintOsk(); return; }
     if(key==="BS"){ oskTarget.value = oskTarget.value.slice(0,-1); }
     else {
       oskTarget.value += oskShift ? key.toUpperCase() : key;
-      if(oskShift){ oskShift=false; paintOskKeys(); }   // one-shot, like a phone
+      if(oskShift){ oskShift=false; paintOsk(); }       // one-shot, like a phone
     }
     // existing fields save on input, so fire the same event a real keypress would
     oskTarget.dispatchEvent(new Event('input', {bubbles:true}));
   });
   document.body.appendChild(el);
+  paintOsk();
 }
-function paintOskKeys(){
-  document.querySelectorAll('#osk button[data-k]').forEach(button=>{
-    const key=button.dataset.k;
-    if(/^[a-z]$/.test(key)) button.textContent = oskShift ? key.toUpperCase() : key;
-  });
-  document.getElementById('oskShift')?.classList.toggle('on', oskShift);
+function paintOsk(){
+  const rows = oskSymbols ? OSK_SYMBOLS : OSK_LETTERS;
+  // shift only means anything on the letter pane
+  const shiftKey = key => oskShift && /^[a-z]$/.test(key) ? key.toUpperCase() : key;
+  document.getElementById('osk').innerHTML = rows.map((row,i)=>`<div class="krow">${
+      (i===rows.length-1 && !oskSymbols
+        ? `<button id="oskShift" class="${oskShift?'on':''}" data-k="SH">&#8679;</button>` : "")
+      + [...row].map(c=>`<button data-k="${esc(c)}">${esc(shiftKey(c))}</button>`).join("")
+    }</div>`).join("")
+    + `<div class="krow"><button data-k="SY">${oskSymbols ? "ABC" : "?123"}</button>`
+    + `<button class="wide" data-k="BS">&#9003;</button>`
+    + `<button class="wide" data-k=" ">space</button>`
+    + `<button class="wide done" data-k="OK">done</button></div>`;
 }
 const hideOsk = () => document.getElementById('osk')?.classList.add('hidden');
 if(IS_ONBOX){
