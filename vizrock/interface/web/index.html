@@ -388,6 +388,9 @@
   /* Scene lights are status, not decoration: a strobe that cannot strobe tells the
      operator nothing about what the rig is doing. They stay animated even when
      everything else holds still. */
+  /* A touch panel has no mouse, so a stranded pointer just sits on the screen all
+     set. Keyed off the primary pointer, so a laptop or a trackpad still gets one. */
+  @media (pointer:coarse),(pointer:none){ *{cursor:none!important} }
   @media (prefers-reduced-motion:reduce){
     *:not(.miniring):not(.ringmini){animation:none!important;transition:none!important}
   }
