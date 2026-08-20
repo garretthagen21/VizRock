@@ -126,6 +126,7 @@
   .osk button:active{border-color:var(--active); color:#fff}
   .osk .wide{flex:2.2 1 0}
   .osk .done{color:var(--live); border-color:#2f6b48}
+  .osk button.on{background:#1a1533; border-color:var(--home); color:var(--home)}
 
   .transport{display:flex; align-items:center; gap:12px; padding:14px 22px; border-top:1px solid var(--line); background:var(--panel)}
   .log{flex:1; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
@@ -978,12 +979,13 @@ function setView(v){
 // The kiosk is the only client that loads over localhost — the cage unit points at
 // http://localhost:8080 — so that identifies it without sniffing input devices.
 const IS_KIOSK = ['localhost','127.0.0.1'].includes(location.hostname);
-const OSK_ROWS = ["1234567890","qwertyuiop","asdfghjkl","zxcvbnm.-"];
-let oskTarget = null;
+const OSK_ROWS = ["1234567890","qwertyuiop","asdfghjkl","zxcvbnm.-_"];
+let oskTarget = null, oskShift = false;
 function buildOsk(){
   const el=document.createElement('div'); el.className="osk hidden"; el.id="osk";
-  el.innerHTML = OSK_ROWS.map(r=>`<div class="krow">${[...r]
-      .map(c=>`<button data-k="${c}">${c}</button>`).join("")}</div>`).join("")
+  el.innerHTML = OSK_ROWS.map((r,i)=>`<div class="krow">${
+      (i===OSK_ROWS.length-1 ? `<button id="oskShift" data-k="SH">&#8679;</button>` : "")
+      + [...r].map(c=>`<button data-k="${c}">${c}</button>`).join("")}</div>`).join("")
     + `<div class="krow"><button class="wide" data-k=" ">space</button>`
     + `<button class="wide" data-k="BS">&#9003;</button>`
     + `<button class="wide done" data-k="OK">done</button></div>`;
@@ -993,11 +995,23 @@ function buildOsk(){
     const key=e.target.dataset?.k;
     if(key===undefined || !oskTarget) return;
     if(key==="OK"){ oskTarget.blur(); hideOsk(); return; }
-    oskTarget.value = key==="BS" ? oskTarget.value.slice(0,-1) : oskTarget.value + key;
+    if(key==="SH"){ oskShift=!oskShift; paintOskKeys(); return; }
+    if(key==="BS"){ oskTarget.value = oskTarget.value.slice(0,-1); }
+    else {
+      oskTarget.value += oskShift ? key.toUpperCase() : key;
+      if(oskShift){ oskShift=false; paintOskKeys(); }   // one-shot, like a phone
+    }
     // existing fields save on input, so fire the same event a real keypress would
     oskTarget.dispatchEvent(new Event('input', {bubbles:true}));
   });
   document.body.appendChild(el);
+}
+function paintOskKeys(){
+  document.querySelectorAll('#osk button[data-k]').forEach(button=>{
+    const key=button.dataset.k;
+    if(/^[a-z]$/.test(key)) button.textContent = oskShift ? key.toUpperCase() : key;
+  });
+  document.getElementById('oskShift')?.classList.toggle('on', oskShift);
 }
 const hideOsk = () => document.getElementById('osk')?.classList.add('hidden');
 if(IS_KIOSK){
