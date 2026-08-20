@@ -124,9 +124,11 @@
   .btn.go{background:#12271c; border-color:#2f6b48; color:var(--live); font-weight:700; padding:11px 26px}
   .btn.go:active{background:#173626; border-color:var(--live)}
   @media (hover:hover){ .btn.go:hover{background:#173626; border-color:var(--live)} }
-  .btn.home{border-color:#4a3d78; color:var(--home)}
-  .btn.home:active{background:#1c1830; border-color:var(--home)}
-  @media (hover:hover){ .btn.home:hover{background:#1c1830; border-color:var(--home)} }
+  /* MAIN gets the same filled treatment as GO — they are the two buttons you reach
+     for without looking, so both read as a colour rather than an outline */
+  .btn.home{background:#1a1533; border-color:#4a3d78; color:var(--home); font-weight:700}
+  .btn.home:active{background:#241d45; border-color:var(--home)}
+  @media (hover:hover){ .btn.home:hover{background:#241d45; border-color:var(--home)} }
   .btn.blackout{border-color:#3a2530; color:#ff8a8a}
   .btn.blackout:active{background:#2a1720; border-color:#ff8a8a}
   @media (hover:hover){ .btn.blackout:hover{background:#2a1720; border-color:#ff8a8a} }
