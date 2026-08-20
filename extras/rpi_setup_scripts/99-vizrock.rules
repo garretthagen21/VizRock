@@ -10,3 +10,9 @@
 SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="ring_tx"
 # WCH CH340:
 SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ring_tx"
+
+# The Pi's HDMI CEC endpoints enumerate with a pointer capability, because the CEC
+# spec lets a TV remote act as one. Nothing ever sends those events, but the seat
+# has a pointer, so cage parks a mouse cursor on the kiosk that never moves. We do
+# not use CEC — the panel is DSI and the Pi's HDMI is unused — so hide them.
+SUBSYSTEM=="input", ATTRS{name}=="vc4-hdmi-*", ENV{LIBINPUT_IGNORE_DEVICE}="1"
