@@ -113,6 +113,20 @@
   .goready{font-family:var(--mono); font-size:13px; letter-spacing:.16em; color:var(--armamber); margin-top:6px}
   .goready::before{content:"▸ "; }
 
+  /* The kiosk panel has no keyboard, so text fields were uneditable on the one
+     screen that is always at the show. Only the kiosk gets this — every other
+     client already has a real keyboard. */
+  .osk{position:fixed; left:0; right:0; bottom:0; z-index:60; background:var(--panel);
+    border-top:1px solid var(--line); padding:6px; display:flex; flex-direction:column; gap:5px;
+    padding-bottom:max(6px, env(safe-area-inset-bottom))}
+  .osk .krow{display:flex; gap:5px; justify-content:center}
+  .osk button{flex:1 1 0; min-width:0; font-family:var(--mono); font-size:16px; padding:12px 0;
+    background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:7px;
+    cursor:pointer}
+  .osk button:active{border-color:var(--active); color:#fff}
+  .osk .wide{flex:2.2 1 0}
+  .osk .done{color:var(--live); border-color:#2f6b48}
+
   .transport{display:flex; align-items:center; gap:12px; padding:14px 22px; border-top:1px solid var(--line); background:var(--panel)}
   .log{flex:1; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .log .t{color:var(--muted2)}
@@ -960,6 +974,43 @@ function setView(v){
   else if(v==='cues') renderCues();
   else { setEditDetail(editShowingDetail); setDetailMode(detailMode); renderList(); renderInsp(); renderOuts(); renderTapMode(); renderNetwork(); renderUpdate(); }
 }
+// ---- on-screen keyboard (kiosk only) ----
+// The kiosk is the only client that loads over localhost — the cage unit points at
+// http://localhost:8080 — so that identifies it without sniffing input devices.
+const IS_KIOSK = ['localhost','127.0.0.1'].includes(location.hostname);
+const OSK_ROWS = ["1234567890","qwertyuiop","asdfghjkl","zxcvbnm.-"];
+let oskTarget = null;
+function buildOsk(){
+  const el=document.createElement('div'); el.className="osk hidden"; el.id="osk";
+  el.innerHTML = OSK_ROWS.map(r=>`<div class="krow">${[...r]
+      .map(c=>`<button data-k="${c}">${c}</button>`).join("")}</div>`).join("")
+    + `<div class="krow"><button class="wide" data-k=" ">space</button>`
+    + `<button class="wide" data-k="BS">&#9003;</button>`
+    + `<button class="wide done" data-k="OK">done</button></div>`;
+  // keep the field focused — a blur would close the keyboard on the first keypress
+  el.addEventListener('mousedown', e=>e.preventDefault());
+  el.addEventListener('click', e=>{
+    const key=e.target.dataset?.k;
+    if(key===undefined || !oskTarget) return;
+    if(key==="OK"){ oskTarget.blur(); hideOsk(); return; }
+    oskTarget.value = key==="BS" ? oskTarget.value.slice(0,-1) : oskTarget.value + key;
+    // existing fields save on input, so fire the same event a real keypress would
+    oskTarget.dispatchEvent(new Event('input', {bubbles:true}));
+  });
+  document.body.appendChild(el);
+}
+const hideOsk = () => document.getElementById('osk')?.classList.add('hidden');
+if(IS_KIOSK){
+  buildOsk();
+  document.addEventListener('focusin', e=>{
+    const el=e.target;
+    if(el.tagName!=='INPUT' || !['text','number'].includes(el.type)){ hideOsk(); return; }
+    oskTarget=el;
+    document.getElementById('osk').classList.remove('hidden');
+    el.scrollIntoView({block:'center'});      // the keypad covers the lower half
+  });
+}
+
 setInterval(()=>document.getElementById('clock').textContent=now(),1000);
 document.getElementById('clock').textContent=now();
 render(); connect();
