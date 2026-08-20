@@ -239,5 +239,8 @@ class Brain:
         # auto-arm the next scene so a linear set is just GO, GO, GO
         if rearm and scene_id in self.scene_library.order:
             self.armed = self.scene_library.step_from(scene_id, +1)
-        self.last_event = f'LIVE → {self.scene_library.label(scene_id)} · dispatched'
+        # "dispatched" while blacked out sends you hunting for a broken output, which
+        # is exactly the wrong place to look — say which one it was.
+        self.last_event = f'LIVE → {self.scene_library.label(scene_id)} · ' + \
+            ('HELD DARK · blackout is on' if self.blackout else 'dispatched')
         self.push_state()
