@@ -113,9 +113,8 @@
   .goready{font-family:var(--mono); font-size:13px; letter-spacing:.16em; color:var(--armamber); margin-top:6px}
   .goready::before{content:"▸ "; }
 
-  /* The kiosk panel has no keyboard, so text fields were uneditable on the one
-     screen that is always at the show. Only the kiosk gets this — every other
-     client already has a real keyboard. */
+  /* Fallback keypad for a panel with no keyboard of its own. Every other client
+     comes in over the network and already has one. */
   .osk{position:fixed; left:0; right:0; bottom:0; z-index:60; background:var(--panel);
     border-top:1px solid var(--line); padding:6px; display:flex; flex-direction:column; gap:5px;
     padding-bottom:max(6px, env(safe-area-inset-bottom))}
@@ -975,10 +974,11 @@ function setView(v){
   else if(v==='cues') renderCues();
   else { setEditDetail(editShowingDetail); setDetailMode(detailMode); renderList(); renderInsp(); renderOuts(); renderTapMode(); renderNetwork(); renderUpdate(); }
 }
-// ---- on-screen keyboard (kiosk only) ----
-// The kiosk is the only client that loads over localhost — the cage unit points at
-// http://localhost:8080 — so that identifies it without sniffing input devices.
-const IS_KIOSK = ['localhost','127.0.0.1'].includes(location.hostname);
+// ---- on-screen keyboard (on-box panel only) ----
+// Fallback for a panel with no keyboard of its own. Only the display attached to
+// the brain loads over localhost; phones and laptops come in by name or IP and
+// already have a keyboard.
+const IS_ONBOX = ['localhost','127.0.0.1'].includes(location.hostname);
 const OSK_ROWS = ["1234567890","qwertyuiop","asdfghjkl","zxcvbnm.-_"];
 let oskTarget = null, oskShift = false;
 function buildOsk(){
@@ -1014,7 +1014,7 @@ function paintOskKeys(){
   document.getElementById('oskShift')?.classList.toggle('on', oskShift);
 }
 const hideOsk = () => document.getElementById('osk')?.classList.add('hidden');
-if(IS_KIOSK){
+if(IS_ONBOX){
   buildOsk();
   document.addEventListener('focusin', e=>{
     const el=e.target;
