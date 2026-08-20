@@ -3,10 +3,10 @@
 # Optional: show the VizRock UI on a screen plugged into the Pi.
 #
 #   sudo ./setup-kiosk.sh [port]              # use whatever the image already boots to
-#   sudo ./setup-kiosk.sh --console [port]    # drop the desktop, cage owns the display
+#   sudo ./setup-kiosk.sh --console [port]    # drop the desktop, labwc owns the display
 #
 # This is entirely independent of the show. It installs a Wayland kiosk
-# compositor (cage) running Chromium against http://localhost, so the screen is
+# compositor (labwc) running Chromium against http://localhost, so the screen is
 # just another browser client — the same thing your phone is. The brain has no
 # idea it exists, and `systemctl disable --now vizrock-kiosk` removes it.
 #
@@ -32,7 +32,7 @@ if ! [ "$PORT" -eq "$PORT" ] 2>/dev/null; then
 fi
 
 # --console drops the desktop entirely: boot to a console, stop lightdm, and let
-# cage own the display. Same card, none of the desktop baggage — no display
+# labwc own the display. Same card, none of the desktop baggage — no display
 # manager, no session keyring, no notifications. Reversible with
 #   sudo raspi-config nonint do_boot_behaviour B4
 if [ "$CONSOLE" = "1" ]; then
@@ -45,15 +45,15 @@ fi
 
 # Two very different situations, so detect rather than assume:
 #
-#   Desktop image  — lightdm/labwc already own the display. Installing cage here
+#   Desktop image  — lightdm/labwc already own the display. Installing a compositor here
 #                    would fight the display manager for it. Autostart Chromium
 #                    inside the existing session instead.
-#   Lite image     — nothing owns the display, so cage is the whole compositor.
+#   Lite image     — nothing owns the display, so labwc is the whole compositor.
 #
 if [ "$CONSOLE" != "1" ] && { systemctl is-active --quiet lightdm || [ "$(systemctl get-default)" = "graphical.target" ]; }; then
     MODE="desktop"
 else
-    MODE="cage"
+    MODE="labwc"
 fi
 echo "==> detected: $MODE session"
 
@@ -95,9 +95,21 @@ EOF
     echo "  remove it : rm ~/.config/autostart/vizrock-kiosk.desktop"
     echo "  start now : $BROWSER $FLAGS $URL &"
 else
-    echo "==> cage compositor (no desktop present)"
-    apt-get install -y cage seatd
+    echo "==> labwc compositor (no desktop present)"
+    # labwc rather than cage: cage has no layer-shell, so an on-screen keyboard can
+    # never draw over the browser. The panel has no keyboard, so that is the whole
+    # difference between a configurable box at the venue and a read-only one.
+    apt-get install -y labwc seatd squeekboard
     systemctl enable --now seatd
+    cat > /usr/local/bin/vizrock-kiosk-session <<EOF
+#!/bin/bash
+# squeekboard draws over the browser via layer-shell; Chromium only asks for an
+# input method when given the IME flags.
+squeekboard &
+exec $BROWSER $FLAGS --ozone-platform=wayland --enable-wayland-ime \\
+  --wayland-text-input-version=3 $URL
+EOF
+    chmod +x /usr/local/bin/vizrock-kiosk-session
     # Add groups one at a time and skip any that do not exist. Passing a missing
     # group makes usermod fail outright, which under set -e aborted the whole script
     # after it had already switched the box to console boot — leaving no kiosk at all.
