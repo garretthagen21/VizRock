@@ -12,7 +12,7 @@ Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=WLR_LIBINPUT_NO_DEVICES=1
 # Chromium shows a static error page if it loads before the brain is listening,
 # and will not retry on its own — so restart until the port answers.
-ExecStart=/usr/bin/dbus-run-session -- /usr/bin/labwc -s /usr/local/bin/vizrock-kiosk-session
+ExecStart=/usr/bin/cage -- BROWSER --kiosk --noerrdialogs --disable-infobars --incognito --force-prefers-reduced-motion --password-store=basic --disable-features=Translate --ozone-platform=wayland --user-data-dir=/tmp/vizrock-kiosk http://localhost:8080
 Restart=always
 RestartSec=3
 

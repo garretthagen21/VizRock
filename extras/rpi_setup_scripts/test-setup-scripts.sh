@@ -119,20 +119,20 @@ check "no stale clone path"    "$(grep -c '/home/pi/vizrock' "$UNIT_OUT")" 0
 echo "--- kiosk is optional and independent ---"
 check "install.sh never calls it" \
       "$(grep -c 'setup-kiosk' "$HERE/install.sh")" 0
-# --- headless (Lite): labwc owns the display ---
+# --- headless (Lite): cage owns the display ---
 FAKE_TARGET=multi-user.target FAKE_LIGHTDM=1 rc=$(run "$HERE/setup-kiosk.sh")
 check "kiosk completes (lite)"  "$rc" 0
-check "installs labwc + osk"    "$(has 'apt-get install -y labwc seatd squeekboard')" yes
+check "installs cage"           "$(has 'apt-get install -y cage seatd')" yes
 check "enables seatd"           "$(has 'systemctl enable --now seatd')" yes
 check "grants group access"     "$(has 'usermod -aG video')" yes
 check "survives a missing group" "$(has 'usermod -aG seat')" no
 check "enables the kiosk unit"  "$(has 'systemctl enable --now vizrock-kiosk')" yes
 
-# --- desktop image: lightdm already owns it, so labwc must NOT be reinstalled ---
+# --- desktop image: lightdm already owns it, so cage must NOT be installed ---
 rm -rf "$WORK/home/.config"
 FAKE_TARGET=graphical.target FAKE_LIGHTDM=0 rc=$(run "$HERE/setup-kiosk.sh")
 check "kiosk completes (desktop)" "$rc" 0
-check "does NOT install labwc"    "$(has 'apt-get install -y labwc seatd squeekboard')" no
+check "does NOT install cage"     "$(has 'apt-get install -y cage seatd')" no
 check "no competing unit"         "$(has 'enable --now vizrock-kiosk')" no
 check "writes an autostart entry" "$([ -f "$WORK/home/.config/autostart/vizrock-kiosk.desktop" ] && echo yes || echo no)" yes
 check "autostart runs chromium"   "$(grep -c '^Exec=.*--kiosk' "$WORK/home/.config/autostart/vizrock-kiosk.desktop" 2>/dev/null)" 1
@@ -148,20 +148,17 @@ rc=$(run "$HERE/setup-kiosk.sh" notaport); check "kiosk rejects a bad port" "$rc
 check "unit orders after the show"  "$(grep -c '^After=vizrock.service' "$HERE/vizrock-kiosk.service")" 1
 check "unit does NOT Require it"    "$(grep -c '^Requires=' "$HERE/vizrock-kiosk.service")" 0
 check "unit restarts on crash"      "$(grep -c '^Restart=always' "$HERE/vizrock-kiosk.service")" 1
-check "unit runs the session"       "$(grep -c 'vizrock-kiosk-session' "$HERE/vizrock-kiosk.service")" 1
-check "session script is written"   "$(grep -c 'vizrock-kiosk-session' "$HERE/setup-kiosk.sh")" 2
-check "kiosk points at localhost"   "$(grep -c 'URL="http://localhost' "$HERE/setup-kiosk.sh")" 1
-check "chromium asks for an IME"    "$(grep -c 'enable-wayland-ime' "$HERE/setup-kiosk.sh")" 1
+check "kiosk points at localhost"   "$(grep -c 'http://localhost' "$HERE/vizrock-kiosk.service")" 1
 check "no python package touched"   "$(grep -rc 'kiosk' "$HERE/../../vizrock" 2>/dev/null | grep -v ':0' | wc -l | tr -d ' ')" 0
 
-# --console must take the labwc path even on a desktop image
+# --console must take the cage path even on a desktop image
 rm -rf "$WORK/home/.config"
 FAKE_TARGET=graphical.target FAKE_LIGHTDM=0 rc=$(run "$HERE/setup-kiosk.sh" --console)
 check "console mode completes"     "$rc" 0
 check "switches boot behaviour"    "$(has 'raspi-config nonint do_boot_behaviour B2')" yes
 check "disables lightdm"           "$(has 'systemctl disable lightdm')" yes
 check "targets multi-user"         "$(has 'set-default multi-user.target')" yes
-check "installs labwc anyway"      "$(has 'apt-get install -y labwc seatd squeekboard')" yes
+check "installs cage anyway"       "$(has 'apt-get install -y cage seatd')" yes
 check "no desktop autostart left"  "$([ -f "$WORK/home/.config/autostart/vizrock-kiosk.desktop" ] && echo yes || echo no)" no
 
 echo "--- unit matches the package ---"
