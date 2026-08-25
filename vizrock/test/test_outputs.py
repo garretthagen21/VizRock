@@ -14,6 +14,7 @@ import socket
 from vizrock.outputs.artnet_dmx import ArtNetDmx
 from vizrock.outputs.oled_display import OledDisplay
 from vizrock.outputs.resolume_osc import ResolumeOsc
+from vizrock.outputs.ring_serial import RingSerial
 
 
 def _listeners(count):
@@ -31,6 +32,25 @@ def run():
     _one_host_many_addresses()
     _honest_status()
     _oled_variants()
+    _ring_wire_format()
+
+
+def _ring_wire_format():
+    """The RING line is parsed by firmware in the other repo — pin its shape."""
+    ring = RingSerial(port='/dev/null')
+    try:
+        ring.apply({'ring': {'mode': 'pulse', 'hue': 200, 'bright': 90, 'speed': 3}})
+        assert ring.latest_payload == 'RING 0 pulse 200 90 3\n', ring.latest_payload
+
+        ring.apply({'ring': {'mode': 'solid', 'hue': 10, 'bright': 20, 'speed': 1,
+                             'group': 2}})
+        assert ring.latest_payload == 'RING 2 solid 10 20 1\n', ring.latest_payload
+
+        # a scene with no light block must still be a well-formed line
+        ring.apply({})
+        assert ring.latest_payload == 'RING 0 off 0 0 0\n', ring.latest_payload
+    finally:
+        ring.close()
 
 
 def _many_hosts():

@@ -33,7 +33,7 @@ class RingSerial(Output):
     def __init__(self, port='auto', baud=115200, **_):
         self.port_hint = port
         self.baud = baud
-        self.latest_payload = 'RING off 0 0 0\n'
+        self.latest_payload = 'RING 0 off 0 0 0\n'
         self.serial_port = None
         self.is_running = True
         self.thread = threading.Thread(target=self._run, daemon=True)
@@ -41,8 +41,11 @@ class RingSerial(Output):
 
     def apply(self, scene):
         ring = scene.get('ring') or {'mode': 'off'}
-        self.latest_payload = 'RING {} {} {} {}\n'.format(
-            ring.get('mode', 'off'), ring.get('hue', 0),
+        # Group 0 addresses every node. Scenes carry one light block today, so every
+        # node renders the same look; per-group scenes would send one line each and
+        # never a group-0 line in the same tick.
+        self.latest_payload = 'RING {} {} {} {} {}\n'.format(
+            ring.get('group', 0), ring.get('mode', 'off'), ring.get('hue', 0),
             ring.get('bright', 0), ring.get('speed', 0))
 
     def status(self):
