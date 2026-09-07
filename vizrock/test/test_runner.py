@@ -9,6 +9,7 @@
 # @date    2026-08-08
 #
 
+import json
 import os
 import shutil
 import tempfile
@@ -21,6 +22,26 @@ _REAL_CONFIGS = Path(__file__).parents[2] / 'configs'   # the redirect is read l
 _TMP_CONFIGS = Path(tempfile.mkdtemp(prefix='vizrock-test-configs-'))
 for _example in _REAL_CONFIGS.glob('*.example.json'):
     shutil.copy(_example, _TMP_CONFIGS / _example.name)
+
+# The suites get their own setlist rather than the shipped one. scenes.example.json
+# is the real show and changes whenever the set does — asserting against it means
+# every setlist edit breaks the tests for no reason.
+(_TMP_CONFIGS / 'scenes.example.json').write_text(json.dumps({
+    'meta': {'show': 'TEST'},
+    'scenes': [
+        {'id': 1, 'name': 'Main loop', 'main': True,
+         'resolume': {'layer': 1, 'clip': 1}, 'dmx': {'cue': 'off'},
+         'lights': {'default': {'mode': 'pulse', 'hue': 200, 'bright': 80, 'speed': 2}},
+         'audio': False},
+        {'id': 2, 'name': 'Song A - drop',
+         'resolume': {'layer': 1, 'clip': 2}, 'dmx': {'cue': 'off'},
+         'lights': {'default': {'mode': 'strobe', 'hue': 0, 'bright': 220, 'speed': 8}},
+         'audio': False},
+        {'id': 3, 'name': 'Interlude',
+         'resolume': {'layer': 1, 'clip': 3}, 'dmx': {'cue': 'off'},
+         'lights': {'default': {'mode': 'chase', 'hue': 96, 'bright': 110, 'speed': 3}},
+         'audio': False},
+    ]}, indent=2))
 os.environ['VIZROCK_CONFIG_DIR'] = str(_TMP_CONFIGS)
 
 from vizrock.test import stubs
