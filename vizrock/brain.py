@@ -39,7 +39,7 @@ class Brain:
         self.ui_server = None
         self.updater = None
         # Blackout is the panic control and kills everything. Lights are a separate
-        # switch, because "rings off, visuals running" is a real ask and the reverse
+        # switch, because "lights off, visuals running" is a real ask and the reverse
         # never is. Both are pure output mutes: LIVE stays set throughout, so
         # releasing either reveals the scene rather than restoring a remembered one.
         self.blackout = False
@@ -257,7 +257,7 @@ class Brain:
         or duration. Hue never changes, so a burst alters how the lights move rather
         than what colour the stage is.
 
-        RingSerial re-sends the last payload every ~250ms and holds no timer of its
+        LightSerial re-sends the last payload every ~250ms and holds no timer of its
         own, so the brain has to push a fresh payload when the burst ends. The timer
         runs on its own thread — nothing here may block the dispatch path.
         """
@@ -297,7 +297,7 @@ class Brain:
         """
         A scene's lighting as {peripheral name: [steps]}.
 
-        Lights are keyed by peripheral — `default`, `CabA`, `CabB` — so one scene can
+        Lights are keyed by peripheral — `default`, `cabA`, `cabB` — so one scene can
         light two stacks differently. Each entry is a single dict or a list of steps
         that loops. `default` covers every peripheral without its own entry.
         """
@@ -379,19 +379,19 @@ class Brain:
         Precedence is blackout > lights off > burst > colour override > the scene.
         The burst never sets hue, so a colour chosen by hand survives one.
         """
-        ring = dict(steps[self._light_step % len(steps)])
-        ring.pop('seconds', None)         # timing is ours, not the wire's
+        light = dict(steps[self._light_step % len(steps)])
+        light.pop('seconds', None)        # timing is ours, not the wire's
         if self.color_index is not None and vizrock_settings.palette:
-            ring['hue'] = vizrock_settings.palette[self.color_index]
+            light['hue'] = vizrock_settings.palette[self.color_index]
         if self._burst_until > time.monotonic():
             # the burst changes how the lights move, never what colour they are, so
             # hue is pointedly not taken from the spec
             burst = self._burst_spec()
-            ring['mode'] = burst.get('mode', 'strobe')
+            light['mode'] = burst.get('mode', 'strobe')
             for key in ('speed', 'bright'):
                 if key in burst:
-                    ring[key] = burst[key]
-        return ring
+                    light[key] = burst[key]
+        return light
 
     def _all_off(self):
         return {group: {'mode': 'off'} for group in vizrock_settings.light_groups.values()}
@@ -399,7 +399,7 @@ class Brain:
     def _effective_scene(self):
         """
         The live scene as the outputs should see it, with every mute and override
-        applied. Outputs only ever receive a single ring dict — the step sequence is
+        applied. Outputs only ever receive one light dict per group — the step sequence
         resolved here so nothing downstream has to know it exists.
         """
         if self.blackout:
@@ -448,7 +448,7 @@ class Brain:
         resolume = scene.get('resolume') or {}
         target = 'clear' if resolume.get('clear') else \
             f"layer {resolume.get('layer')} clip {resolume.get('clip')}"
-        logger.info('LIVE -> %s  (resolume: %s, ring: %s)%s',
+        logger.info('LIVE -> %s  (resolume: %s, lights: %s)%s',
                     self.scene_library.label(scene_id), target,
                     self._light_summary(scene),
                     ' [held dark]' if self.blackout else '')

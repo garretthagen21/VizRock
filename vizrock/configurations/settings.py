@@ -44,6 +44,9 @@ class VizRockSettings:
         self.midi_inputs = self.raw.get('midi_inputs', [])
         self.triggers = self.raw.get('triggers', [])
         self.outputs = self.raw.setdefault('outputs', {})
+        # a pre-2026-09 box has outputs.rings; the output is called lights now
+        if 'rings' in self.outputs and 'lights' not in self.outputs:
+            self.outputs['lights'] = self.outputs.pop('rings')
 
     def set_tap_fires(self, value):
         self.tap_fires = bool(value)

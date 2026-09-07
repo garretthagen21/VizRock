@@ -15,12 +15,12 @@ from vizrock.configurations.settings import vizrock_settings
 from vizrock.outputs.artnet_dmx import ArtNetDmx
 from vizrock.outputs.oled_display import OledDisplay
 from vizrock.outputs.resolume_osc import ResolumeOsc
-from vizrock.outputs.ring_serial import RingSerial
+from vizrock.outputs.light_serial import LightSerial
 
 logger = logging.getLogger(__name__)
 
 OUTPUT_KINDS = {'osc': ResolumeOsc, 'artnet': ArtNetDmx,
-                'serial': RingSerial, 'oled': OledDisplay}
+                'serial': LightSerial, 'oled': OledDisplay}
 
 
 def build_output(name, spec):

@@ -53,7 +53,7 @@ class SceneLibrary:
         """
         Turn a pre-2026-09 `ring` block into `lights: {default: ...}`.
 
-        Lights are keyed by peripheral now — `default`, `CabA`, `CabB` — so one scene
+        Lights are keyed by peripheral now — `default`, `cabA`, `cabB` — so one scene
         can light two 2x12 stacks differently. The old single block becomes the
         default, which is what every peripheral without its own entry still uses.
         """

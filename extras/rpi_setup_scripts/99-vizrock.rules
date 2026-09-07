@@ -1,15 +1,15 @@
 # Stable device names for VizRock hardware.
 #
-# Only the ring transmitter needs one: RingSerial opens a serial port by path. The
+# Only the ring transmitter needs one: LightSerial opens a serial port by path. The
 # footswitch does not — MIDI devices are found by ALSA port name, so no rule and no
 # VID:PID guess is involved, and any USB-MIDI controller works.
 # Install:  sudo cp 99-vizrock.rules /etc/udev/rules.d/  &&  sudo udevadm control --reload
 #
 # ESP32 ring transmitter (CP210x / CH340 USB-serial). Adjust VID:PID to your board.
 # Silicon Labs CP210x:
-SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="ring_tx"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="light_tx"
 # WCH CH340:
-SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ring_tx"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="light_tx"
 
 # The Pi's HDMI CEC endpoints enumerate with a pointer capability, because the CEC
 # spec lets a TV remote act as one. Nothing ever sends those events, but the seat

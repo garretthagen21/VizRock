@@ -14,7 +14,7 @@ import socket
 from vizrock.outputs.artnet_dmx import ArtNetDmx
 from vizrock.outputs.oled_display import OledDisplay
 from vizrock.outputs.resolume_osc import ResolumeOsc
-from vizrock.outputs.ring_serial import RingSerial
+from vizrock.outputs.light_serial import LightSerial
 
 
 def _listeners(count):
@@ -36,24 +36,24 @@ def run():
 
 
 def _ring_wire_format():
-    """The RING line is parsed by firmware in the other repo — pin its shape."""
-    ring = RingSerial(port='/dev/null')
+    """The LIGHT line is parsed by firmware in the other repo — pin its shape."""
+    serial = LightSerial(port='/dev/null')
     try:
         # the brain hands outputs {group: light}, already resolved
-        ring.apply({'lights': {0: {'mode': 'pulse', 'hue': 200, 'bright': 90, 'speed': 3}}})
-        assert ring.latest_payload == 'RING 0 pulse 200 90 3\n', ring.latest_payload
+        serial.apply({'lights': {0: {'mode': 'pulse', 'hue': 200, 'bright': 90, 'speed': 3}}})
+        assert serial.latest_payload == 'LIGHT 0 pulse 200 90 3\n', serial.latest_payload
 
         # one line per peripheral group, every tick, sorted so it is stable
-        ring.apply({'lights': {0: {'mode': 'solid', 'hue': 10, 'bright': 20, 'speed': 1},
+        serial.apply({'lights': {0: {'mode': 'solid', 'hue': 10, 'bright': 20, 'speed': 1},
                                2: {'mode': 'chase', 'hue': 90, 'bright': 30, 'speed': 5}}})
-        assert ring.latest_payload == ('RING 0 solid 10 20 1\n'
-                                       'RING 2 chase 90 30 5\n'), ring.latest_payload
+        assert serial.latest_payload == ('LIGHT 0 solid 10 20 1\n'
+                                       'LIGHT 2 chase 90 30 5\n'), serial.latest_payload
 
         # a scene with no light block must still be a well-formed line
-        ring.apply({})
-        assert ring.latest_payload == 'RING 0 off 0 0 0\n', ring.latest_payload
+        serial.apply({})
+        assert serial.latest_payload == 'LIGHT 0 off 0 0 0\n', serial.latest_payload
     finally:
-        ring.close()
+        serial.close()
 
 
 def _many_hosts():

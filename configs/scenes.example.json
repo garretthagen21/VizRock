@@ -23,13 +23,15 @@
       "dmx": {
         "cue": "off"
       },
-      "ring": {
-        "mode": "pulse",
-        "hue": 200,
-        "bright": 80,
-        "speed": 2
-      },
-      "audio": false
+      "audio": false,
+      "lights": {
+        "default": {
+          "mode": "pulse",
+          "hue": 200,
+          "bright": 80,
+          "speed": 2
+        }
+      }
     },
     {
       "id": 2,
@@ -41,13 +43,15 @@
       "dmx": {
         "cue": "off"
       },
-      "ring": {
-        "mode": "strobe",
-        "hue": 150,
-        "bright": 200,
-        "speed": 8
-      },
-      "audio": false
+      "audio": false,
+      "lights": {
+        "default": {
+          "mode": "strobe",
+          "hue": 150,
+          "bright": 200,
+          "speed": 8
+        }
+      }
     },
     {
       "id": 3,
@@ -59,13 +63,15 @@
       "dmx": {
         "cue": "off"
       },
-      "ring": {
-        "mode": "chase",
-        "hue": 280,
-        "bright": 100,
-        "speed": 4
-      },
-      "audio": true
+      "audio": true,
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 280,
+          "bright": 100,
+          "speed": 4
+        }
+      }
     }
   ]
 }

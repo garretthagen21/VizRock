@@ -54,7 +54,7 @@ every output degrades to a no-op and the web UI still drives the full state mach
   errors and report them through `status()`.
 - **Nothing blocks in the dispatch path.** `apply()` runs inline on the event loop during GO.
   Anything with a real connection owns a background thread and `apply()` only updates state —
-  see `outputs/ring_serial.py`.
+  see `outputs/light_serial.py`.
 - **State changes happen on the asyncio loop only.** MIDI arrives on a rtmidi callback thread;
   `__main__` hands `MidiInterface` a handler that hops via `call_soon_threadsafe`. There are
   no locks and there shouldn't need to be.
@@ -183,8 +183,8 @@ every output degrades to a no-op and the web UI still drives the full state mach
   something the operator never saw.
 - Adding a new output = one file in `outputs/` + an entry in `OUTPUT_KINDS`. Don't
   special-case outputs inside `brain.py`.
-- Adding a ring mode means editing `interface/web/index.html` — **both** `RING_MODES` and
-  `paintRing` — **and** both sketches in `../VizRock-Firmware`. `outputs/ring_serial.py` passes the mode string through
+- Adding a ring mode means editing `interface/web/index.html` — **both** `LIGHT_MODES` and
+  `paintLight` — **and** both sketches in `../VizRock-Firmware`. `outputs/light_serial.py` passes the mode string through
   untouched — there is no table here to update. See the wire protocol in `../CLAUDE.md`.
 
 ## Optional kiosk

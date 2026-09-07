@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# @file    ring_serial.py
+# @file    light_serial.py
 #
 # @brief   Serial link to the USB to ESP-NOW ring transmitter
 #
@@ -21,19 +21,19 @@ REBROADCAST_INTERVAL_SECONDS = 0.25
 USB_SERIAL_KEYWORDS = ('CP210', 'CH340', 'USB', 'ESP')
 
 
-class RingSerial(Output):
+class LightSerial(Output):
     """
     Owns a background thread that keeps the port open and re-broadcasts the latest
     payload every ~250ms, so a dropped ESP-NOW packet self-heals on the next tick.
     apply() only updates the payload — instant, never blocks the dispatch path.
     """
 
-    name = 'rings'
+    name = 'lights'
 
     def __init__(self, port='auto', baud=115200, **_):
         self.port_hint = port
         self.baud = baud
-        self.latest_payload = 'RING 0 off 0 0 0\n'   # one line per group, joined
+        self.latest_payload = 'LIGHT 0 off 0 0 0\n'   # one line per group, joined
         self.serial_port = None
         self.is_running = True
         self.thread = threading.Thread(target=self._run, daemon=True)
@@ -41,7 +41,7 @@ class RingSerial(Output):
 
     def apply(self, scene):
         """
-        One RING line per peripheral group, sent together every tick.
+        One LIGHT line per peripheral group, sent together every tick.
 
         The brain resolves `lights` to {group: dict} — every configured group gets a
         line, so a node matching its group exactly is addressed once and only once.
@@ -50,7 +50,7 @@ class RingSerial(Output):
         if not isinstance(lights, dict) or not lights:
             lights = {0: {'mode': 'off'}}
         self.latest_payload = ''.join(
-            'RING {} {} {} {} {}\n'.format(
+            'LIGHT {} {} {} {} {}\n'.format(
                 group, light.get('mode', 'off'), light.get('hue', 0),
                 light.get('bright', 0), light.get('speed', 0))
             for group, light in sorted(lights.items()))

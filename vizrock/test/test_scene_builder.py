@@ -63,7 +63,7 @@ def _duplicates_are_reported():
 
 def _merge_preserves_tuning():
     """
-    Regenerating must never wipe ring or DMX settings someone tuned in the UI, and
+    Regenerating must never wipe light or DMX settings someone tuned in the UI, and
     must match on the clip a scene plays rather than its id — ids are set positions
     and drift once the setlist is reordered.
     """

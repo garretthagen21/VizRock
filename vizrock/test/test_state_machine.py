@@ -149,7 +149,7 @@ def _blackout_is_a_toggle():
 def _lights_are_a_separate_switch():
     """
     Lights off must leave the visuals running. Blackout is the panic control that
-    kills everything; muting the rings during a quiet song is a different job.
+    kills everything; muting the lights during a quiet song is a different job.
     """
     sent = []
 
@@ -243,7 +243,7 @@ def _light_overrides_have_one_precedence():
     sent = []
 
     class Spy:
-        name = 'rings'
+        name = 'lights'
 
         def apply(self, scene):
             sent.append(dict((scene.get('lights') or {}).get(0) or {}))
@@ -279,7 +279,7 @@ def _light_overrides_have_one_precedence():
     brain.handle('toggle_lights')
     assert brain.lights_off is False
 
-    # blackout outranks everything, and the ring block is the blackout scene's own
+    # blackout outranks everything, and the light block is the blackout scene's own
     brain.handle('blackout')
     sent.clear()
     brain.handle('light_burst')
@@ -309,7 +309,7 @@ def _light_sequences_loop():
     sent = []
 
     class Spy:
-        name = 'rings'
+        name = 'lights'
 
         def apply(self, scene):
             sent.append(dict((scene.get('lights') or {}).get(0) or {}))
@@ -367,7 +367,7 @@ def _peripherals_get_their_own_light_config():
     sent = []
 
     class Spy:
-        name = 'rings'
+        name = 'lights'
 
         def apply(self, scene):
             sent.append(scene.get('lights') or {})
@@ -382,23 +382,23 @@ def _peripherals_get_their_own_light_config():
             return ''
 
     groups = dict(vizrock_settings.light_groups)
-    vizrock_settings.light_groups = {'default': 0, 'CabA': 1, 'CabB': 2}
+    vizrock_settings.light_groups = {'default': 0, 'cabA': 1, 'cabB': 2}
     try:
         brain = Brain()
         brain.outputs = [Spy()]
         brain.scene_library.scenes[2]['lights'] = {
             'default': {'mode': 'solid', 'hue': 10},
-            'CabA': {'mode': 'chase', 'hue': 90}}
+            'cabA': {'mode': 'chase', 'hue': 90}}
         brain.handle('goto', 2)
 
         lights = sent[-1]
         assert set(lights) == {0, 1, 2}, f'every group needs a line: {sorted(lights)}'
-        assert lights[1]['mode'] == 'chase', 'CabA takes its own config'
+        assert lights[1]['mode'] == 'chase', 'cabA takes its own config'
         assert lights[0]['mode'] == 'solid', 'group 0 takes the default'
-        assert lights[2]['mode'] == 'solid', 'CabB has no entry, so it falls back'
+        assert lights[2]['mode'] == 'solid', 'cabB has no entry, so it falls back'
 
         # with no `default` key the first entry written becomes the fallback
-        brain.scene_library.scenes[2]['lights'] = {'CabA': {'mode': 'pulse', 'hue': 5}}
+        brain.scene_library.scenes[2]['lights'] = {'cabA': {'mode': 'pulse', 'hue': 5}}
         brain.handle('goto', 2)
         assert sent[-1][0]['mode'] == 'pulse', sent[-1]
         assert sent[-1][2]['mode'] == 'pulse', 'everything falls back to the first entry'

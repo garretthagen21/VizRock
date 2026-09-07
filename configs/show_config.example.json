@@ -35,7 +35,7 @@
         }
       }
     },
-    "rings": {
+    "lights": {
       "type": "serial",
       "port": "auto",
       "baud": 115200,
@@ -95,7 +95,7 @@
   ],
   "light_groups": {
     "default": 0,
-    "CabA": 1,
-    "CabB": 2
+    "cabA": 1,
+    "cabB": 2
   }
 }

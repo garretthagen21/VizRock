@@ -102,14 +102,14 @@
      reads as left-aligned against wider text */
   .row{display:flex; align-items:center; gap:26px}
   .row > div{min-width:0}
-  .ringwrap{display:flex; flex-direction:column; align-items:center; text-align:center}
+  .lightwrap{display:flex; flex-direction:column; align-items:center; text-align:center}
   .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em}
   .live .num{font-size:clamp(78px,12vw,150px)}
   .deck .num{font-size:clamp(58px,9vw,104px); color:var(--armamber)}
   .name{font-size:clamp(20px,2.6vw,34px); font-weight:600; margin-top:10px}
   .deck .name{color:#f0e2c4}
-  .miniring{width:clamp(74px,10vw,120px); aspect-ratio:1; border-radius:50%; flex:none}
-  .ringcap{font-family:var(--mono); font-size:13px; letter-spacing:.12em; color:var(--muted); margin-top:10px; text-align:center}
+  .minilight{width:clamp(74px,10vw,120px); aspect-ratio:1; border-radius:50%; flex:none}
+  .lightcap{font-family:var(--mono); font-size:13px; letter-spacing:.12em; color:var(--muted); margin-top:10px; text-align:center}
   .goready{font-family:var(--mono); font-size:13px; letter-spacing:.16em; color:var(--armamber); margin-top:6px}
   .goready::before{content:"▸ "; }
 
@@ -208,7 +208,7 @@
   .saved{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--live);opacity:0;transition:.2s}
   .saved.on{opacity:1}
   .slider{display:flex;align-items:center;gap:12px}
-  .ringmini{width:44px;height:44px;border-radius:50%;flex:none}
+  .lightmini{width:44px;height:44px;border-radius:50%;flex:none}
   .learn{display:flex;align-items:center;justify-content:space-between;border:1px dashed var(--line);border-radius:9px;
     padding:12px 14px;margin-bottom:9px;font-family:var(--mono);font-size:12px;color:var(--muted)}
   .learn b{color:var(--ink);font-weight:600}
@@ -339,7 +339,7 @@
     .log{order:5; flex:1 1 100%; white-space:normal}
     .foot-note{display:none}
     .row2{grid-template-columns:1fr}
-    .miniring{width:clamp(56px,18vw,90px)}
+    .minilight{width:clamp(56px,18vw,90px)}
   }
   /* Portrait phone: stack LIVE over ON DECK, since there is no room side by side. */
   @media (max-width:860px) and (orientation:portrait){
@@ -369,9 +369,9 @@
     .deck .num{font-size:clamp(44px,8.5vw,78px); line-height:.84}
     .live .name{font-size:clamp(24px,4.2vw,38px); margin-top:10px; line-height:1.12}
     .deck .name{font-size:clamp(17px,2.7vw,24px); margin-top:6px; line-height:1.15}
-    .ringcap,.goready{margin-top:4px; font-size:10px}
-    .miniring{width:clamp(52px,8.5vw,80px)}
-    .live .miniring{width:clamp(64px,10.5vw,96px)}
+    .lightcap,.goready{margin-top:4px; font-size:10px}
+    .minilight{width:clamp(52px,8.5vw,80px)}
+    .live .minilight{width:clamp(64px,10.5vw,96px)}
     .row{gap:16px}
     .eyebrow{font-size:15px; letter-spacing:.2em}
     .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
@@ -408,7 +408,7 @@
      set. Keyed off the primary pointer, so a laptop or a trackpad still gets one. */
   @media (pointer:coarse),(pointer:none){ *{cursor:none!important} }
   @media (prefers-reduced-motion:reduce){
-    *:not(.miniring):not(.ringmini){animation:none!important;transition:none!important}
+    *:not(.minilight):not(.lightmini){animation:none!important;transition:none!important}
   }
 </style>
 </head>
@@ -440,9 +440,9 @@
             <div class="num" id="lNum">--</div>
             <div class="name" id="lName">—</div>
           </div>
-          <div class="ringwrap">
-            <div class="miniring" id="lRing"></div>
-            <div class="ringcap" id="lCap"></div>
+          <div class="lightwrap">
+            <div class="minilight" id="lLight"></div>
+            <div class="lightcap" id="lCap"></div>
           </div>
         </div>
       </div>
@@ -454,9 +454,9 @@
             <div class="name" id="aName">—</div>
             <div class="goready">GO fires this</div>
           </div>
-          <div class="ringwrap">
-            <div class="miniring" id="aRing"></div>
-            <div class="ringcap" id="aCap"></div>
+          <div class="lightwrap">
+            <div class="minilight" id="aLight"></div>
+            <div class="lightcap" id="aCap"></div>
           </div>
         </div>
       </div>
@@ -520,7 +520,7 @@ const DEMO = {
   live:3, armed:4, last_event:"demo mode · no brain connected",
   meta:{show:"THC Halloween 2026-10-30", home_scene:1},
   outputs:{resolume:"ready", dmx:"off", rings:"retrying", oled:"ok"},
-  addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", dmx:"", rings:"/dev/ring_tx (searching)", oled:"i2c 0x3c ssd1306"},
+  addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", dmx:"", rings:"/dev/light_tx (searching)", oled:"i2c 0x3c ssd1306"},
   output_config:{resolume:{type:"osc",hosts:["Garretts-M2-MacBook-Pro.local"],port:38200},
                  dmx:{type:"artnet",host:"192.168.4.60"}, rings:{type:"serial"}, oled:{type:"oled"}},
   tap_fires:false,
@@ -576,7 +576,7 @@ function demoAct(action, sceneId){
 const lbl = id => { const s=scene(id); return s?`${String(id).padStart(2,'0')} ${s.name}`:String(id); };
 
 // ---- ring visualization ----
-function paintRing(el, r){
+function paintLight(el, r){
   if(!el) return;
   r = r || {mode:"off"};
   // Repainting on every snapshot restarted the animation mid-cycle, so a strobe
@@ -593,7 +593,7 @@ function paintRing(el, r){
   }
   // brightness has to be readable across the room, so it drives lightness, glow
   // and opacity together instead of nudging just one of them
-  const col=ringColor(r);
+  const col=lightColor(r);
   const peak=(0.5+bright*0.5).toFixed(2);
   el.style.background = r.mode==="chase"
     ? `conic-gradient(${col}, transparent 40%, ${col})`
@@ -663,7 +663,7 @@ function render(){
 }
 const outputKeys = () => Object.keys(state.outputs||{});
 function renderPills(){
-  const labels={resolume:"VISUALS",dmx:"DMX",rings:"LIGHTS",oled:"DISPLAY"};
+  const labels={resolume:"VISUALS",dmx:"DMX",lights:"LIGHTS",oled:"DISPLAY"};
   const wrap=document.getElementById('pills'); wrap.innerHTML="";
   outputKeys().forEach(k=>{
     const st=state.outputs?.[k]||"off";
@@ -684,12 +684,12 @@ function renderShow(){
   const A=scene(state.armed)||{name:"—",ring:{mode:"off",hue:0,bright:0}};
   document.getElementById('lNum').textContent=String(state.live??0).padStart(2,'0');
   document.getElementById('lName').textContent=L.name;
-  paintRing(document.getElementById('lRing'),L.ring); document.getElementById('lCap').textContent=capOf(L.ring);
+  paintLight(document.getElementById('lLight'),L.ring); document.getElementById('lCap').textContent=capOf(L.ring);
   document.getElementById('aNum').textContent=String(state.armed??0).padStart(2,'0');
   document.getElementById('aName').textContent=A.name;
-  paintRing(document.getElementById('aRing'),A.ring); document.getElementById('aCap').textContent=capOf(A.ring);
+  paintLight(document.getElementById('aLight'),A.ring); document.getElementById('aCap').textContent=capOf(A.ring);
 }
-function ringColor(r){
+function lightColor(r){
   if(!r || r.mode==="off") return "#3a4657";
   const bright=Math.min(255, Math.max(0, r.bright||0))/255;
   return `hsl(${H(r.hue)} 90% ${(30+bright*38).toFixed(0)}%)`;
@@ -739,7 +739,7 @@ function renderList(){
       <div class="chips">
         <span class="chip">▚ ${s.resolume?.clear?"clear":("L"+s.resolume.layer+"·C"+s.resolume.clip)}</span>
         <span class="chip">✦ ${s.dmx?.cue||"—"}</span>
-        <span class="chip" style="color:${ringColor(s.ring)}"><span class="sw" style="background:${ringColor(s.ring)}"></span>${s.ring.mode}</span>
+        <span class="chip" style="color:${lightColor(s.ring)}"><span class="sw" style="background:${lightColor(s.ring)}"></span>${s.ring.mode}</span>
         <span class="chip">${s.audio?"♪ audio":"muted"}</span></div></div>
       ${canDrag && !isHome?`<span class="grip" title="drag to reorder">⠿</span>`:""}
       <button class="fire" title="test-fire" onclick="event.stopPropagation(); testFire(${s.id})">▸</button>`;
@@ -758,11 +758,11 @@ function dropOn(targetId){
   if(online && ws && ws.readyState===1) ws.send(JSON.stringify({type:"reorder", order}));
   dragId=null;
 }
-const RING_MODES = ["off","solid","pulse","chase","strobe"];
+const LIGHT_MODES = ["off","solid","pulse","chase","strobe"];
 function renderInsp(){
   const s=scene(selected); if(!s){document.getElementById('insp').innerHTML="";return;}
   const r=s.ring||{mode:"off"};
-  const opts=RING_MODES.map(m=>`<option value="${m}"${r.mode===m?" selected":""}>${m}</option>`).join("");
+  const opts=LIGHT_MODES.map(m=>`<option value="${m}"${r.mode===m?" selected":""}>${m}</option>`).join("");
   document.getElementById('insp').innerHTML=`
     <div class="nm">${s.name}</div>
     <div class="sub">SCENE ${String(s.id).padStart(2,'0')} <span class="saved" id="savedTag">SAVED</span></div>
@@ -777,7 +777,7 @@ function renderInsp(){
     <div class="field"><label>DMX CUE</label>
       <input type="text" id="f_cue" value="${(s.dmx?.cue||"").replace(/"/g,'&quot;')}"></div>
     <div class="field"><label>LIGHTS</label>
-      <div class="slider"><div class="ringmini" id="mini"></div>
+      <div class="slider"><div class="lightmini" id="mini"></div>
         <div style="flex:1"><select id="f_mode">${opts}</select></div></div>
       <div style="margin-top:12px">
         <div class="rowlab"><span>hue</span><span id="l_hue">${r.hue??0}</span></div>
@@ -787,7 +787,7 @@ function renderInsp(){
         <div class="rowlab"><span>speed</span><span id="l_speed">${r.speed??0}</span></div>
         <input type="range" id="f_speed" min="0" max="10" value="${r.speed??0}">
       </div></div>`;
-  paintRing(document.getElementById('mini'),r);
+  paintLight(document.getElementById('mini'),r);
   ["f_name","f_layer","f_clip","f_cue","f_mode","f_hue","f_bright","f_speed"].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     el.addEventListener('input',()=>{
@@ -795,12 +795,12 @@ function renderInsp(){
         const v=document.getElementById('f_'+k), lab=document.getElementById('l_'+k);
         if(v&&lab) lab.textContent=v.value;
       });
-      paintRing(document.getElementById('mini'), readRing());
+      paintLight(document.getElementById('mini'), readLight());
       queueSceneEdit();
     });
   });
 }
-function readRing(){
+function readLight(){
   const num=id=>{const e=document.getElementById(id); return e?parseInt(e.value,10)||0:0;};
   const mode=document.getElementById('f_mode')?.value||"off";
   return {mode, hue:num('f_hue'), bright:num('f_bright'), speed:num('f_speed')};
@@ -811,7 +811,7 @@ function queueSceneEdit(){ clearTimeout(editTimer); editTimer=setTimeout(sendSce
 function sendSceneEdit(){
   const s=scene(selected); if(!s) return;
   const el=id=>document.getElementById(id);
-  const edited={...s, name:el('f_name')?.value ?? s.name, ring:readRing(),
+  const edited={...s, name:el('f_name')?.value ?? s.name, ring:readLight(),
                 dmx:{...(s.dmx||{}), cue:el('f_cue')?.value ?? ""}};
   if(!s.resolume?.clear && el('f_layer') && el('f_clip')){
     edited.resolume={...(s.resolume||{}), layer:parseInt(el('f_layer').value,10)||1,
@@ -898,7 +898,7 @@ function renderCues(){
       el.onclick=()=>act('home');
       el.innerHTML=`<span class="glyph">⌂</span>
         <span class="cn">${String(h.id).padStart(2,'0')}</span>
-        <span class="swatch" style="background:${ringColor(ring)}"></span>
+        <span class="swatch" style="background:${lightColor(ring)}"></span>
         <span class="cname">${esc(h.name)}</span>
         <span class="tagline">${h.id===state.live?"LIVE · ":""}MAIN LOOP</span>`;
       homeBox.appendChild(el);
@@ -916,7 +916,7 @@ function renderCues(){
                : isArmed?'<span class="cueflag a">ARMED</span>' : '';
     el.innerHTML=`<div class="cn">${String(s.id).padStart(2,'0')} ${flag}</div>
       <div class="cname">${esc(s.name)}</div>
-      <div class="cmeta"><span class="swatch" style="background:${ringColor(ring)}"></span>
+      <div class="cmeta"><span class="swatch" style="background:${lightColor(ring)}"></span>
         ${esc(capOf(ring))}</div>`;
     grid.appendChild(el);
   });

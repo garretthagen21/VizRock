@@ -21,7 +21,7 @@ import vizrock.constants.paths as vizrock_paths
 VIDEO_SUFFIXES = {'.mov', '.mp4', '.m4v', '.avi', '.mkv'}
 CLIP_PATTERN = re.compile(r'^(\d+)[\s_-]+(.+)$')
 
-DEFAULT_RING = {'mode': 'off', 'hue': 0, 'bright': 0, 'speed': 0}
+DEFAULT_LIGHT = {'mode': 'off', 'hue': 0, 'bright': 0, 'speed': 0}
 
 
 def scan(folder):
@@ -72,7 +72,8 @@ def merge(existing, clips, layer):
         if existing_id is not None:
             by_id[existing_id]['name'] = name
             continue
-        scene = {'id': next_id, 'name': name, 'ring': dict(DEFAULT_RING),
+        scene = {'id': next_id, 'name': name,
+                 'lights': {'default': dict(DEFAULT_LIGHT)},
                  'dmx': {'cue': 'off'}, 'audio': False,
                  'resolume': {'layer': layer, 'clip': number}}
         by_id[next_id] = scene
