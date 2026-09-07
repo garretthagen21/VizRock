@@ -1,21 +1,11 @@
 {
   "meta": {
-    "show": "THC Devils Night",
-    "home_scene": 1,
-    "board": {
-      "orientation": "landscape",
-      "width_inches": 119,
-      "height_inches": 79,
-      "width_pixels": 384,
-      "height_pixels": 256,
-      "aspect": "3:2",
-      "note": "~7.85mm pitch, derived from both dimensions independently. Compose 1620x1080."
-    }
+    "show": "THC Devils Night 2026-10-30"
   },
   "scenes": [
     {
       "id": 1,
-      "name": "Main loop",
+      "name": "Walkout",
       "resolume": {
         "layer": 1,
         "clip": 1
@@ -23,19 +13,19 @@
       "dmx": {
         "cue": "off"
       },
-      "audio": false,
       "lights": {
         "default": {
           "mode": "pulse",
-          "hue": 200,
-          "bright": 80,
+          "hue": 160,
+          "bright": 100,
           "speed": 2
         }
-      }
+      },
+      "audio": false
     },
     {
       "id": 2,
-      "name": "Song A - drop",
+      "name": "Suey Intro",
       "resolume": {
         "layer": 1,
         "clip": 2
@@ -43,19 +33,19 @@
       "dmx": {
         "cue": "off"
       },
-      "audio": false,
       "lights": {
         "default": {
-          "mode": "strobe",
-          "hue": 150,
-          "bright": 200,
-          "speed": 8
+          "mode": "solid",
+          "hue": 0,
+          "bright": 110,
+          "speed": 0
         }
-      }
+      },
+      "audio": false
     },
     {
       "id": 3,
-      "name": "Interlude",
+      "name": "Suey Drop",
       "resolume": {
         "layer": 1,
         "clip": 3
@@ -63,15 +53,470 @@
       "dmx": {
         "cue": "off"
       },
-      "audio": true,
       "lights": {
         "default": {
-          "mode": "chase",
-          "hue": 280,
-          "bright": 100,
-          "speed": 4
+          "mode": "strobe",
+          "hue": 0,
+          "bright": 220,
+          "speed": 8
         }
-      }
+      },
+      "audio": false
+    },
+    {
+      "id": 4,
+      "name": "Sweetness Punk Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 4
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "pulse",
+            "hue": 40,
+            "bright": 90,
+            "speed": 2,
+            "seconds": 12
+          },
+          {
+            "mode": "chase",
+            "hue": 64,
+            "bright": 110,
+            "speed": 3,
+            "seconds": 8
+          }
+        ]
+      },
+      "audio": false,
+      "main": true
+    },
+    {
+      "id": 5,
+      "name": "Machine Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 5
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "solid",
+          "hue": 96,
+          "bright": 110,
+          "speed": 0
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 6,
+      "name": "Machine Drop",
+      "resolume": {
+        "layer": 1,
+        "clip": 6
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "strobe",
+          "hue": 96,
+          "bright": 220,
+          "speed": 8
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 7,
+      "name": "Machine Outro",
+      "resolume": {
+        "layer": 1,
+        "clip": 7
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "pulse",
+          "hue": 96,
+          "bright": 110,
+          "speed": 2
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 8,
+      "name": "Man Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 8
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "solid",
+          "hue": 200,
+          "bright": 110,
+          "speed": 0
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 9,
+      "name": "Man Drop",
+      "resolume": {
+        "layer": 1,
+        "clip": 9
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "strobe",
+          "hue": 200,
+          "bright": 220,
+          "speed": 8
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 10,
+      "name": "Man Breakdown",
+      "resolume": {
+        "layer": 1,
+        "clip": 10
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "pulse",
+          "hue": 200,
+          "bright": 110,
+          "speed": 2
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 11,
+      "name": "Jamie Singalong Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 11
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "pulse",
+            "hue": 30,
+            "bright": 90,
+            "speed": 2,
+            "seconds": 12
+          },
+          {
+            "mode": "chase",
+            "hue": 54,
+            "bright": 110,
+            "speed": 3,
+            "seconds": 8
+          }
+        ]
+      },
+      "audio": false,
+      "main": true
+    },
+    {
+      "id": 12,
+      "name": "St Redacted Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 12
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "solid",
+          "hue": 224,
+          "bright": 110,
+          "speed": 0
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 13,
+      "name": "St Redacted Drop",
+      "resolume": {
+        "layer": 1,
+        "clip": 13
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "strobe",
+          "hue": 224,
+          "bright": 220,
+          "speed": 8
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 14,
+      "name": "St Redacted Outro",
+      "resolume": {
+        "layer": 1,
+        "clip": 14
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "pulse",
+          "hue": 224,
+          "bright": 110,
+          "speed": 2
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 15,
+      "name": "Soft Rock Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 15
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "pulse",
+            "hue": 140,
+            "bright": 90,
+            "speed": 2,
+            "seconds": 12
+          },
+          {
+            "mode": "chase",
+            "hue": 164,
+            "bright": 110,
+            "speed": 3,
+            "seconds": 8
+          }
+        ]
+      },
+      "audio": false,
+      "main": true
+    },
+    {
+      "id": 16,
+      "name": "Drop C Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 16
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "pulse",
+            "hue": 8,
+            "bright": 90,
+            "speed": 2,
+            "seconds": 12
+          },
+          {
+            "mode": "chase",
+            "hue": 32,
+            "bright": 110,
+            "speed": 3,
+            "seconds": 8
+          }
+        ]
+      },
+      "audio": false,
+      "main": true
+    },
+    {
+      "id": 17,
+      "name": "Letter Lost Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 17
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "solid",
+          "hue": 176,
+          "bright": 110,
+          "speed": 0
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 18,
+      "name": "Letter Lost Drop",
+      "resolume": {
+        "layer": 1,
+        "clip": 18
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "strobe",
+          "hue": 176,
+          "bright": 220,
+          "speed": 8
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 19,
+      "name": "Letter Lost Outro",
+      "resolume": {
+        "layer": 1,
+        "clip": 19
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "pulse",
+          "hue": 176,
+          "bright": 110,
+          "speed": 2
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 20,
+      "name": "Dyings Alright Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 20
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "solid",
+          "hue": 64,
+          "bright": 110,
+          "speed": 0
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 21,
+      "name": "Dyings Alright Drop",
+      "resolume": {
+        "layer": 1,
+        "clip": 21
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "strobe",
+          "hue": 64,
+          "bright": 220,
+          "speed": 8
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 22,
+      "name": "Dyings Alright Outro",
+      "resolume": {
+        "layer": 1,
+        "clip": 22
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "pulse",
+          "hue": 64,
+          "bright": 110,
+          "speed": 2
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 23,
+      "name": "Fat Lip Encore Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 23
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "pulse",
+            "hue": 40,
+            "bright": 90,
+            "speed": 2,
+            "seconds": 12
+          },
+          {
+            "mode": "chase",
+            "hue": 64,
+            "bright": 110,
+            "speed": 3,
+            "seconds": 8
+          }
+        ]
+      },
+      "audio": false,
+      "main": true
     }
   ]
 }
