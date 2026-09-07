@@ -150,6 +150,9 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **The transport is exactly the four pedal switches** — POP, PREV, NEXT, GO — in pedal order,
   each carrying the same short and long action the pedal does. Nothing else belongs in that
   bar; it is the one surface where muscle memory has to match.
+- **The long action is printed on the button, always.** One you can only discover by holding
+  is a hidden feature, and the label is tinted by what it does so the palette explains the
+  control.
 - **A long press fires instead of the short action, never as well.** The short action therefore
   waits for release. On a touchscreen that costs nothing; on the pedal it would put ~450ms in
   front of GO, which is why the pedal wants distinct messages rather than hold-timing.
@@ -161,6 +164,7 @@ every output degrades to a no-op and the web UI still drives the full state mach
   saying there is more below — do not tidy it away.
 - **One colour, one meaning. Never reuse one.**
   green `--live` = playing · amber `--armamber` = armed · purple `--home` = a main scene ·
+  orange `--pop` = the light burst ·
   blue `--active` = interactive/addressable · orange `--warn` = the show title ·
   red = blackout. Mains were briefly set to the same blue as `--active`, which made the
   LIVE dot, the ready pills and the mains all look like the same thing.

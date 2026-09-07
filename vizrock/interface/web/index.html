@@ -22,7 +22,7 @@
     --void:#0B0E13; --panel:#141922; --panel2:#1B222E; --line:#232C3A;
     --ink:#E6EDF5; --muted:#6B7A90; --muted2:#48566B;
     --live:#35E08A; --warn:#FFB347; --idle:#3A4657; --active:#4EA8FF; --armamber:#FFCB6B;
-    --home:#A78BFA; --mono:'IBM Plex Mono',ui-monospace,monospace; --disp:'Space Grotesk',system-ui,sans-serif;
+    --home:#A78BFA; --pop:#FF9A3C; --mono:'IBM Plex Mono',ui-monospace,monospace; --disp:'Space Grotesk',system-ui,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -165,18 +165,24 @@
   .btn.go:active{background:#173626; border-color:var(--live)}
   /* A long press with no feedback reads as a broken button, so show the hold
      filling and name the action it will fire. */
-  .btn[data-long]::after{content:attr(data-longlabel); position:absolute; left:0; right:0;
-    bottom:3px; font-size:9px; letter-spacing:.08em; color:var(--muted2); opacity:0}
-  .btn[data-long]{position:relative; padding-bottom:16px}
-  .btn.holding::after{opacity:1; color:var(--active)}
+  /* A long action you can only discover by holding is a hidden feature. It is
+     always printed, tinted by what it does — so the palette explains the button. */
+  .btn[data-long]::after{content:"⟲ " attr(data-longlabel); position:absolute; left:0; right:0;
+    bottom:3px; font-size:9px; letter-spacing:.08em; color:var(--muted2); opacity:.85}
+  .btn[data-long]{position:relative; padding-bottom:17px}
+  .btn[data-long="blackout"]::after{color:#c96b7a}
+  .btn[data-long="next_main"]::after{color:var(--home)}
+  .btn[data-long="cycle_color"]::after{color:var(--pop)}
+  .btn.holding::after{opacity:1; font-weight:700}
   .btn.holding{border-color:var(--active)}
   .btn.fired{background:var(--active); color:#08131f}
   @media (hover:hover){ .btn.go:hover{background:#173626; border-color:var(--live)} }
-  /* MAIN gets the same filled treatment as GO — they are the two buttons you reach
-     for without looking, so both read as a colour rather than an outline */
-  .btn.home{background:#1a1533; border-color:#4a3d78; color:var(--home); font-weight:700}
-  .btn.home:active{background:#241d45; border-color:var(--home)}
-  @media (hover:hover){ .btn.home:hover{background:#241d45; border-color:var(--home)} }
+  /* POP gets the same filled treatment as GO — they are the two buttons you reach
+     for without looking, so both read as a colour rather than an outline. Orange is
+     its own meaning: purple stays reserved for a main scene. */
+  .btn.pop{background:#2a1a0c; border-color:#7a4a1e; color:var(--pop); font-weight:700}
+  .btn.pop:active{background:#3a250f; border-color:var(--pop)}
+  @media (hover:hover){ .btn.pop:hover{background:#3a250f; border-color:var(--pop)} }
   .btn.blackout{border-color:#3a2530; color:#ff8a8a}
   .btn.blackout:active{background:#2a1720; border-color:#ff8a8a}
   @media (hover:hover){ .btn.blackout:hover{background:#2a1720; border-color:#ff8a8a} }
@@ -507,7 +513,7 @@
 
   <div id="sharedTransport">
     <div class="transport">
-      <button class="btn home" data-short="light_burst" data-long="cycle_color"
+      <button class="btn pop" data-short="light_burst" data-long="cycle_color"
               data-longlabel="COLOUR">✦ POP</button>
       <button class="btn" data-short="arm_prev" data-long="blackout"
               data-longlabel="BLACKOUT">◄ PREV</button>
