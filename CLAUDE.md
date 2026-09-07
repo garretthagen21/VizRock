@@ -135,6 +135,12 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **`restart_scene` puts the scene back as authored** — clip from the top, light sequence from
   step 1, the scene's own hue, any burst cancelled. A colour picked by hand mid-set must not
   survive it, or the button does not actually get you back to a known state.
+- **Effects live on the composition, bypassed, and VizRock only flips `bypassed`.** A layer's
+  effects process only that layer's content, so a clip on another layer would be untouched.
+  Parameters are tuned once in Resolume; sending only a boolean means there are no float
+  params to get wrong. `burst.osc_end` should bypass **every** effect you have added, not just
+  the one just used — that makes the reset exhaustive rather than dependent on tracking what
+  was switched on.
 - **A burst never changes hue.** `light_burst` alters how the lights move — mode, speed,
   brightness — so a colour chosen by hand survives one. Strobe is only the default; a scene may
   override the whole spec.

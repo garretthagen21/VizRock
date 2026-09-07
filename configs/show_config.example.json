@@ -84,16 +84,24 @@
     "mode": "strobe",
     "seconds": 5,
     "speed": 9,
-    "_comment": "osc fires on burst start, osc_end on burst end AND on every cue. Addresses depend on your Resolume composition \u2014 find them in its OSC monitor.",
+    "_comment": "Effects live on the COMPOSITION, not a layer \u2014 a layer's effects only process that layer's own content. Add the ones you use once, leave them bypassed, tune their parameters in Resolume. VizRock only ever flips bypassed, so there are no float params to get wrong. Find the real addresses in Resolume's OSC monitor.",
     "osc": [
       {
-        "address": "/composition/layers/1/video/effects/strobe/bypassed",
+        "address": "/composition/video/effects/strobe/bypassed",
         "value": 0
       }
     ],
     "osc_end": [
       {
-        "address": "/composition/layers/1/video/effects/strobe/bypassed",
+        "address": "/composition/video/effects/strobe/bypassed",
+        "value": 1
+      },
+      {
+        "address": "/composition/video/effects/glitch/bypassed",
+        "value": 1
+      },
+      {
+        "address": "/composition/video/effects/rgbshift/bypassed",
         "value": 1
       }
     ]
