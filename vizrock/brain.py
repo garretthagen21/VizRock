@@ -78,6 +78,12 @@ class Brain:
             if self.live is None:
                 logger.warning('nothing is live, so there is nothing to restart')
             else:
+                # Restart means the scene as authored: clip from the top, light
+                # sequence from step 1, the scene's own hue, no burst running. A
+                # colour picked by hand mid-set must not survive a restart, or the
+                # button does not actually get you back to a known state.
+                self.color_index = None
+                self._cancel_burst()
                 self._commit(self.live, rearm=False)
         elif action == 'toggle_lights':
             self._toggle_lights()
@@ -350,6 +356,12 @@ class Brain:
         self._render()
         self.push_state()
         self._schedule_light_step()
+
+    def _cancel_burst(self):
+        if self._burst_timer:
+            self._burst_timer.cancel()
+            self._burst_timer = None
+        self._burst_until = 0.0
 
     def _end_burst(self):
         self._burst_until = 0.0

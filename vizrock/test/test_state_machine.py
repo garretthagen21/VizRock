@@ -418,6 +418,19 @@ def _restart_refires_without_rearming():
     assert brain.live == 2, brain.live
     assert brain.armed == armed_before, 'restart must not disturb what is queued'
 
+    # restart puts the scene back as authored, whatever was fiddled with mid-set
+    brain.scene_library.scenes[2]['lights'] = {'default': [
+        {'mode': 'pulse', 'hue': 200, 'seconds': 4}, {'mode': 'chase', 'hue': 160, 'seconds': 4}]}
+    brain.handle('goto', 2)
+    brain._advance_light_step()
+    brain.handle('cycle_color')
+    brain.handle('light_burst')
+    assert brain.color_index is not None and brain._light_step == 1
+    brain.handle('restart_scene')
+    assert brain.color_index is None, 'a hand-picked colour must not survive a restart'
+    assert brain._light_step == 0, 'the light sequence restarts at step 1'
+    assert brain._burst_until == 0.0, 'a running burst is cancelled'
+
     # nothing live is a no-op, not a crash
     fresh = Brain()
     fresh.live = None

@@ -5,7 +5,7 @@ out to Resolume (OSC), DMX (Art-Net), the wearable LED rings (USB serial → ESP
 pedalboard OLED. Serves its own control UI over websocket.
 
 Workspace root is `../` — read `../CLAUDE.md` first for cross-repo contracts
-(ring wire protocol, arm-and-GO model, venue networking).
+(light wire protocol, arm-and-GO model, venue networking).
 
 ## Layout
 
@@ -58,34 +58,39 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **State changes happen on the asyncio loop only.** MIDI arrives on a rtmidi callback thread;
   `__main__` hands `MidiInterface` a handler that hops via `call_soon_threadsafe`. There are
   no locks and there shouldn't need to be.
-- **Scene `1` is the main loop**, named by `meta.home_scene`, and is excluded from
-  `SceneLibrary.order` — PREV/NEXT must never land on it. It is the default state you drop
-  back into, not a step in the set.
-- **`home` and `blackout` deliberately do not re-arm.** Bouncing out to the main loop has to
-  leave whatever was queued still queued, or you lose your place mid-set.
+- **`main` is a per-scene flag and there can be several.** The setlist is one flat running
+  order — specific scenes for songs and moments, with stretches of generic looping visuals
+  between them. A scene with `main: true` is one of those loops: what you fall back to when
+  something goes wrong. `SceneLibrary.order` is **every** scene; PREV/NEXT walk the lot.
+  *(Superseded 2026-09-07: `meta.home_scene` and a single pinned main loop excluded from the
+  order. It migrates to a flag on load.)*
+- **`next_main` advances to the next main after LIVE, wrapping.** It lands on the loop that
+  belongs to this part of the set rather than jumping to the top — it is a safety control, not
+  navigation. With no scene marked main it is a **no-op that logs**: a dead button is honest,
+  jumping to an arbitrary clip is not.
+- **`next_main` and `blackout` deliberately do not re-arm.** Bouncing out to a looping visual
+  has to leave whatever was queued still queued, or you lose your place mid-set.
 - **Blackout is an action, not a scene.** `BLACKOUT_SCENE` is a constant dispatched directly —
-  it needs no ring or dmx settings because they are zero by definition, and keeping it out of
+  it needs no light or dmx settings because they are zero by definition, and keeping it out of
   `scenes.json` leaves that file purely about the show.
 - **Scene ids are set positions and get renumbered on reorder.** Dragging in EDIT renumbers
-  scenes 2..N so the CUES grid always reads 01, 02, 03 — a grid you scan with a foot has to be
-  in order. Each scene keeps its own `resolume.clip`, so the video travels with the scene and
+  **1..N flat, nothing pinned** — mains renumber alongside the specials, because a main is a
+  position in the set like anything else. The CUES grid always reads 01, 02, 03; a grid you
+  scan with a foot has to be in order. Each scene keeps its own `resolume.clip`, so the video travels with the scene and
   id/clip diverge on purpose. `Brain.reorder` remaps LIVE and ARMED so they follow the *scene*,
   not the number.
 - **The generator matches on clip, never on id.** `vizrock_scenes` keys existing scenes by the
   clip they play, because ids drift after a reorder and keying on them would silently undo
   someone's running order.
-- **The main loop is always the home scene, and always scene 1.** `meta.home_scene` exists,
-  but if it ever names a scene that does not exist the library falls back to the lowest id
-  rather than leaving HOME inert — a dead HOME button is the worst failure available, since it
-  is the one thing you press to get out of trouble. Reordering never moves it.
-- **The main loop is pinned, not listed.** In CUES it sits above the grid and is excluded from
-  it; in EDIT it is not draggable. It is the default state, not a step in the set.
+- **Mains are listed, not pinned.** In CUES they sit in the running order marked with a purple
+  dashed border and a `⌂ MAIN` chip. Mid-set you need to see *where the nearest fallback is*,
+  which a box pinned above the grid cannot tell you.
 - **Reordering is desktop-only** (`hover:hover and pointer:fine`). Dragging with a finger
   fights scrolling, and a pedalboard is not where you rearrange a setlist.
 - **Scene id and clip number are the same by convention, not by rule.** `vizrock_scenes`
   derives the clip from the filename number, so scene 3 is clip 3 — but `resolume.clip` is
   explicit per scene and the runtime never assumes identity. Two scenes may deliberately share
-  one clip with different ring or DMX looks. Do not add code that infers one from the other.
+  one clip with different light or DMX looks. Do not add code that infers one from the other.
 - **`configs/scenes.json` is not source of truth** — the UI overwrites it. Committed values
   are defaults for a fresh Pi. This works because the install is editable (`pip install -e .`):
   `paths.py` resolves `REPO_DIR` to the clone, wherever it is, and the running user can write
@@ -107,24 +112,41 @@ every output degrades to a no-op and the web UI still drives the full state mach
   initial snapshot silently vanished until this was fixed.
 - **Gate every `:hover` behind `@media (hover:hover)`.** On touch, `:hover` latches after a
   tap, which made the transport buttons look stuck on. Pair each one with `:active`.
-- **Boot dark with the main loop queued.** `Brain.boot()` comes up with blackout on and the
-  restore target primed to the main loop. Powering on must never throw a visual at a screen
-  nobody is ready for, but releasing blackout has to land somewhere rather than nothing.
+- **Boot dark with the first main loaded.** `Brain.boot()` comes up with blackout on and LIVE
+  set to the lowest-id main, falling back to the first scene if none are marked. Powering on
+  must never throw a visual at a screen nobody is ready for, but releasing blackout has to
+  land somewhere rather than nothing.
 - **Never reuse the word "live" for anything but the playing scene.** The connection indicator
   said `live` when it meant "websocket connected", which is exactly the overload that makes a
   glanceable UI unreadable. It says `connected` / `no brain`.
-- **Blackout is a master mute, and nothing but blackout clears it.** You can load and change
-  scenes underneath it — GO, MAIN, a cue tap all update LIVE — but `_commit` dispatches
-  **nothing** while it is on, and releasing it reveals whatever ended up loaded. GO silently
+- **Blackout is a pure output mute, and nothing but blackout clears it.** LIVE keeps pointing
+  at whatever is loaded — you can cue underneath it and releasing reveals the result, rather
+  than the brain remembering a scene and restoring it. A cue under blackout re-asserts all-off
+  rather than sending nothing, so an output that came up late is still muted. GO silently
   undoing a blackout someone put on deliberately would be the worst kind of surprise.
-- **Blackout is a held toggle, not a one-way trip.** Turning it off restores whatever was
-  playing, so killing the screen mid-song does not also lose your place. Committing any scene
-  clears it. It lives in the header, deliberately away from the transport, because a stray tap
-  next to GO would be expensive.
-- **The transport is exactly the four pedal actions** — MAIN, PREV, NEXT, GO — in pedal order.
-  Nothing else belongs in that bar; it is the one surface where muscle memory has to match.
-- **The action is `home`, the label is MAIN.** Users see MAIN; the code, config and log keep
-  `home`/`home_scene`. Do not rename the action.
+  *(Superseded 2026-09-07: blackout used to set `live = None` and restore from `_restore_to`.)*
+- **Lights are a separate switch from blackout.** Blackout is the panic control and kills
+  everything; `toggle_lights` mutes only the lights, because "lights off, visuals running" is
+  a real ask and the reverse never is. A scoped blackout (mute either half independently) was
+  built and thrown away — four combinations to reason about at 1am, buying a case nobody wants.
+- **One precedence order, in one place.** `blackout > lights off > burst > colour override >
+  the scene`, resolved in `Brain._effective_scene`. An explicit mute always outranks a
+  momentary effect. Put it anywhere else and the UI and the outputs will disagree.
+- **`restart_scene` puts the scene back as authored** — clip from the top, light sequence from
+  step 1, the scene's own hue, any burst cancelled. A colour picked by hand mid-set must not
+  survive it, or the button does not actually get you back to a known state.
+- **A burst never changes hue.** `light_burst` alters how the lights move — mode, speed,
+  brightness — so a colour chosen by hand survives one. Strobe is only the default; a scene may
+  override the whole spec.
+- **Timers hop back onto the loop before touching state.** `UiServer.broadcast` looks up the
+  running loop and gives up if there is not one, so a `push_state` from a `threading.Timer`
+  is silently dropped. Burst and light-step timers go through `Brain._from_thread`.
+- **The transport is exactly the four pedal switches** — POP, PREV, NEXT, GO — in pedal order,
+  each carrying the same short and long action the pedal does. Nothing else belongs in that
+  bar; it is the one surface where muscle memory has to match.
+- **A long press fires instead of the short action, never as well.** The short action therefore
+  waits for release. On a touchscreen that costs nothing; on the pedal it would put ~450ms in
+  front of GO, which is why the pedal wants distinct messages rather than hold-timing.
 - **Tapping a cue arms; it does not fire.** `ui.tap_fires` opts into firing straight from a
   tap and defaults **off**. A mis-tap that only changes what is queued costs nothing; one that
   fires a visual costs the song. `arm` is display-only and must never reach an output.
@@ -132,10 +154,10 @@ every output degrades to a no-op and the web UI still drives the full state mach
   on a phone, everything at once on a laptop. A partly visible row is the only affordance
   saying there is more below — do not tidy it away.
 - **One colour, one meaning. Never reuse one.**
-  green `--live` = playing · amber `--armamber` = armed · purple `--home` = the main loop ·
+  green `--live` = playing · amber `--armamber` = armed · purple `--home` = a main scene ·
   blue `--active` = interactive/addressable · orange `--warn` = the show title ·
-  red = blackout. The main loop was briefly set to the same blue as `--active`, which made the
-  LIVE dot, the ready pills and the main loop all look like the same thing.
+  red = blackout. Mains were briefly set to the same blue as `--active`, which made the
+  LIVE dot, the ready pills and the mains all look like the same thing.
 - **Per-scene and global settings are separate screens, and each says its scope.** The
   inspector is headed `INSPECTOR · THIS SCENE ONLY`; outputs, cues, triggers, connect and
   software sit behind `⚙ GLOBAL SETTINGS`, headed `GLOBAL · APPLIES TO EVERY SCENE`. Mixing
@@ -183,7 +205,7 @@ every output degrades to a no-op and the web UI still drives the full state mach
   something the operator never saw.
 - Adding a new output = one file in `outputs/` + an entry in `OUTPUT_KINDS`. Don't
   special-case outputs inside `brain.py`.
-- Adding a ring mode means editing `interface/web/index.html` — **both** `LIGHT_MODES` and
+- Adding a light mode means editing `interface/web/index.html` — **both** `LIGHT_MODES` and
   `paintLight` — **and** both sketches in `../VizRock-Firmware`. `outputs/light_serial.py` passes the mode string through
   untouched — there is no table here to update. See the wire protocol in `../CLAUDE.md`.
 
@@ -205,7 +227,7 @@ without that flag.
 ## Setlist tooling
 
 `vizrock_scenes <folder>` builds `configs/scenes.json` from clips named `NN_name.mov`. Two
-rules it must keep: **nothing is written without `--write`**, and **merging preserves ring,
+rules it must keep: **nothing is written without `--write`**, and **merging preserves light,
 dmx and audio on existing scenes** — the file only drives name and clip number. Wiping tuned
 cues on a regenerate would be worse than no tool at all.
 
@@ -220,7 +242,38 @@ Run both after any change — the suites are cheap and a later edit silently bre
 one is the failure mode they exist to catch. `test_config_edit` writes `show_config.json` and
 restores it; if it is interrupted, check `git diff configs/`.
 
-They cover logic, not hardware: no MIDI device, ring, OLED or Pi is involved anywhere.
+They cover logic, not hardware: no MIDI device, light, OLED or Pi is involved anywhere.
+
+## Lights
+
+A scene's lighting is `lights`, keyed by **peripheral**, so one scene can light two 2x12
+stacks differently:
+
+```json
+"lights": {
+  "default": [
+    {"mode": "pulse", "hue": 200, "bright": 90, "speed": 2, "seconds": 8},
+    {"mode": "chase", "hue": 160, "bright": 110, "speed": 4, "seconds": 4}
+  ],
+  "cabA": {"mode": "strobe", "hue": 0, "bright": 255, "speed": 9}
+}
+```
+
+- Each entry is a single config **or a list of steps that loops**, so a long stretch of
+  looping visuals does not sit on one look. `seconds` defaults to `light_step_seconds`; `0`
+  parks on that step. Re-cueing a scene restarts at step 1.
+- **`default` covers every peripheral without its own entry.** If there is no `default` key,
+  the first entry written is used.
+- Names map to ESP-NOW groups via `light_groups` in `show_config.json`. The brain resolves a
+  scene to `{group: light}` and `LightSerial` emits **one `LIGHT` line per group every tick**,
+  so a node matching its group exactly is addressed once and only once.
+- **Every node's group must appear in `light_groups`** or it gets no packets and drops to the
+  4s idle fallback. Visible rather than silent, but it is a new way to misconfigure.
+- **A ring is one kind of light**, like a cab stack — nothing is named `ring` any more.
+  *(Renamed 2026-09-07; `ring` blocks and `outputs.rings` migrate on load.)*
+- **The inspector will not edit a stepped or multi-peripheral config.** It shows what the
+  scene holds and points at `scenes.json`. The save path spreads the whole scene, so without
+  that guard editing a *name* would flatten the entire light sequence.
 
 ## Config notes
 
@@ -244,3 +297,10 @@ They cover logic, not hardware: no MIDI device, ring, OLED or Pi is involved any
   before suspecting the network.
 - DMX cues are named channel maps; an unknown cue name resolves to an all-zero frame, so a typo
   blacks out rather than crashing.
+- `light_groups` maps a peripheral name to an ESP-NOW group (`{"default": 0, "cabA": 1}`).
+  A node ships as group 0, so an unconfigured rig needs nothing here.
+- `burst` is what "make the lights pop" does — `{"mode": "strobe", "seconds": 5, "speed": 9}`,
+  overridable per scene. `palette` is the hue list `cycle_color` steps through; the scene's own
+  hue is also a stop, so there is always a way back that does not depend on counting presses.
+- **Actions:** `go · arm · arm_prev · arm_next · goto · next_main · restart_scene · blackout ·
+  toggle_lights · light_burst · cycle_color`.
