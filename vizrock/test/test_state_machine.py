@@ -75,6 +75,7 @@ def run():
     _blackout_is_a_master_mute()
     _light_overrides_have_one_precedence()
     _light_sequences_loop()
+    _peripherals_get_their_own_light_config()
     _restart_refires_without_rearming()
     _next_main_is_a_dead_button_with_no_mains()
 
@@ -174,18 +175,18 @@ def _lights_are_a_separate_switch():
 
     brain.handle('toggle_lights')
     assert brain.lights_off is True
-    assert sent[-1]['ring']['mode'] == 'off', sent[-1]['ring']
+    assert sent[-1]['lights'][0]['mode'] == 'off', sent[-1]['lights']
     assert not sent[-1].get('resolume', {}).get('clear'), \
         'the visuals must keep running with the lights off'
 
     # a cue still fires visuals while the lights stay muted
     brain.handle('goto', 3)
-    assert sent[-1]['ring']['mode'] == 'off', 'lights stay off across a cue'
+    assert sent[-1]['lights'][0]['mode'] == 'off', 'lights stay off across a cue'
     assert sent[-1]['resolume']['clip'] == 3, sent[-1]['resolume']
 
     brain.handle('toggle_lights')
     assert brain.lights_off is False
-    assert sent[-1]['ring']['mode'] != 'off', 'lights come back'
+    assert sent[-1]['lights'][0]['mode'] != 'off', 'lights come back'
 
     # blackout outranks the lights switch either way round
     brain.handle('blackout')
@@ -245,7 +246,7 @@ def _light_overrides_have_one_precedence():
         name = 'rings'
 
         def apply(self, scene):
-            sent.append(dict(scene.get('ring') or {}))
+            sent.append(dict((scene.get('lights') or {}).get(0) or {}))
 
         def on_state(self, _):
             pass
@@ -258,8 +259,8 @@ def _light_overrides_have_one_precedence():
 
     brain = Brain()
     brain.outputs = [Spy()]
-    brain.scene_library.scenes[2]['ring'] = {'mode': 'solid', 'hue': 200,
-                                             'bright': 90, 'speed': 2}
+    brain.scene_library.scenes[2]['lights'] = {
+        'default': {'mode': 'solid', 'hue': 200, 'bright': 90, 'speed': 2}}
     brain.handle('goto', 2)
     sent.clear()
 
@@ -311,7 +312,7 @@ def _light_sequences_loop():
         name = 'rings'
 
         def apply(self, scene):
-            sent.append(dict(scene.get('ring') or {}))
+            sent.append(dict((scene.get('lights') or {}).get(0) or {}))
 
         def on_state(self, _):
             pass
@@ -324,9 +325,9 @@ def _light_sequences_loop():
 
     brain = Brain()
     brain.outputs = [Spy()]
-    brain.scene_library.scenes[2]['ring'] = [
+    brain.scene_library.scenes[2]['lights'] = {'default': [
         {'mode': 'pulse', 'hue': 200, 'bright': 90, 'speed': 2, 'seconds': 4},
-        {'mode': 'chase', 'hue': 160, 'bright': 110, 'speed': 4, 'seconds': 4}]
+        {'mode': 'chase', 'hue': 160, 'bright': 110, 'speed': 4, 'seconds': 4}]}
     brain.handle('goto', 2)
 
     assert sent[-1]['mode'] == 'pulse', 'a cue starts at the first step'
@@ -343,7 +344,7 @@ def _light_sequences_loop():
     assert sent[-1]['mode'] == 'pulse', f'a fresh cue restarts the loop: {sent[-1]}'
 
     # a plain dict is still a one-step scene, and never starts a timer
-    brain.scene_library.scenes[3]['ring'] = {'mode': 'solid', 'hue': 10}
+    brain.scene_library.scenes[3]['lights'] = {'default': {'mode': 'solid', 'hue': 10}}
     brain.handle('goto', 3)
     assert sent[-1]['mode'] == 'solid', sent[-1]
     assert brain._light_timer is None, 'a single-step scene needs no timer'
@@ -354,6 +355,59 @@ def _light_sequences_loop():
     from vizrock.configurations.settings import vizrock_settings
     assert sent[-1]['hue'] == vizrock_settings.palette[0], sent[-1]
     brain._restart_light_loop()
+
+
+def _peripherals_get_their_own_light_config():
+    """
+    Lights are keyed by peripheral. `default` covers every group without its own
+    entry, and each group is addressed exactly once per tick.
+    """
+    from vizrock.configurations.settings import vizrock_settings
+
+    sent = []
+
+    class Spy:
+        name = 'rings'
+
+        def apply(self, scene):
+            sent.append(scene.get('lights') or {})
+
+        def on_state(self, _):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    groups = dict(vizrock_settings.light_groups)
+    vizrock_settings.light_groups = {'default': 0, 'CabA': 1, 'CabB': 2}
+    try:
+        brain = Brain()
+        brain.outputs = [Spy()]
+        brain.scene_library.scenes[2]['lights'] = {
+            'default': {'mode': 'solid', 'hue': 10},
+            'CabA': {'mode': 'chase', 'hue': 90}}
+        brain.handle('goto', 2)
+
+        lights = sent[-1]
+        assert set(lights) == {0, 1, 2}, f'every group needs a line: {sorted(lights)}'
+        assert lights[1]['mode'] == 'chase', 'CabA takes its own config'
+        assert lights[0]['mode'] == 'solid', 'group 0 takes the default'
+        assert lights[2]['mode'] == 'solid', 'CabB has no entry, so it falls back'
+
+        # with no `default` key the first entry written becomes the fallback
+        brain.scene_library.scenes[2]['lights'] = {'CabA': {'mode': 'pulse', 'hue': 5}}
+        brain.handle('goto', 2)
+        assert sent[-1][0]['mode'] == 'pulse', sent[-1]
+        assert sent[-1][2]['mode'] == 'pulse', 'everything falls back to the first entry'
+
+        # muting still covers every group
+        brain.handle('toggle_lights')
+        assert all(l['mode'] == 'off' for l in sent[-1].values()), sent[-1]
+    finally:
+        vizrock_settings.light_groups = groups
 
 
 def _restart_refires_without_rearming():

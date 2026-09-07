@@ -33,6 +33,10 @@ class VizRockSettings:
         # deliberately not overridable, so a burst never changes the colour on stage.
         self.burst = {'mode': 'strobe', 'seconds': 5, 'speed': 9}
         self.burst.update(self.raw.get('burst', {}))
+        # Peripheral name -> ESP-NOW group. `default` is group 0, which is what a node
+        # ships as, so an unconfigured rig needs nothing here.
+        self.light_groups = {'default': 0}
+        self.light_groups.update(self.raw.get('light_groups', {}))
         # how long a light step holds when it does not say; 0 in a step means hold
         self.light_step_seconds = float(self.raw.get('light_step_seconds', 8))
         # hues that cycle_color steps through; the scene's own hue is also a stop

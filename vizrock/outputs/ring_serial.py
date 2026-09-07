@@ -33,20 +33,27 @@ class RingSerial(Output):
     def __init__(self, port='auto', baud=115200, **_):
         self.port_hint = port
         self.baud = baud
-        self.latest_payload = 'RING 0 off 0 0 0\n'
+        self.latest_payload = 'RING 0 off 0 0 0\n'   # one line per group, joined
         self.serial_port = None
         self.is_running = True
         self.thread = threading.Thread(target=self._run, daemon=True)
         self.thread.start()
 
     def apply(self, scene):
-        ring = scene.get('ring') or {'mode': 'off'}
-        # Group 0 addresses every node. Scenes carry one light block today, so every
-        # node renders the same look; per-group scenes would send one line each and
-        # never a group-0 line in the same tick.
-        self.latest_payload = 'RING {} {} {} {} {}\n'.format(
-            ring.get('group', 0), ring.get('mode', 'off'), ring.get('hue', 0),
-            ring.get('bright', 0), ring.get('speed', 0))
+        """
+        One RING line per peripheral group, sent together every tick.
+
+        The brain resolves `lights` to {group: dict} — every configured group gets a
+        line, so a node matching its group exactly is addressed once and only once.
+        """
+        lights = scene.get('lights')
+        if not isinstance(lights, dict) or not lights:
+            lights = {0: {'mode': 'off'}}
+        self.latest_payload = ''.join(
+            'RING {} {} {} {} {}\n'.format(
+                group, light.get('mode', 'off'), light.get('hue', 0),
+                light.get('bright', 0), light.get('speed', 0))
+            for group, light in sorted(lights.items()))
 
     def status(self):
         return 'ok' if self.serial_port and self.serial_port.is_open else 'retrying'

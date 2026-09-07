@@ -286,25 +286,41 @@ class Brain:
             function()                    # tests and dev runs without a loop
 
     def _light_summary(self, scene):
-        """How the lights read in a log line, for one step or a whole sequence."""
-        steps = self._light_steps(scene)
-        if len(steps) == 1:
-            return steps[0].get('mode', 'off')
-        return f"{len(steps)}-step {'/'.join(s.get('mode', 'off') for s in steps)}"
+        """How the lights read in a log line, across every peripheral."""
+        parts = []
+        for name, steps in self._light_configs(scene).items():
+            modes = '/'.join(s.get('mode', 'off') for s in steps)
+            parts.append(modes if name == 'default' else f'{name}:{modes}')
+        return ' '.join(parts) or 'off'
+
+    def _light_configs(self, scene):
+        """
+        A scene's lighting as {peripheral name: [steps]}.
+
+        Lights are keyed by peripheral — `default`, `CabA`, `CabB` — so one scene can
+        light two stacks differently. Each entry is a single dict or a list of steps
+        that loops. `default` covers every peripheral without its own entry.
+        """
+        lights = scene.get('lights')
+        if not isinstance(lights, dict) or not lights:
+            return {'default': [{'mode': 'off'}]}
+        return {name: self._as_steps(value) for name, value in lights.items()}
+
+    @staticmethod
+    def _as_steps(value):
+        if isinstance(value, list):
+            steps = [s for s in value if isinstance(s, dict)]
+            return steps or [{'mode': 'off'}]
+        return [value if isinstance(value, dict) else {'mode': 'off'}]
+
+    def _default_config_name(self, configs):
+        """`default` if present, otherwise whichever entry was written first."""
+        return 'default' if 'default' in configs else next(iter(configs))
 
     def _light_steps(self, scene):
-        """
-        A scene's lighting as a list of steps.
-
-        A single dict is a one-step loop, so existing scenes keep working untouched.
-        Several steps cycle, which keeps a long stretch of looping visuals from going
-        stale without needing a separate cue for every change.
-        """
-        ring = scene.get('ring')
-        if isinstance(ring, list):
-            steps = [s for s in ring if isinstance(s, dict)]
-            return steps or [{'mode': 'off'}]
-        return [ring or {'mode': 'off'}]
+        """The default peripheral's steps — what drives the loop timing."""
+        configs = self._light_configs(scene)
+        return configs[self._default_config_name(configs)]
 
     def _restart_light_loop(self):
         """Back to the first step and re-time. Called whenever LIVE changes."""
@@ -340,14 +356,29 @@ class Brain:
         self._render()
         self.push_state()
 
-    def _ring_for(self, scene):
+    def _lights_for(self, scene):
         """
-        The ring block for a scene with the colour override and any burst applied.
+        Resolve a scene to {group number: light dict}, one entry per configured
+        peripheral, with the colour override and any burst applied.
 
-        Precedence is blackout > burst > colour override > the scene. The burst never
-        sets hue, so a colour chosen by hand survives one.
+        Every group in `light_groups` gets a line, falling back to the default
+        config. Nodes match their group exactly, so no node is ever addressed twice
+        in a tick and none is left unaddressed.
         """
-        steps = self._light_steps(scene)
+        configs = self._light_configs(scene)
+        fallback = configs[self._default_config_name(configs)]
+        resolved = {}
+        for name, group in vizrock_settings.light_groups.items():
+            resolved[group] = self._one_light(configs.get(name, fallback))
+        return resolved
+
+    def _one_light(self, steps):
+        """
+        One peripheral's light dict for the current step.
+
+        Precedence is blackout > lights off > burst > colour override > the scene.
+        The burst never sets hue, so a colour chosen by hand survives one.
+        """
         ring = dict(steps[self._light_step % len(steps)])
         ring.pop('seconds', None)         # timing is ours, not the wire's
         if self.color_index is not None and vizrock_settings.palette:
@@ -362,6 +393,9 @@ class Brain:
                     ring[key] = burst[key]
         return ring
 
+    def _all_off(self):
+        return {group: {'mode': 'off'} for group in vizrock_settings.light_groups.values()}
+
     def _effective_scene(self):
         """
         The live scene as the outputs should see it, with every mute and override
@@ -369,12 +403,12 @@ class Brain:
         resolved here so nothing downstream has to know it exists.
         """
         if self.blackout:
-            return BLACKOUT_SCENE
+            return {**BLACKOUT_SCENE, 'lights': self._all_off()}
         scene = self.scene_library.scenes.get(self.live)
         if scene is None:
             return None
         effective = dict(scene)
-        effective['ring'] = {'mode': 'off'} if self.lights_off else self._ring_for(scene)
+        effective['lights'] = self._all_off() if self.lights_off else self._lights_for(scene)
         return effective
 
     def _render(self):

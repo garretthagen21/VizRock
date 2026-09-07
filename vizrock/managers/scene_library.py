@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 BLACKOUT_SCENE = {'name': 'Blackout',
                   'resolume': {'clear': True},
                   'dmx': {'cue': 'off'},
-                  'ring': {'mode': 'off'},
+                  'lights': {'default': {'mode': 'off'}},
                   'audio': False}
 
 
@@ -43,10 +43,25 @@ class SceneLibrary:
         self.scenes = {scene['id']: scene for scene in data['scenes']}
         self.meta = data.get('meta', {})
         self._migrate_home_scene()
+        self._migrate_ring_to_lights()
         # Every scene steps. Mains are interleaved with the specials rather than
         # sitting outside the order, so PREV/NEXT walk the whole set.
         self.order = sorted(self.scenes)
         self.mains = [i for i in self.order if self.scenes[i].get('main')]
+
+    def _migrate_ring_to_lights(self):
+        """
+        Turn a pre-2026-09 `ring` block into `lights: {default: ...}`.
+
+        Lights are keyed by peripheral now — `default`, `CabA`, `CabB` — so one scene
+        can light two 2x12 stacks differently. The old single block becomes the
+        default, which is what every peripheral without its own entry still uses.
+        """
+        for scene in self.scenes.values():
+            if 'ring' in scene and 'lights' not in scene:
+                scene['lights'] = {'default': scene.pop('ring')}
+            else:
+                scene.pop('ring', None)
 
     def _migrate_home_scene(self):
         """Turn a pre-2026-09 `meta.home_scene` into a `main` flag on that scene."""

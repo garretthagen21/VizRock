@@ -92,5 +92,10 @@
     96,
     160,
     200
-  ]
+  ],
+  "light_groups": {
+    "default": 0,
+    "CabA": 1,
+    "CabB": 2
+  }
 }

@@ -49,7 +49,7 @@ def _renumbers_and_keeps_clips():
     assert after[2]['resolume']['clip'] == 2
     assert after[3]['resolume']['clip'] == 1, 'nothing is pinned any more'
     assert after[1]['name'] == 'Interlude', 'name travels too'
-    assert after[1]['ring']['mode'] == 'chase', 'ring settings travel'
+    assert after[1]['lights']['default']['mode'] == 'chase', 'light settings travel'
     assert library.order == [1, 2, 3], library.order
 
 

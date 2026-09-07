@@ -69,7 +69,7 @@ def _merge_preserves_tuning():
     """
     existing = {'meta': {'show': 'THC'}, 'scenes': [
         {'id': 3, 'name': 'Old name', 'resolume': {'layer': 1, 'clip': 2},
-         'ring': {'mode': 'strobe', 'hue': 150, 'bright': 200, 'speed': 8},
+         'lights': {'default': {'mode': 'strobe', 'hue': 150, 'bright': 200, 'speed': 8}},
          'dmx': {'cue': 'strobe_cool'}, 'audio': True}]}
     clips = {2: ('Drop', '02_Drop.mov'), 5: ('New thing', '05_New thing.mov')}
 
@@ -79,8 +79,8 @@ def _merge_preserves_tuning():
     # matched by clip 2, not by id
     assert scenes[3]['name'] == 'Drop', 'name should follow the file'
     assert scenes[3]['resolume']['clip'] == 2, 'the scene keeps the clip it plays'
-    assert scenes[3]['ring']['mode'] == 'strobe', 'ring tuning was wiped'
-    assert scenes[3]['ring']['hue'] == 150
+    assert scenes[3]['lights']['default']['mode'] == 'strobe', 'light tuning was wiped'
+    assert scenes[3]['lights']['default']['hue'] == 150
     assert scenes[3]['dmx']['cue'] == 'strobe_cool', 'dmx cue was wiped'
     assert scenes[3]['audio'] is True, 'audio flag was wiped'
 

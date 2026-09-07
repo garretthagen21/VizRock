@@ -39,12 +39,15 @@ def _ring_wire_format():
     """The RING line is parsed by firmware in the other repo — pin its shape."""
     ring = RingSerial(port='/dev/null')
     try:
-        ring.apply({'ring': {'mode': 'pulse', 'hue': 200, 'bright': 90, 'speed': 3}})
+        # the brain hands outputs {group: light}, already resolved
+        ring.apply({'lights': {0: {'mode': 'pulse', 'hue': 200, 'bright': 90, 'speed': 3}}})
         assert ring.latest_payload == 'RING 0 pulse 200 90 3\n', ring.latest_payload
 
-        ring.apply({'ring': {'mode': 'solid', 'hue': 10, 'bright': 20, 'speed': 1,
-                             'group': 2}})
-        assert ring.latest_payload == 'RING 2 solid 10 20 1\n', ring.latest_payload
+        # one line per peripheral group, every tick, sorted so it is stable
+        ring.apply({'lights': {0: {'mode': 'solid', 'hue': 10, 'bright': 20, 'speed': 1},
+                               2: {'mode': 'chase', 'hue': 90, 'bright': 30, 'speed': 5}}})
+        assert ring.latest_payload == ('RING 0 solid 10 20 1\n'
+                                       'RING 2 chase 90 30 5\n'), ring.latest_payload
 
         # a scene with no light block must still be a well-formed line
         ring.apply({})
