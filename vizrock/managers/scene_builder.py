@@ -64,13 +64,25 @@ def merge(existing, clips, layer):
     # Match on the clip a scene already plays, not on its id. Ids are set positions
     # and drift once the setlist is reordered, so keying on them would silently undo
     # someone's running order the next time this ran.
-    by_clip = {s.get('resolume', {}).get('clip'): s['id']
-               for s in by_id.values() if s.get('resolume', {}).get('clip')}
+    # A clip may be played by several scenes — an intro, a drop and an outro sharing
+    # one video with different light looks is the normal case, not an edge one. So
+    # this maps to a *list*: as a dict the last scene silently won and a regenerate
+    # renamed whichever happened to sort last.
+    by_clip = {}
+    for scene in by_id.values():
+        clip = (scene.get('resolume') or {}).get('clip')
+        if clip:
+            by_clip.setdefault(clip, []).append(scene['id'])
     next_id = max(by_id, default=0) + 1
     for number, (name, _) in sorted(clips.items()):
-        existing_id = by_clip.get(number)
-        if existing_id is not None:
-            by_id[existing_id]['name'] = name
+        sharing = by_clip.get(number, [])
+        if len(sharing) == 1:
+            by_id[sharing[0]]['name'] = name
+            continue
+        if sharing:
+            # Several scenes play this clip, so the filename cannot say which name
+            # belongs to which. Renaming one at random is worse than renaming none;
+            # `problems()` reports it so the operator can see why nothing changed.
             continue
         scene = {'id': next_id, 'name': name,
                  'lights': {'default': dict(DEFAULT_LIGHT)},
@@ -85,9 +97,23 @@ def merge(existing, clips, layer):
     return {'meta': meta, 'scenes': [by_id[i] for i in sorted(by_id)]}
 
 
+def shared_clips(existing):
+    """{clip: [scene names]} for clips more than one scene plays."""
+    by_clip = {}
+    for scene in existing.get('scenes', []):
+        clip = (scene.get('resolume') or {}).get('clip')
+        if clip:
+            by_clip.setdefault(clip, []).append(scene.get('name', scene.get('id')))
+    return {clip: names for clip, names in by_clip.items() if len(names) > 1}
+
+
 def problems(existing, clips, ignored, duplicates=()):
     """Everything that would bite at showtime, as plain sentences."""
     issues = []
+    for clip, names in sorted(shared_clips(existing).items()):
+        issues.append(f'clip {clip} is shared by {len(names)} scenes '
+                      f'({", ".join(str(n) for n in names)}) — their names are left '
+                      f'alone, since the file cannot say which is which')
     for number, first, second in duplicates:
         issues.append(f'duplicate: clip {number} claimed by both {first} and {second} '
                       f'— {second} wins, which may not be what you meant')

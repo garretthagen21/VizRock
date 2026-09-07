@@ -79,6 +79,12 @@ every output degrades to a no-op and the web UI still drives the full state mach
   scan with a foot has to be in order. Each scene keeps its own `resolume.clip`, so the video travels with the scene and
   id/clip diverge on purpose. `Brain.reorder` remaps LIVE and ARMED so they follow the *scene*,
   not the number.
+- **A clip may be played by several scenes, and the generator must not rename them.** An
+  intro, a drop and an outro sharing one video with different light looks is the normal case.
+  `by_clip` maps a clip to a **list** of scene ids; where more than one scene plays it the
+  filename cannot say which name belongs to which, so `merge` leaves every one of them alone
+  and `problems()` reports it. As a dict the last scene silently won and a regenerate renamed
+  whichever happened to sort last.
 - **The generator matches on clip, never on id.** `vizrock_scenes` keys existing scenes by the
   clip they play, because ids drift after a reorder and keying on them would silently undo
   someone's running order.
