@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 async def _serve():
     brain = Brain()
     loop = asyncio.get_running_loop()
+    brain.loop = loop                     # so light and burst timers can hop back on
     brain.outputs = build_outputs()
     brain.ui_server = UiServer(brain)
     await brain.ui_server.start(vizrock_settings.ui_port)

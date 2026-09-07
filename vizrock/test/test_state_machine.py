@@ -37,10 +37,15 @@ def run():
     brain.handle('go')
     assert (brain.live, brain.armed) == (2, 3), 'resume exactly where we left off'
 
-    # blackout is an action, not a scene: nothing is playing afterwards
+    # blackout is a pure output mute: LIVE keeps pointing at what is loaded, so
+    # releasing it reveals the scene rather than restoring a remembered one
     brain.handle('blackout')
-    assert brain.live is None, brain.live
+    assert brain.blackout is True
+    assert brain.live == 2, f'blackout must not unload the scene, got {brain.live}'
     assert brain.armed == 3, 'blackout must not re-arm either'
+    brain.handle('blackout')
+    assert (brain.blackout, brain.live) == (False, 2), 'releasing reveals what was loaded'
+    brain.handle('blackout')
     assert not [s for s in brain.snapshot()['scenes'] if s.get('resolume', {}).get('clear')], \
         'blackout should not appear in the setlist'
 
@@ -65,9 +70,11 @@ def run():
 
     _arm_is_display_only()
     _blackout_is_a_toggle()
+    _lights_are_a_separate_switch()
     _boots_dark_with_main_queued()
     _blackout_is_a_master_mute()
     _light_overrides_have_one_precedence()
+    _light_sequences_loop()
     _restart_refires_without_rearming()
     _next_main_is_a_dead_button_with_no_mains()
 
@@ -114,8 +121,9 @@ def _arm_is_display_only():
 
 def _blackout_is_a_toggle():
     """
-    Blackout is a held state, not a one-way trip: turning it off must put back what
-    was playing, or killing the screen mid-song also loses your place.
+    Blackout is a held state and a pure output mute. LIVE keeps pointing at whatever
+    is loaded, so releasing it reveals the scene rather than the brain having to
+    remember and restore one — killing the screen mid-song never loses your place.
     """
     brain = Brain()
     brain.handle('goto', 3)
@@ -123,11 +131,11 @@ def _blackout_is_a_toggle():
 
     brain.handle('blackout')
     assert brain.blackout is True, 'should be held on'
-    assert brain.live is None, 'nothing is playing during blackout'
+    assert brain.live == 3, 'the scene stays loaded underneath — this mutes outputs'
 
     brain.handle('blackout')
     assert brain.blackout is False, 'should toggle off'
-    assert brain.live == 3, f'should restore what was playing, got {brain.live}'
+    assert brain.live == 3, f'should reveal what was loaded, got {brain.live}'
 
     # blackout holds through a commit — see _blackout_is_a_master_mute
     brain.handle('blackout')
@@ -136,13 +144,52 @@ def _blackout_is_a_toggle():
     assert brain.blackout is True, 'GO must not clear a deliberate blackout'
     brain.handle('blackout')
 
-    # nothing live beforehand falls back to home rather than staying dark
-    fresh = Brain()
-    fresh.handle('blackout')
-    fresh.handle('blackout')
-    assert fresh.live == fresh.scene_library.next_main(0), \
-        f'should land on the first main, got {fresh.live}'
-    assert fresh.blackout is False
+
+def _lights_are_a_separate_switch():
+    """
+    Lights off must leave the visuals running. Blackout is the panic control that
+    kills everything; muting the rings during a quiet song is a different job.
+    """
+    sent = []
+
+    class Spy:
+        name = 'spy'
+
+        def apply(self, scene):
+            sent.append(scene)
+
+        def on_state(self, _):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    brain = Brain()
+    brain.outputs = [Spy()]
+    brain.handle('goto', 2)
+    sent.clear()
+
+    brain.handle('toggle_lights')
+    assert brain.lights_off is True
+    assert sent[-1]['ring']['mode'] == 'off', sent[-1]['ring']
+    assert not sent[-1].get('resolume', {}).get('clear'), \
+        'the visuals must keep running with the lights off'
+
+    # a cue still fires visuals while the lights stay muted
+    brain.handle('goto', 3)
+    assert sent[-1]['ring']['mode'] == 'off', 'lights stay off across a cue'
+    assert sent[-1]['resolume']['clip'] == 3, sent[-1]['resolume']
+
+    brain.handle('toggle_lights')
+    assert brain.lights_off is False
+    assert sent[-1]['ring']['mode'] != 'off', 'lights come back'
+
+    # blackout outranks the lights switch either way round
+    brain.handle('blackout')
+    assert sent[-1].get('resolume', {}).get('clear') is True, sent[-1]
 
 
 def _boots_dark_with_main_queued():
@@ -253,6 +300,62 @@ def _light_overrides_have_one_precedence():
     assert vizrock_settings.burst['mode'] == 'strobe', 'the global default is strobe'
 
 
+def _light_sequences_loop():
+    """
+    A scene's lighting may be a list of steps that cycles, so a long stretch of
+    looping visuals does not sit on one look. A single dict must keep working.
+    """
+    sent = []
+
+    class Spy:
+        name = 'rings'
+
+        def apply(self, scene):
+            sent.append(dict(scene.get('ring') or {}))
+
+        def on_state(self, _):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    brain = Brain()
+    brain.outputs = [Spy()]
+    brain.scene_library.scenes[2]['ring'] = [
+        {'mode': 'pulse', 'hue': 200, 'bright': 90, 'speed': 2, 'seconds': 4},
+        {'mode': 'chase', 'hue': 160, 'bright': 110, 'speed': 4, 'seconds': 4}]
+    brain.handle('goto', 2)
+
+    assert sent[-1]['mode'] == 'pulse', 'a cue starts at the first step'
+    assert 'seconds' not in sent[-1], 'timing is ours, it must not reach the wire'
+
+    brain._advance_light_step()
+    assert sent[-1]['mode'] == 'chase', sent[-1]
+    brain._advance_light_step()
+    assert sent[-1]['mode'] == 'pulse', 'it loops'
+
+    # re-cueing restarts at the first step rather than resuming mid-sequence
+    brain._advance_light_step()
+    brain.handle('goto', 2)
+    assert sent[-1]['mode'] == 'pulse', f'a fresh cue restarts the loop: {sent[-1]}'
+
+    # a plain dict is still a one-step scene, and never starts a timer
+    brain.scene_library.scenes[3]['ring'] = {'mode': 'solid', 'hue': 10}
+    brain.handle('goto', 3)
+    assert sent[-1]['mode'] == 'solid', sent[-1]
+    assert brain._light_timer is None, 'a single-step scene needs no timer'
+
+    # the colour override still applies on top of a sequenced scene
+    brain.handle('goto', 2)
+    brain.handle('cycle_color')
+    from vizrock.configurations.settings import vizrock_settings
+    assert sent[-1]['hue'] == vizrock_settings.palette[0], sent[-1]
+    brain._restart_light_loop()
+
+
 def _restart_refires_without_rearming():
     brain = Brain()
     brain.handle('goto', 2)
@@ -310,12 +413,15 @@ def _blackout_is_a_master_mute():
     brain.handle('go')
     assert brain.blackout is True, 'GO must not clear blackout'
     assert brain.live == 1, f'the scene should still load, got {brain.live}'
-    assert sent == [], f'nothing may reach an output while blacked out, got {sent}'
+    # A cue under blackout re-asserts all-off rather than sending nothing at all, so
+    # an output that came up late is still muted. What must never happen is a real
+    # scene reaching the stage.
+    assert set(sent) <= {'Blackout'}, f'a scene leaked while blacked out: {sent}'
 
     brain.handle('arm', 3)
     brain.handle('go')
     assert brain.blackout is True and brain.live == 3
-    assert sent == [], 'still nothing out'
+    assert set(sent) <= {'Blackout'}, f'a scene leaked while blacked out: {sent}'
 
     brain.handle('blackout')
     assert brain.blackout is False

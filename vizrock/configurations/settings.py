@@ -33,6 +33,10 @@ class VizRockSettings:
         # deliberately not overridable, so a burst never changes the colour on stage.
         self.burst = {'mode': 'strobe', 'seconds': 5, 'speed': 9}
         self.burst.update(self.raw.get('burst', {}))
+        # how long a light step holds when it does not say; 0 in a step means hold
+        self.light_step_seconds = float(self.raw.get('light_step_seconds', 8))
+        # hues that cycle_color steps through; the scene's own hue is also a stop
+        self.palette = self.raw.get('palette', [0, 32, 64, 96, 160, 200])
         self.midi_inputs = self.raw.get('midi_inputs', [])
         self.triggers = self.raw.get('triggers', [])
         self.outputs = self.raw.setdefault('outputs', {})

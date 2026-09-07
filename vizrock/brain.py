@@ -35,13 +35,20 @@ class Brain:
         self.live = None
         self.armed = self.scene_library.order[0] if self.scene_library.order else None
         self.outputs = []
+        self.loop = None                 # set by __main__; timers hop back onto it
         self.ui_server = None
         self.updater = None
+        # Blackout is the panic control and kills everything. Lights are a separate
+        # switch, because "rings off, visuals running" is a real ask and the reverse
+        # never is. Both are pure output mutes: LIVE stays set throughout, so
+        # releasing either reveals the scene rather than restoring a remembered one.
         self.blackout = False
-        self._restore_to = None          # what was live when blackout went on
-        self.lights_off = False          # lights muted on their own, without blackout
-        self._burst_until = 0.0          # strobe burst expiry, monotonic
+        self.lights_off = False
+        self.color_index = None          # None = the scene's own hue
+        self._burst_until = 0.0          # light burst expiry, monotonic
         self._burst_timer = None
+        self._light_step = 0             # position in a scene's looping light sequence
+        self._light_timer = None
         self.last_event = 'armed · waiting for trigger'
 
     # MARK: - Actions (called from MIDI or the UI)
@@ -74,6 +81,8 @@ class Brain:
                 self._commit(self.live, rearm=False)
         elif action == 'toggle_lights':
             self._toggle_lights()
+        elif action == 'cycle_color':
+            self._cycle_color()
         elif action == 'light_burst':
             self._light_burst()
         elif action == 'blackout':
@@ -93,11 +102,10 @@ class Brain:
         if first_main is None and self.scene_library.order:
             first_main = self.scene_library.order[0]
         self.blackout = True
-        self._restore_to = first_main
-        # LIVE shows the scene so you can see what you will get back; the outputs get
-        # all-off, so nothing actually reaches the screen until blackout is released
+        # LIVE shows the scene so you can see what you will get back; every output is
+        # muted, so nothing actually reaches the stage until blackout is released
         self.live = first_main
-        self._dispatch(BLACKOUT_SCENE)
+        self._render()
         self.last_event = 'booted blacked out · main loaded'
         logger.info('booted blacked out with main scene %s loaded', first_main)
 
@@ -113,6 +121,7 @@ class Brain:
             'tap_fires': vizrock_settings.tap_fires,
             'blackout': self.blackout,
             'lights_off': self.lights_off,
+            'color_index': self.color_index,
             'burst_active': self._burst_until > time.monotonic(),
             'mains': self.scene_library.mains,
             'update': self.updater.snapshot() if self.updater else None,
@@ -176,7 +185,7 @@ class Brain:
             # a new output starts blank — bring it up to whatever is already on stage
             if self.live in self.scene_library.scenes:
                 try:
-                    replacement.apply(self.scene_library.scenes[self.live])
+                    replacement.apply(self._effective_scene())
                 except Exception as error:
                     logger.warning('output %s failed: %s', name, error)
         self.push_state()
@@ -185,32 +194,46 @@ class Brain:
     # MARK: - Private
     def _toggle_blackout(self):
         """
-        Blackout is a held state, not a one-way trip. Turning it off puts back
-        whatever was playing, so killing the screen mid-song does not also lose your
-        place. If nothing was live, fall back to the main loop rather than staying
-        dark — a button that appears to do nothing is worse than one that overshoots.
-        """
-        if not self.blackout:
-            self._restore_to = self.live
-            self.blackout = True
-            logger.info('LIVE -> blackout (all outputs off, will restore %s)', self._restore_to)
-            self._dispatch(BLACKOUT_SCENE)
-            self.live = None
-            self.last_event = 'blackout · press again to restore'
-            self.push_state()
-            return
+        The panic control: every output off, held until pressed again.
 
-        self.blackout = False
-        target = self._restore_to if self._restore_to in self.scene_library.scenes else self.live
-        if target not in self.scene_library.scenes:
-            target = self.scene_library.next_main(0)
-        self._restore_to = None
-        if target in self.scene_library.scenes:
-            logger.info('blackout off -> restoring %s', self.scene_library.label(target))
-            self._commit(target, rearm=False)
+        A pure mute — LIVE keeps pointing at whatever is loaded, so releasing it
+        reveals the scene instead of the brain having to remember and restore one.
+        """
+        self.blackout = not self.blackout
+        self.last_event = 'blackout · press again to restore' if self.blackout else 'blackout off'
+        logger.info(self.last_event)
+        self._render()
+        self.push_state()
+
+    def _toggle_lights(self):
+        """Mute the lights alone, leaving the visuals running."""
+        self.lights_off = not self.lights_off
+        self.last_event = 'lights off' if self.lights_off else 'lights on'
+        logger.info(self.last_event)
+        self._render()
+        self.push_state()
+
+    def _cycle_color(self):
+        """
+        Step the light colour through the palette, and back to the scene's own hue.
+
+        The scene's colour is one of the stops rather than something you can only
+        get back to by cycling all the way round — after fiddling mid-set you need a
+        way home that does not depend on counting presses.
+        """
+        palette = vizrock_settings.palette
+        if not palette:
+            return
+        if self.color_index is None:
+            self.color_index = 0
+        elif self.color_index + 1 >= len(palette):
+            self.color_index = None
         else:
-            self.last_event = 'blackout off'
-            self.push_state()
+            self.color_index += 1
+        hue = 'scene' if self.color_index is None else palette[self.color_index]
+        self.last_event = f'light colour · {hue}'
+        self._render()
+        self.push_state()
 
     def _arm(self, scene_id):
         """Queue a specific scene. Display-only, exactly like arm_prev/arm_next."""
@@ -219,14 +242,6 @@ class Brain:
             return
         self.armed = scene_id
         self.last_event = f'armed → {self.scene_library.label(scene_id)}'
-        self.push_state()
-
-    def _toggle_lights(self):
-        """Mute the lights on their own. Narrower than blackout, which mutes everything."""
-        self.lights_off = not self.lights_off
-        self.last_event = 'lights off' if self.lights_off else 'lights on'
-        logger.info(self.last_event)
-        self._render()
         self.push_state()
 
     def _burst_spec(self):
@@ -250,30 +265,94 @@ class Brain:
         self._burst_until = time.monotonic() + seconds
         if self._burst_timer:
             self._burst_timer.cancel()
-        self._burst_timer = threading.Timer(seconds, self._end_burst)
+        self._burst_timer = threading.Timer(seconds, lambda: self._from_thread(self._end_burst))
         self._burst_timer.daemon = True
         self._burst_timer.start()
         self.last_event = f"{self._burst_spec().get('mode', 'strobe')} burst · {seconds:g}s"
         self._render()
         self.push_state()
 
+    def _from_thread(self, function):
+        """
+        Hop a timer callback back onto the asyncio loop before it touches state.
+
+        `UiServer.broadcast` looks up the running loop and gives up if there isn't
+        one, so a push from a Timer thread would be silently dropped — the UI would
+        never learn the burst ended.
+        """
+        if self.loop is not None:
+            self.loop.call_soon_threadsafe(function)
+        else:
+            function()                    # tests and dev runs without a loop
+
+    def _light_summary(self, scene):
+        """How the lights read in a log line, for one step or a whole sequence."""
+        steps = self._light_steps(scene)
+        if len(steps) == 1:
+            return steps[0].get('mode', 'off')
+        return f"{len(steps)}-step {'/'.join(s.get('mode', 'off') for s in steps)}"
+
+    def _light_steps(self, scene):
+        """
+        A scene's lighting as a list of steps.
+
+        A single dict is a one-step loop, so existing scenes keep working untouched.
+        Several steps cycle, which keeps a long stretch of looping visuals from going
+        stale without needing a separate cue for every change.
+        """
+        ring = scene.get('ring')
+        if isinstance(ring, list):
+            steps = [s for s in ring if isinstance(s, dict)]
+            return steps or [{'mode': 'off'}]
+        return [ring or {'mode': 'off'}]
+
+    def _restart_light_loop(self):
+        """Back to the first step and re-time. Called whenever LIVE changes."""
+        if self._light_timer:
+            self._light_timer.cancel()
+            self._light_timer = None
+        self._light_step = 0
+        self._schedule_light_step()
+
+    def _schedule_light_step(self):
+        scene = self.scene_library.scenes.get(self.live) or {}
+        steps = self._light_steps(scene)
+        if len(steps) < 2:
+            return                        # nothing to cycle through
+        step = steps[self._light_step % len(steps)]
+        seconds = float(step.get('seconds', vizrock_settings.light_step_seconds) or 0)
+        if seconds <= 0:
+            return                        # 0 means hold here rather than advance
+        self._light_timer = threading.Timer(
+            seconds, lambda: self._from_thread(self._advance_light_step))
+        self._light_timer.daemon = True
+        self._light_timer.start()
+
+    def _advance_light_step(self):
+        steps = self._light_steps(self.scene_library.scenes.get(self.live) or {})
+        self._light_step = (self._light_step + 1) % len(steps)
+        self._render()
+        self.push_state()
+        self._schedule_light_step()
+
     def _end_burst(self):
         self._burst_until = 0.0
         self._render()
         self.push_state()
 
-    def _with_light_overrides(self, scene):
+    def _ring_for(self, scene):
         """
-        Apply the light mutes and the burst to a scene's ring block.
+        The ring block for a scene with the colour override and any burst applied.
 
-        Precedence is blackout > lights off > burst > the scene, so an explicit mute
-        always outranks a momentary effect. Blackout is handled a level up in
-        `_render`, because it silences every output rather than only the lights.
+        Precedence is blackout > burst > colour override > the scene. The burst never
+        sets hue, so a colour chosen by hand survives one.
         """
-        ring = dict(scene.get('ring') or {'mode': 'off'})
-        if self.lights_off:
-            ring['mode'] = 'off'
-        elif self._burst_until > time.monotonic():
+        steps = self._light_steps(scene)
+        ring = dict(steps[self._light_step % len(steps)])
+        ring.pop('seconds', None)         # timing is ours, not the wire's
+        if self.color_index is not None and vizrock_settings.palette:
+            ring['hue'] = vizrock_settings.palette[self.color_index]
+        if self._burst_until > time.monotonic():
             # the burst changes how the lights move, never what colour they are, so
             # hue is pointedly not taken from the spec
             burst = self._burst_spec()
@@ -281,16 +360,31 @@ class Brain:
             for key in ('speed', 'bright'):
                 if key in burst:
                     ring[key] = burst[key]
-        return {**scene, 'ring': ring}
+        return ring
+
+    def _effective_scene(self):
+        """
+        The live scene as the outputs should see it, with every mute and override
+        applied. Outputs only ever receive a single ring dict — the step sequence is
+        resolved here so nothing downstream has to know it exists.
+        """
+        if self.blackout:
+            return BLACKOUT_SCENE
+        scene = self.scene_library.scenes.get(self.live)
+        if scene is None:
+            return None
+        effective = dict(scene)
+        effective['ring'] = {'mode': 'off'} if self.lights_off else self._ring_for(scene)
+        return effective
 
     def _render(self):
-        """Push current state to the outputs, honouring every mute in precedence order."""
-        if self.blackout:
-            self._dispatch(BLACKOUT_SCENE)
-            return
-        scene = self.scene_library.scenes.get(self.live)
-        if scene is not None:
-            self._dispatch(self._with_light_overrides(scene))
+        """
+        Push current state out. Precedence: blackout > lights off > burst > colour >
+        the scene, in one place so the UI and the outputs cannot disagree.
+        """
+        effective = self._effective_scene()
+        if effective is not None:
+            self._dispatch(effective)
 
     def _dispatch(self, scene):
         """Fan a scene out to every output, each isolated so one failure cannot spread."""
@@ -313,6 +407,7 @@ class Brain:
             logger.warning('commit to missing scene %s', scene_id)
             return
         self.live = scene_id
+        self._restart_light_loop()
         scene = self.scene_library.scenes[scene_id]
         # say what was actually targeted — "which clip did it fire?" is the first
         # question when visuals look wrong, and the action alone does not answer it
@@ -321,15 +416,12 @@ class Brain:
             f"layer {resolume.get('layer')} clip {resolume.get('clip')}"
         logger.info('LIVE -> %s  (resolume: %s, ring: %s)%s',
                     self.scene_library.label(scene_id), target,
-                    (scene.get('ring') or {}).get('mode', 'off'),
+                    self._light_summary(scene),
                     ' [held dark]' if self.blackout else '')
-        if self.blackout:
-            # Blackout is a master mute: you can load and change scenes underneath it,
-            # but nothing reaches an output until it is released. GO must not silently
-            # undo a blackout someone put on deliberately.
-            self._restore_to = scene_id
-        else:
-            self._render()
+        # Blackout is a master mute: you can load and change scenes underneath it, and
+        # _render drops whichever half is muted. GO must not silently undo a blackout
+        # someone put on deliberately.
+        self._render()
         # auto-arm the next scene so a linear set is just GO, GO, GO
         if rearm and scene_id in self.scene_library.order:
             self.armed = self.scene_library.step_from(scene_id, +1)
