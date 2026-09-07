@@ -137,6 +137,14 @@
   @media (hover:hover){ .btn:hover{border-color:var(--active); color:#fff} }
   .btn.go{background:#12271c; border-color:#2f6b48; color:var(--live); font-weight:700; padding:11px 26px}
   .btn.go:active{background:#173626; border-color:var(--live)}
+  /* A long press with no feedback reads as a broken button, so show the hold
+     filling and name the action it will fire. */
+  .btn[data-long]::after{content:attr(data-longlabel); position:absolute; left:0; right:0;
+    bottom:3px; font-size:9px; letter-spacing:.08em; color:var(--muted2); opacity:0}
+  .btn[data-long]{position:relative; padding-bottom:16px}
+  .btn.holding::after{opacity:1; color:var(--active)}
+  .btn.holding{border-color:var(--active)}
+  .btn.fired{background:var(--active); color:#08131f}
   @media (hover:hover){ .btn.go:hover{background:#173626; border-color:var(--live)} }
   /* MAIN gets the same filled treatment as GO — they are the two buttons you reach
      for without looking, so both read as a colour rather than an outline */
@@ -294,7 +302,8 @@
   .cue.live .cn{color:var(--live)}
   .cue.armed{border-color:var(--armamber)}
   .cue.armed .cn{color:var(--armamber)}
-  .cue.home{border-style:dashed}
+  .cue.home{border-style:dashed; border-color:var(--home)}
+  .cueflag.m{background:var(--home); color:#12091f}
   .cue:active{border-color:var(--active)}
   @media (hover:hover){ .cue:hover{border-color:var(--active)} }
   .cueflag{font-family:var(--mono);font-size:9px;letter-spacing:.12em;padding:2px 6px;
@@ -425,6 +434,7 @@
       <button id="tCues" onclick="setView('cues')">CUES</button>
       <button id="tEdit" onclick="setView('edit')">EDIT</button>
     </div>
+    <button class="blackoutbtn" id="lightsBtn" onclick="act('toggle_lights')">LIGHTS</button>
     <button class="blackoutbtn" id="blackoutBtn" onclick="act('blackout')">BLACKOUT</button>
     <div class="clock" id="clock">--:--:--</div>
   </header>
@@ -471,10 +481,14 @@
 
   <div id="sharedTransport">
     <div class="transport">
-      <button class="btn home" onclick="act('home')">⌂ MAIN</button>
-      <button class="btn" onclick="act('arm_prev')">◄ PREV</button>
-      <button class="btn" onclick="act('arm_next')">NEXT ►</button>
-      <button class="btn go" onclick="act('go')">GO ▸</button>
+      <button class="btn home" data-short="light_burst" data-long="cycle_color"
+              data-longlabel="COLOUR">✦ POP</button>
+      <button class="btn" data-short="arm_prev" data-long="blackout"
+              data-longlabel="BLACKOUT">◄ PREV</button>
+      <button class="btn" data-short="arm_next" data-long="next_main"
+              data-longlabel="⌂ MAIN">NEXT ►</button>
+      <button class="btn go" data-short="go" data-long="restart_scene"
+              data-longlabel="RESTART">GO ▸</button>
       <div class="log" id="log"><span class="t">[--:--:--]</span> connecting…</div>
     </div>
   </div>
@@ -518,26 +532,26 @@
 // ---- demo fallback state (used only if the brain WS isn't reachable) ----
 const DEMO = {
   live:3, armed:4, last_event:"demo mode · no brain connected",
-  meta:{show:"THC Halloween 2026-10-30", home_scene:1},
-  outputs:{resolume:"ready", dmx:"off", rings:"retrying", oled:"ok"},
-  addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", dmx:"", rings:"/dev/light_tx (searching)", oled:"i2c 0x3c ssd1306"},
+  meta:{show:"THC Halloween 2026-10-30"},
+  outputs:{resolume:"ready", dmx:"off", lights:"retrying", oled:"ok"},
+  addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", dmx:"", lights:"/dev/light_tx (searching)", oled:"i2c 0x3c ssd1306"},
   output_config:{resolume:{type:"osc",hosts:["Garretts-M2-MacBook-Pro.local"],port:38200},
-                 dmx:{type:"artnet",host:"192.168.4.60"}, rings:{type:"serial"}, oled:{type:"oled"}},
+                 dmx:{type:"artnet",host:"192.168.4.60"}, lights:{type:"serial"}, oled:{type:"oled"}},
   tap_fires:false,
-  blackout:false,
+  blackout:false, lights_off:false, color_index:null, mains:[1],
   network:{hostname:"vizrock-box", addresses:["10.42.1.1","10.42.0.1"]},
   update:{online:true,current:"f20083c",subject:"Show every reachable URL in the UI",
           behind:1,incoming:[{sha:"a1b2c3d",subject:"Add the CUES view"}],busy:false,
           can_update:true,message:"1 update(s) available"},
   scenes:[
-    {id:1,name:"Main loop",resolume:{layer:1,clip:1},dmx:{cue:"off"},ring:{mode:"pulse",hue:200,bright:80,speed:2},audio:false},
-    {id:2,name:"Opening \u2014 fog",resolume:{layer:1,clip:2},dmx:{cue:"off"},ring:{mode:"solid",hue:180,bright:90,speed:0},audio:false},
-    {id:3,name:"Graveyard",resolume:{layer:1,clip:3},dmx:{cue:"off"},ring:{mode:"chase",hue:100,bright:110,speed:3},audio:false},
-    {id:4,name:"Jump scare",resolume:{layer:1,clip:4},dmx:{cue:"off"},ring:{mode:"strobe",hue:0,bright:255,speed:9},audio:false},
-    {id:5,name:"Song B \u2014 drop",resolume:{layer:1,clip:5},dmx:{cue:"off"},ring:{mode:"strobe",hue:150,bright:200,speed:8},audio:false},
-    {id:6,name:"Blood moon",resolume:{layer:1,clip:6},dmx:{cue:"off"},ring:{mode:"pulse",hue:0,bright:160,speed:2},audio:false},
-    {id:7,name:"Interlude",resolume:{layer:1,clip:7},dmx:{cue:"off"},ring:{mode:"chase",hue:280,bright:100,speed:4},audio:true},
-    {id:8,name:"Finale",resolume:{layer:1,clip:8},dmx:{cue:"off"},ring:{mode:"strobe",hue:40,bright:220,speed:7},audio:false}
+    {id:1,name:"Main loop",main:true,resolume:{layer:1,clip:1},dmx:{cue:"off"},lights:{default:{mode:"pulse",hue:200,bright:80,speed:2}},audio:false},
+    {id:2,name:"Opening \u2014 fog",resolume:{layer:1,clip:2},dmx:{cue:"off"},lights:{default:{mode:"solid",hue:180,bright:90,speed:0}},audio:false},
+    {id:3,name:"Graveyard",resolume:{layer:1,clip:3},dmx:{cue:"off"},lights:{default:{mode:"chase",hue:100,bright:110,speed:3}},audio:false},
+    {id:4,name:"Jump scare",resolume:{layer:1,clip:4},dmx:{cue:"off"},lights:{default:{mode:"strobe",hue:0,bright:255,speed:9}},audio:false},
+    {id:5,name:"Song B \u2014 drop",resolume:{layer:1,clip:5},dmx:{cue:"off"},lights:{default:{mode:"strobe",hue:150,bright:200,speed:8}},audio:false},
+    {id:6,name:"Blood moon",resolume:{layer:1,clip:6},dmx:{cue:"off"},lights:{default:{mode:"pulse",hue:0,bright:160,speed:2}},audio:false},
+    {id:7,name:"Interlude",resolume:{layer:1,clip:7},dmx:{cue:"off"},lights:{default:{mode:"chase",hue:280,bright:100,speed:4}},audio:true},
+    {id:8,name:"Finale",resolume:{layer:1,clip:8},dmx:{cue:"off"},lights:{default:{mode:"strobe",hue:40,bright:220,speed:7}},audio:false}
   ]
 };
 let state = structuredClone(DEMO);
@@ -546,7 +560,10 @@ let selected = 1, ws = null, online = false;
 const H = h => Math.round(h/255*360);
 const now = () => new Date().toTimeString().slice(0,8);
 const scene = id => state.scenes.find(s=>s.id===id);
-const order = () => state.scenes.filter(s=>s.id!==(state.meta?.home_scene??0)).map(s=>s.id);
+const order = () => state.scenes.map(s=>s.id);
+const isMain = id => !!scene(id)?.main;
+const nextMain = from => { const m=state.scenes.filter(s=>s.main).map(s=>s.id);
+  return m.length ? (m.find(i=>i>(from??0)) ?? m[0]) : null; };
 
 // ---- websocket to the brain (graceful demo fallback) ----
 function connect(){
@@ -569,8 +586,12 @@ function demoAct(action, sceneId){
   else if(action==="arm_next"){ let i=ord.indexOf(state.armed); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`armed → ${lbl(state.armed)}`; }
   else if(action==="go"){ state.live=state.armed; let i=ord.indexOf(state.live); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`LIVE → ${lbl(state.live)} · dispatched`; }
   else if(action==="goto"){ state.live=sceneId; state.last_event=`LIVE → ${lbl(sceneId)}`; }
-  else if(action==="home"){ const h=state.meta?.home_scene??0; state.live=h; state.last_event=`LIVE → ${lbl(h)}`; }
-  else if(action==="blackout"){ state.live=0; state.last_event=`LIVE → 00 Blackout`; }
+  else if(action==="next_main"){ const h=nextMain(state.live); if(h!==null){ state.live=h; state.last_event=`LIVE → ${lbl(h)}`; } }
+  else if(action==="restart_scene"){ state.last_event=`LIVE → ${lbl(state.live)} · restarted`; }
+  else if(action==="toggle_lights"){ state.lights_off=!state.lights_off; state.last_event=state.lights_off?'lights off':'lights on'; }
+  else if(action==="cycle_color"){ state.last_event='light colour'; }
+  else if(action==="light_burst"){ state.last_event='burst'; }
+  else if(action==="blackout"){ state.blackout=!state.blackout; state.last_event=state.blackout?'blackout':'blackout off'; }
   blip(); render();
 }
 const lbl = id => { const s=scene(id); return s?`${String(id).padStart(2,'0')} ${s.name}`:String(id); };
@@ -638,15 +659,17 @@ function render(){
   if(lastLive !== undefined && state.live !== lastLive) flashOutputs();
   lastLive = state.live;
   document.querySelector('.app').classList.toggle('blackedout', !!state.blackout);
-  document.querySelector('.stack.live')?.classList
-    .toggle('ismain', state.live === (state.meta?.home_scene ?? 1));
+  document.querySelector('.stack.live')?.classList.toggle('ismain', isMain(state.live));
   const lm=document.getElementById('liveMark');
-  const isMain = state.live !== null && state.live === (state.meta?.home_scene ?? 1);
   if(lm) lm.innerHTML = (state.blackout ? '<span class="blackoutmark">· BLACKED OUT</span>' : '')
-                      + (isMain ? '<span class="mainmark">· ⌂ MAIN LOOP</span>' : '');
+                      + (state.lights_off ? '<span class="blackoutmark">· LIGHTS OFF</span>' : '')
+                      + (isMain(state.live) ? '<span class="mainmark">· ⌂ MAIN</span>' : '');
   const bb=document.getElementById('blackoutBtn');
   if(bb){ bb.classList.toggle('on', !!state.blackout);
           bb.textContent = state.blackout ? "BLACKOUT ON" : "BLACKOUT"; }
+  const lb=document.getElementById('lightsBtn');
+  if(lb){ lb.classList.toggle('on', !!state.lights_off);
+          lb.textContent = state.lights_off ? "LIGHTS OFF" : "LIGHTS"; }
   document.getElementById('showId').textContent = state.meta?.show || "—";
   renderPills();
   if(!document.getElementById('viewShow').classList.contains('hidden')) renderShow();
@@ -680,14 +703,14 @@ function renderPills(){
   wrap.appendChild(b);
 }
 function renderShow(){
-  const L=scene(state.live)||{name:"—",ring:{mode:"off",hue:0,bright:0}};
-  const A=scene(state.armed)||{name:"—",ring:{mode:"off",hue:0,bright:0}};
+  const L=scene(state.live)||{name:"—"};
+  const A=scene(state.armed)||{name:"—"};
   document.getElementById('lNum').textContent=String(state.live??0).padStart(2,'0');
   document.getElementById('lName').textContent=L.name;
-  paintLight(document.getElementById('lLight'),L.ring); document.getElementById('lCap').textContent=capOf(L.ring);
+  paintLight(document.getElementById('lLight'),defaultLight(L)); document.getElementById('lCap').textContent=capOf(defaultLight(L));
   document.getElementById('aNum').textContent=String(state.armed??0).padStart(2,'0');
   document.getElementById('aName').textContent=A.name;
-  paintLight(document.getElementById('aLight'),A.ring); document.getElementById('aCap').textContent=capOf(A.ring);
+  paintLight(document.getElementById('aLight'),defaultLight(A)); document.getElementById('aCap').textContent=capOf(defaultLight(A));
 }
 function lightColor(r){
   if(!r || r.mode==="off") return "#3a4657";
@@ -712,7 +735,6 @@ function setDetailMode(mode){
 function openSettings(){ setDetailMode('settings'); setEditDetail(true); }
 function renderList(){
   const wrap=document.getElementById('sceneList'); wrap.innerHTML="";
-  const home=state.meta?.home_scene??1;
   // Reordering is desktop-only: dragging with a finger fights scrolling, and a
   // pedalboard is not where you rearrange a setlist.
   const canDrag = matchMedia('(hover:hover) and (pointer:fine)').matches;
@@ -739,7 +761,7 @@ function renderList(){
       <div class="chips">
         <span class="chip">▚ ${s.resolume?.clear?"clear":("L"+s.resolume.layer+"·C"+s.resolume.clip)}</span>
         <span class="chip">✦ ${s.dmx?.cue||"—"}</span>
-        <span class="chip" style="color:${lightColor(s.ring)}"><span class="sw" style="background:${lightColor(s.ring)}"></span>${s.ring.mode}</span>
+        <span class="chip" style="color:${lightColor(defaultLight(s))}"><span class="sw" style="background:${lightColor(defaultLight(s))}"></span>${lightShape(s).simple ? defaultLight(s).mode : lightShape(s).names.join('+')}</span>
         <span class="chip">${s.audio?"♪ audio":"muted"}</span></div></div>
       ${canDrag && !isHome?`<span class="grip" title="drag to reorder">⠿</span>`:""}
       <button class="fire" title="test-fire" onclick="event.stopPropagation(); testFire(${s.id})">▸</button>`;
@@ -749,9 +771,9 @@ function renderList(){
 // Ids are set positions, so a reorder renumbers. Each scene keeps its own clip, so
 // the video travels with it.
 function dropOn(targetId){
-  const home=state.meta?.home_scene??1;
   if(dragId===null || dragId===targetId) return;
-  const order=state.scenes.filter(s=>s.id!==home).map(s=>s.id);
+  // one flat running order — mains renumber alongside everything else
+  const order=state.scenes.map(s=>s.id);
   const from=order.indexOf(dragId), to=order.indexOf(targetId);
   if(from<0 || to<0) return;
   order.splice(to, 0, order.splice(from, 1)[0]);
@@ -759,15 +781,36 @@ function dropOn(targetId){
   dragId=null;
 }
 const LIGHT_MODES = ["off","solid","pulse","chase","strobe"];
+// Lights are keyed by peripheral and each entry may be a list of steps. The
+// inspector edits the common shape — one `default` entry, one step — and refuses to
+// touch anything richer rather than silently flattening it on the next name edit.
+const lightConfigs = s => (s && typeof s.lights === 'object' && s.lights) ? s.lights : {};
+const defaultName = s => { const c=lightConfigs(s); return 'default' in c ? 'default' : Object.keys(c)[0]; };
+function defaultLight(s){
+  const c = lightConfigs(s), name = defaultName(s);
+  const entry = name === undefined ? null : c[name];
+  const step = Array.isArray(entry) ? entry[0] : entry;
+  return step && typeof step === 'object' ? step : {mode:"off"};
+}
+function lightShape(s){
+  const c = lightConfigs(s), names = Object.keys(c);
+  const steps = names.reduce((n,k)=> n + (Array.isArray(c[k]) ? c[k].length : 1), 0);
+  return {names, simple: names.length <= 1 && steps <= 1};
+}
 function renderInsp(){
   const s=scene(selected); if(!s){document.getElementById('insp').innerHTML="";return;}
-  const r=s.ring||{mode:"off"};
+  const r=defaultLight(s);
+  const shape=lightShape(s);
   const opts=LIGHT_MODES.map(m=>`<option value="${m}"${r.mode===m?" selected":""}>${m}</option>`).join("");
   document.getElementById('insp').innerHTML=`
     <div class="nm">${s.name}</div>
     <div class="sub">SCENE ${String(s.id).padStart(2,'0')} <span class="saved" id="savedTag">SAVED</span></div>
     <div class="field"><label>NAME</label>
       <input type="text" id="f_name" value="${s.name.replace(/"/g,'&quot;')}"></div>
+    <div class="field"><label>MAIN</label>
+      <button class="settingsbtn${s.main?' on':''}" id="f_main" onclick="toggleMain()">
+        ${s.main ? '⌂ MAIN — a looping visual to fall back to' : 'mark as a main looping visual'}
+      </button></div>
     <div class="field"><label>VISUALS — RESOLUME</label>${s.resolume?.clear
       ? `<div class="val">clear all</div>`
       : `<div class="row2"><div><div class="rowlab"><span>layer</span></div>
@@ -776,7 +819,8 @@ function renderInsp(){
            <input type="number" id="f_clip" min="1" value="${s.resolume?.clip??1}"></div></div>`}</div>
     <div class="field"><label>DMX CUE</label>
       <input type="text" id="f_cue" value="${(s.dmx?.cue||"").replace(/"/g,'&quot;')}"></div>
-    <div class="field"><label>LIGHTS</label>
+    <div class="field"><label>LIGHTS${shape.simple?'':' — '+shape.names.join(' · ')}</label>
+      ${shape.simple ? `
       <div class="slider"><div class="lightmini" id="mini"></div>
         <div style="flex:1"><select id="f_mode">${opts}</select></div></div>
       <div style="margin-top:12px">
@@ -786,8 +830,12 @@ function renderInsp(){
         <input type="range" id="f_bright" min="0" max="255" value="${r.bright??0}">
         <div class="rowlab"><span>speed</span><span id="l_speed">${r.speed??0}</span></div>
         <input type="range" id="f_speed" min="0" max="10" value="${r.speed??0}">
-      </div></div>`;
-  paintLight(document.getElementById('mini'),r);
+      </div>` : `
+      <div class="val">This scene has ${shape.names.length} peripheral(s) and stepped
+        sequences. Editing it here would flatten that, so the controls are hidden —
+        edit <code>configs/scenes.json</code>. Everything else on this screen is safe.</div>`}
+      </div>`;
+  if(shape.simple) paintLight(document.getElementById('mini'),r);
   ["f_name","f_layer","f_clip","f_cue","f_mode","f_hue","f_bright","f_speed"].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     el.addEventListener('input',()=>{
@@ -800,6 +848,12 @@ function renderInsp(){
     });
   });
 }
+function toggleMain(){
+  const s=scene(selected); if(!s) return;
+  s.main = !s.main;
+  renderInsp(); renderList();
+  queueSceneEdit();
+}
 function readLight(){
   const num=id=>{const e=document.getElementById(id); return e?parseInt(e.value,10)||0:0;};
   const mode=document.getElementById('f_mode')?.value||"off";
@@ -811,8 +865,14 @@ function queueSceneEdit(){ clearTimeout(editTimer); editTimer=setTimeout(sendSce
 function sendSceneEdit(){
   const s=scene(selected); if(!s) return;
   const el=id=>document.getElementById(id);
-  const edited={...s, name:el('f_name')?.value ?? s.name, ring:readLight(),
+  const edited={...s, name:el('f_name')?.value ?? s.name,
                 dmx:{...(s.dmx||{}), cue:el('f_cue')?.value ?? ""}};
+  // Only write lights back when the scene is the simple shape the controls can
+  // represent. A stepped or multi-peripheral config must survive a name edit.
+  if(lightShape(s).simple && el('f_mode')){
+    const name = defaultName(s) ?? 'default';
+    edited.lights = {...(s.lights||{}), [name]: readLight()};
+  }
   if(!s.resolume?.clear && el('f_layer') && el('f_clip')){
     edited.resolume={...(s.resolume||{}), layer:parseInt(el('f_layer').value,10)||1,
                                           clip:parseInt(el('f_clip').value,10)||1};
@@ -876,44 +936,32 @@ function askUpdate(){
 }
 function renderCues(){
   const grid=document.getElementById('cueGrid'); if(!grid) return;
-  const home=state.meta?.home_scene??1;
   const hint=document.getElementById('cueHint');
   if(hint){
     const mode = state.tap_fires ? "tap fires immediately" : "tap arms · GO fires";
-    hint.classList.toggle('blacked', !!state.blackout);
+    hint.classList.toggle('blacked', !!(state.blackout || state.lights_off));
     hint.textContent = state.blackout
       ? "⬛ BLACKED OUT · nothing is reaching the screen · " + mode
+      : state.lights_off ? "◐ LIGHTS OFF · visuals still running · " + mode
       : mode;
   }
   grid.innerHTML="";
-  // the main loop is pinned above and excluded from the sequence grid
+  // Mains sit in the running order now, marked rather than pinned above it — the
+  // setlist is specific moments with stretches of looping visuals between them, and
+  // you need to see where the nearest one is.
   const homeBox=document.getElementById('homeCue');
-  if(homeBox){
-    const h=(state.scenes||[]).find(s=>s.id===home);
-    homeBox.innerHTML="";
-    if(h){
-      const ring=h.ring||{mode:"off"};
-      const el=document.createElement('button');
-      el.className="homecue"+(h.id===state.live?" live":"");
-      el.onclick=()=>act('home');
-      el.innerHTML=`<span class="glyph">⌂</span>
-        <span class="cn">${String(h.id).padStart(2,'0')}</span>
-        <span class="swatch" style="background:${lightColor(ring)}"></span>
-        <span class="cname">${esc(h.name)}</span>
-        <span class="tagline">${h.id===state.live?"LIVE · ":""}MAIN LOOP</span>`;
-      homeBox.appendChild(el);
-    }
-  }
-  (state.scenes||[]).filter(s=>s.id!==home).forEach(s=>{
+  if(homeBox) homeBox.innerHTML="";
+  (state.scenes||[]).forEach(s=>{
     const el=document.createElement('button');
     const isLive=s.id===state.live, isArmed=s.id===state.armed;
     el.className="cue"+(isLive?" live":"")+(isArmed?" armed":"");
     // arming is the safe default; firing straight from a tap is opt-in, because a
     // mis-tap that only changes what is queued costs nothing
     el.onclick=()=>act(state.tap_fires ? 'goto' : 'arm', s.id);
-    const ring=s.ring||{mode:"off"};
+    if(s.main) el.classList.add('home');
     const flag = isLive?'<span class="cueflag l">LIVE</span>'
-               : isArmed?'<span class="cueflag a">ARMED</span>' : '';
+               : isArmed?'<span class="cueflag a">ARMED</span>'
+               : s.main?'<span class="cueflag m">⌂ MAIN</span>' : '';
     el.innerHTML=`<div class="cn">${String(s.id).padStart(2,'0')} ${flag}</div>
       <div class="cname">${esc(s.name)}</div>
       <div class="cmeta"><span class="swatch" style="background:${lightColor(ring)}"></span>
@@ -1029,11 +1077,41 @@ if(IS_ONBOX){
   });
 }
 
+// ---- transport: short press fires on release, long press instead of it ----
+// A long press must not also fire the short action, so the short one waits for
+// release. On a touchscreen nothing is being hit on a downbeat, so the delay costs
+// nothing here — the pedal is where that tradeoff would actually matter.
+const LONG_PRESS_MS = 450;
+document.querySelectorAll('.transport .btn[data-short]').forEach(button=>{
+  let timer=null, fired=false;
+  const start = event => {
+    event.preventDefault();
+    fired=false;
+    button.classList.add('holding');
+    timer=setTimeout(()=>{
+      fired=true;
+      button.classList.remove('holding');
+      button.classList.add('fired');
+      setTimeout(()=>button.classList.remove('fired'), 200);
+      act(button.dataset.long);
+    }, LONG_PRESS_MS);
+  };
+  const end = () => {
+    clearTimeout(timer);
+    button.classList.remove('holding');
+    if(!fired) act(button.dataset.short);
+  };
+  button.addEventListener('pointerdown', start);
+  button.addEventListener('pointerup', end);
+  button.addEventListener('pointercancel', ()=>{ clearTimeout(timer); button.classList.remove('holding'); });
+  button.addEventListener('pointerleave', ()=>{ clearTimeout(timer); button.classList.remove('holding'); });
+});
+
 setInterval(()=>document.getElementById('clock').textContent=now(),1000);
 document.getElementById('clock').textContent=now();
 render(); connect();
 window.act=act; window.setView=setView; window.testFire=testFire; window.learn=learn;
-window.dropOn=dropOn; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
+window.dropOn=dropOn; window.toggleMain=toggleMain; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>
