@@ -90,7 +90,7 @@ def _merge_preserves_tuning():
     assert added[0]['id'] == 4, f"should append, not reuse a position: {added[0]['id']}"
 
     assert merged['meta']['show'] == 'THC', 'meta must survive'
-    assert merged['meta']['home_scene'] == 1, 'home_scene should default to 1'
+    assert 'home_scene' not in merged['meta'], 'home_scene is replaced by a per-scene main flag'
 
 
 def _write_is_opt_in():

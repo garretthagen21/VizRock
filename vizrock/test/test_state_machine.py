@@ -16,11 +16,13 @@ from vizrock.brain import Brain
 
 def run():
     brain = Brain()
-    # scene 1 is the main loop and sits outside the stepping order
-    assert brain.scene_library.home == 1, brain.scene_library.home
-    assert brain.scene_library.order == [2, 3], brain.scene_library.order
-    assert brain.armed == 2
+    # every scene steps now; mains are a flag, not a position outside the order
+    assert brain.scene_library.mains == [1], brain.scene_library.mains
+    assert brain.scene_library.order == [1, 2, 3], brain.scene_library.order
+    assert brain.armed == 1
 
+    brain.handle('go')
+    assert (brain.live, brain.armed) == (1, 2), (brain.live, brain.armed)
     brain.handle('go')
     assert (brain.live, brain.armed) == (2, 3), (brain.live, brain.armed)
     brain.handle('arm_next')
@@ -28,10 +30,10 @@ def run():
     brain.handle('arm_prev')
     assert brain.armed == 2
 
-    # HOME bounces to the main loop without disturbing what is queued
-    brain.handle('home')
+    # the main button bounces to a looping visual without disturbing what is queued
+    brain.handle('next_main')
     assert brain.live == 1, brain.live
-    assert brain.armed == 2, 'home must not re-arm — the queued special stays queued'
+    assert brain.armed == 2, 'next_main must not re-arm — the queued scene stays queued'
     brain.handle('go')
     assert (brain.live, brain.armed) == (2, 3), 'resume exactly where we left off'
 
@@ -53,7 +55,7 @@ def run():
     # the strong foot on the right, and HOME is furthest from it so the two committing
     # actions cannot be confused mid-song.
     midi = MidiInterface(lambda action, scene: None)
-    assert midi.match_trigger(message(type='program_change', program=0)) == ('home', None)
+    assert midi.match_trigger(message(type='program_change', program=0)) == ('next_main', None)
     assert midi.match_trigger(message(type='program_change', program=1)) == ('arm_prev', None)
     assert midi.match_trigger(message(type='program_change', program=2)) == ('arm_next', None)
     assert midi.match_trigger(message(type='program_change', program=3)) == ('go', None)
@@ -65,6 +67,9 @@ def run():
     _blackout_is_a_toggle()
     _boots_dark_with_main_queued()
     _blackout_is_a_master_mute()
+    _light_overrides_have_one_precedence()
+    _restart_refires_without_rearming()
+    _next_main_is_a_dead_button_with_no_mains()
 
     snapshot = brain.snapshot()
     assert 'addresses' in snapshot and 'output_config' in snapshot
@@ -135,7 +140,8 @@ def _blackout_is_a_toggle():
     fresh = Brain()
     fresh.handle('blackout')
     fresh.handle('blackout')
-    assert fresh.live == fresh.scene_library.home, f'should land on home, got {fresh.live}'
+    assert fresh.live == fresh.scene_library.next_main(0), \
+        f'should land on the first main, got {fresh.live}'
     assert fresh.blackout is False
 
 
@@ -166,15 +172,111 @@ def _boots_dark_with_main_queued():
     brain.boot()
 
     assert brain.blackout is True, 'should come up dark'
-    assert brain.live == brain.scene_library.home, \
-        'the main loop should be loaded so you can see what you will get back'
+    assert brain.live == brain.scene_library.next_main(0), \
+        'the first main should be loaded so you can see what you will get back'
     assert sent == ['Blackout'], f'outputs must still get all-off, got {sent}'
-    assert brain.armed == brain.scene_library.order[0], 'first special should be queued'
+    assert brain.armed == brain.scene_library.order[0], 'the first scene should be queued'
 
     brain.handle('blackout')
     assert brain.blackout is False
-    assert brain.live == brain.scene_library.home, \
-        f'releasing blackout should land on the main loop, got {brain.live}'
+    assert brain.live == brain.scene_library.next_main(0), \
+        f'releasing blackout should land on the first main, got {brain.live}'
+
+
+def _light_overrides_have_one_precedence():
+    """
+    blackout > lights off > burst > the scene.
+
+    An explicit mute must always outrank a momentary effect, and a burst must never
+    change the colour on stage — only how the lights move.
+    """
+    from vizrock.configurations.settings import vizrock_settings
+
+    sent = []
+
+    class Spy:
+        name = 'rings'
+
+        def apply(self, scene):
+            sent.append(dict(scene.get('ring') or {}))
+
+        def on_state(self, _):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    brain = Brain()
+    brain.outputs = [Spy()]
+    brain.scene_library.scenes[2]['ring'] = {'mode': 'solid', 'hue': 200,
+                                             'bright': 90, 'speed': 2}
+    brain.handle('goto', 2)
+    sent.clear()
+
+    # burst swaps the mode and keeps the hue
+    brain.handle('light_burst')
+    assert sent[-1]['mode'] == 'strobe', sent[-1]
+    assert sent[-1]['hue'] == 200, 'a burst must never change the colour'
+
+    # an explicit mute outranks the running burst
+    brain.handle('toggle_lights')
+    assert brain.lights_off is True
+    assert sent[-1]['mode'] == 'off', sent[-1]
+    brain.handle('light_burst')
+    assert sent[-1]['mode'] == 'off', 'lights off must outrank a burst'
+
+    brain.handle('toggle_lights')
+    assert brain.lights_off is False
+
+    # blackout outranks everything, and the ring block is the blackout scene's own
+    brain.handle('blackout')
+    sent.clear()
+    brain.handle('light_burst')
+    assert all(s.get('mode') == 'off' for s in sent), f'blackout must win: {sent}'
+    brain.handle('blackout')
+
+    # the burst ends by itself and the scene comes back
+    brain._end_burst()
+    assert sent[-1]['mode'] == 'solid', f'should revert to the scene: {sent[-1]}'
+
+    # a scene may override what popping means
+    brain.scene_library.scenes[2]['burst'] = {'mode': 'pulse', 'speed': 4}
+    brain.handle('light_burst')
+    assert sent[-1]['mode'] == 'pulse', sent[-1]
+    assert sent[-1]['speed'] == 4, sent[-1]
+    assert sent[-1]['hue'] == 200, 'still never the colour'
+    del brain.scene_library.scenes[2]['burst']
+    brain._end_burst()
+    assert vizrock_settings.burst['mode'] == 'strobe', 'the global default is strobe'
+
+
+def _restart_refires_without_rearming():
+    brain = Brain()
+    brain.handle('goto', 2)
+    armed_before = brain.armed
+    brain.handle('restart_scene')
+    assert brain.live == 2, brain.live
+    assert brain.armed == armed_before, 'restart must not disturb what is queued'
+
+    # nothing live is a no-op, not a crash
+    fresh = Brain()
+    fresh.live = None
+    fresh.handle('restart_scene')
+    assert fresh.live is None
+
+
+def _next_main_is_a_dead_button_with_no_mains():
+    brain = Brain()
+    for scene in brain.scene_library.scenes.values():
+        scene.pop('main', None)
+    brain.scene_library.load({'meta': brain.scene_library.meta,
+                              'scenes': list(brain.scene_library.scenes.values())})
+    brain.live = 2
+    brain.handle('next_main')
+    assert brain.live == 2, 'must not invent a scene to jump to'
 
 
 def _blackout_is_a_master_mute():
@@ -207,7 +309,7 @@ def _blackout_is_a_master_mute():
 
     brain.handle('go')
     assert brain.blackout is True, 'GO must not clear blackout'
-    assert brain.live == 2, f'the scene should still load, got {brain.live}'
+    assert brain.live == 1, f'the scene should still load, got {brain.live}'
     assert sent == [], f'nothing may reach an output while blacked out, got {sent}'
 
     brain.handle('arm', 3)

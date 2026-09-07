@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 
 import vizrock.constants.paths as vizrock_paths
-from vizrock.managers.scene_library import HOME_SCENE_ID
 
 VIDEO_SUFFIXES = {'.mov', '.mp4', '.m4v', '.avi', '.mkv'}
 CLIP_PATTERN = re.compile(r'^(\d+)[\s_-]+(.+)$')
@@ -78,8 +77,10 @@ def merge(existing, clips, layer):
                  'resolume': {'layer': layer, 'clip': number}}
         by_id[next_id] = scene
         next_id += 1
+    # No implicit main. Which scenes are the fallback loops is a judgement about the
+    # set, not something derivable from a folder of clips — guessing would put a
+    # get-out-of-trouble button on whatever happened to sort first.
     meta = dict(existing.get('meta', {}))
-    meta.setdefault('home_scene', HOME_SCENE_ID)
     return {'meta': meta, 'scenes': [by_id[i] for i in sorted(by_id)]}
 
 
@@ -126,8 +127,10 @@ def main(argv=None):
 
     print(f'{len(clips)} clip(s) in {folder}')
     for number, (name, filename) in sorted(clips.items()):
-        home = '  (home)' if number == HOME_SCENE_ID else ''
-        print(f'  {number:02d}  {name:<26} {filename}{home}')
+        existing_scene = next((s for s in existing.get('scenes', [])
+                               if s.get('id') == number), {})
+        flag = '  (main)' if existing_scene.get('main') else ''
+        print(f'  {number:02d}  {name:<26} {filename}{flag}')
 
     issues = problems(existing, clips, ignored, duplicates)
     for issue in issues:

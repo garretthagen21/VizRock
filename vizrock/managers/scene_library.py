@@ -16,8 +16,6 @@ import vizrock.constants.paths as vizrock_paths
 
 logger = logging.getLogger(__name__)
 
-HOME_SCENE_ID = 1
-
 # Blackout is not content — it is every output off, which needs no ring or dmx
 # settings because they are zero by definition. Keeping it out of scenes.json frees
 # id 0 for the main loop and keeps the setlist file purely about the show.
@@ -30,10 +28,12 @@ BLACKOUT_SCENE = {'name': 'Blackout',
 
 class SceneLibrary:
     """
-    Scene lookup plus the steppable setlist order.
+    Scene lookup plus the setlist order.
 
-    The main loop named by `meta.home_scene` (default 1) sits outside that order: it
-    is the default state you drop back into, not something to step onto by accident.
+    The setlist is one flat running order — specific scenes for songs and moments,
+    with stretches of generic looping visuals between them. A scene marked
+    `main: true` is one of those loops: the thing you fall back to when something
+    goes wrong. There can be any number of them and they sit anywhere in the order.
     """
 
     def __init__(self):
@@ -42,18 +42,20 @@ class SceneLibrary:
     def load(self, data):
         self.scenes = {scene['id']: scene for scene in data['scenes']}
         self.meta = data.get('meta', {})
-        # the main loop is the default state, not a step in the set — like Blackout it
-        # is reachable only by its own action, so PREV/NEXT never land on it
-        # The main loop is always the home scene. If meta names one that does not
-        # exist, fall back to the lowest id rather than leaving HOME inert — a dead
-        # HOME button is the worst possible failure for the one thing you press to
-        # get out of trouble.
-        self.home = self.meta.get('home_scene', HOME_SCENE_ID)
-        if self.home not in self.scenes and self.scenes:
-            self.home = min(self.scenes)
-            self.meta['home_scene'] = self.home
-        # the main loop is the default state, not a step in the set — PREV/NEXT never land on it
-        self.order = [scene['id'] for scene in data['scenes'] if scene['id'] != self.home]
+        self._migrate_home_scene()
+        # Every scene steps. Mains are interleaved with the specials rather than
+        # sitting outside the order, so PREV/NEXT walk the whole set.
+        self.order = sorted(self.scenes)
+        self.mains = [i for i in self.order if self.scenes[i].get('main')]
+
+    def _migrate_home_scene(self):
+        """Turn a pre-2026-09 `meta.home_scene` into a `main` flag on that scene."""
+        home = self.meta.pop('home_scene', None)
+        if home is None:
+            return
+        if home in self.scenes and not any(s.get('main') for s in self.scenes.values()):
+            self.scenes[home]['main'] = True
+            logger.info('migrated meta.home_scene %s to main: true', home)
 
     def save(self):
         data = {'meta': self.meta,
@@ -70,17 +72,16 @@ class SceneLibrary:
         `resolume.clip`, so the video it plays travels with it and id/clip diverge
         deliberately from here on.
 
-        The home scene keeps id 1 and is never part of the order. Returns {old: new}
-        so callers can follow LIVE and ARMED to the same scene rather than the same
-        number.
+        One flat order: mains renumber alongside the specials, since a main is a
+        position in the set like anything else. Returns {old: new} so callers can
+        follow LIVE and ARMED to the same scene rather than the same number.
         """
-        home = self.home
-        wanted = [i for i in ordered_ids if i in self.scenes and i != home]
+        wanted = [i for i in ordered_ids if i in self.scenes]
         # anything the caller forgot keeps its relative position at the end
-        wanted += [i for i in sorted(self.scenes) if i != home and i not in wanted]
+        wanted += [i for i in sorted(self.scenes) if i not in wanted]
 
-        mapping = {home: home}
-        for position, old_id in enumerate(wanted, start=home + 1):
+        mapping = {}
+        for position, old_id in enumerate(wanted, start=1):
             mapping[old_id] = position
 
         renumbered = {}
@@ -107,6 +108,20 @@ class SceneLibrary:
             return None
         index = self.order.index(scene_id) if scene_id in self.order else 0
         return self.order[max(0, min(len(self.order) - 1, index + delta))]
+
+    def next_main(self, from_id):
+        """
+        The next looping-visual scene after `from_id`, wrapping.
+
+        This is the get-out-of-trouble button, so it lands on the main that belongs to
+        this part of the set rather than jumping back to the top. Returns None when
+        nothing is marked main — the caller must treat that as a no-op rather than
+        picking a scene arbitrarily.
+        """
+        if not self.mains:
+            return None
+        later = [i for i in self.mains if i > (from_id or 0)]
+        return later[0] if later else self.mains[0]
 
     def label(self, scene_id):
         scene = self.scenes.get(scene_id)

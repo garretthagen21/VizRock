@@ -29,6 +29,10 @@ class VizRockSettings:
         self.ui_port = ui.get('port', 8080)
         # tapping a cue arms it by default; firing straight away is opt-in
         self.tap_fires = bool(ui.get('tap_fires', False))
+        # What "make the lights pop" does. A scene may override any of these; hue is
+        # deliberately not overridable, so a burst never changes the colour on stage.
+        self.burst = {'mode': 'strobe', 'seconds': 5, 'speed': 9}
+        self.burst.update(self.raw.get('burst', {}))
         self.midi_inputs = self.raw.get('midi_inputs', [])
         self.triggers = self.raw.get('triggers', [])
         self.outputs = self.raw.setdefault('outputs', {})

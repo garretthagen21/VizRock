@@ -27,7 +27,8 @@ def run():
         _renumbers_and_keeps_clips()
         _follows_live_and_armed()
         _generator_does_not_undo_it()
-        _home_always_resolves()
+        _mains_and_migration()
+        _reorder_is_flat()
     finally:
         shutil.copy(backup, vizrock_paths.Files.SCENES_FILE)
 
@@ -38,17 +39,18 @@ def _renumbers_and_keeps_clips():
     before = {s['id']: s['resolume']['clip'] for s in library.sorted_scenes()}
     assert before == {1: 1, 2: 2, 3: 3}, before
 
-    # put the last special first
+    # put the last scene first; anything the caller omits keeps its relative
+    # position at the end, so 1 lands last
     brain.reorder([3, 2])
 
     after = {s['id']: s for s in library.sorted_scenes()}
     assert sorted(after) == [1, 2, 3], sorted(after)
-    assert after[1]['resolume']['clip'] == 1, 'home must stay id 1 with its clip'
-    assert after[2]['resolume']['clip'] == 3, 'the video travels with the scene'
-    assert after[3]['resolume']['clip'] == 2
-    assert after[2]['name'] == 'Interlude', 'name travels too'
-    assert after[2]['ring']['mode'] == 'chase', 'ring settings travel'
-    assert library.order == [2, 3], library.order
+    assert after[1]['resolume']['clip'] == 3, 'the video travels with the scene'
+    assert after[2]['resolume']['clip'] == 2
+    assert after[3]['resolume']['clip'] == 1, 'nothing is pinned any more'
+    assert after[1]['name'] == 'Interlude', 'name travels too'
+    assert after[1]['ring']['mode'] == 'chase', 'ring settings travel'
+    assert library.order == [1, 2, 3], library.order
 
 
 def _follows_live_and_armed():
@@ -57,10 +59,10 @@ def _follows_live_and_armed():
     assert brain.live == 3
     brain.handle('arm', 2)
 
-    brain.reorder([3, 2])            # scene 3 becomes 2, scene 2 becomes 3
+    brain.reorder([3, 2])            # flat: 3 -> 1, 2 -> 2, and the omitted 1 -> 3
 
-    assert brain.live == 2, f'LIVE should follow the scene, not the number: {brain.live}'
-    assert brain.armed == 3, f'ARMED should follow the scene: {brain.armed}'
+    assert brain.live == 1, f'LIVE should follow the scene, not the number: {brain.live}'
+    assert brain.armed == 2, f'ARMED should follow the scene: {brain.armed}'
 
 
 def _generator_does_not_undo_it():
@@ -74,26 +76,63 @@ def _generator_does_not_undo_it():
     merged = scene_builder.merge(existing, clips, layer=1)
     by_id = {s['id']: s for s in merged['scenes']}
 
-    assert by_id[2]['resolume']['clip'] == 3, 'the generator renumbered back'
-    assert by_id[3]['resolume']['clip'] == 2
+    assert by_id[1]['resolume']['clip'] == 3, 'the generator renumbered back'
+    assert by_id[2]['resolume']['clip'] == 2
+    assert by_id[3]['resolume']['clip'] == 1
     assert len(merged['scenes']) == 3, 'it should not have invented duplicates'
 
 
-def _home_always_resolves():
+def _mains_and_migration():
     """
-    A dead HOME button is the worst failure available — it is the one thing you
-    press to get out of trouble. If meta names a scene that does not exist, fall
-    back rather than leaving it inert.
+    Mains are a per-scene flag, several are allowed, and the long-press cycles them.
+    A pre-2026-09 `meta.home_scene` must become a flag rather than being dropped.
     """
     from vizrock.managers.scene_library import SceneLibrary
 
     library = SceneLibrary()
-    library.load({'meta': {'home_scene': 99}, 'scenes': [
-        {'id': 4, 'name': 'Main loop', 'resolume': {'layer': 1, 'clip': 1}},
-        {'id': 5, 'name': 'Special', 'resolume': {'layer': 1, 'clip': 2}}]})
-    assert library.home == 4, f'should fall back to the lowest id, got {library.home}'
-    assert library.order == [5], 'home must still be excluded from stepping'
-
     library.load({'meta': {}, 'scenes': [
-        {'id': 1, 'name': 'Main loop', 'resolume': {'layer': 1, 'clip': 1}}]})
-    assert library.home == 1, 'default is 1'
+        {'id': 1, 'name': 'Walkout'},
+        {'id': 2, 'name': 'Drift', 'main': True},
+        {'id': 3, 'name': 'Chop Suey'},
+        {'id': 4, 'name': 'Red haze', 'main': True}]})
+
+    assert library.mains == [2, 4], library.mains
+    assert library.order == [1, 2, 3, 4], 'every scene steps now, mains included'
+
+    # cycles forward from wherever you are, wrapping
+    assert library.next_main(1) == 2
+    assert library.next_main(2) == 4, 'from a main, advance to the next one'
+    assert library.next_main(3) == 4
+    assert library.next_main(4) == 2, 'wraps to the first'
+
+    # no mains at all: a dead button, not an arbitrary jump
+    library.load({'meta': {}, 'scenes': [{'id': 1, 'name': 'Only'}]})
+    assert library.mains == []
+    assert library.next_main(1) is None, 'must not invent a scene to jump to'
+
+    # the old single-home config becomes a flag on that scene
+    library.load({'meta': {'home_scene': 2, 'show': 'THC'}, 'scenes': [
+        {'id': 1, 'name': 'A'}, {'id': 2, 'name': 'B'}]})
+    assert library.scenes[2].get('main') is True, 'home_scene should migrate to a flag'
+    assert library.mains == [2]
+    assert 'home_scene' not in library.meta, 'the old key should not linger'
+    assert library.meta['show'] == 'THC', 'the rest of meta must survive'
+
+
+def _reorder_is_flat():
+    """Mains renumber alongside specials — a main is a set position like any other."""
+    from vizrock.managers.scene_library import SceneLibrary
+
+    library = SceneLibrary()
+    library.load({'meta': {}, 'scenes': [
+        {'id': 1, 'name': 'A', 'resolume': {'layer': 1, 'clip': 1}},
+        {'id': 2, 'name': 'B', 'main': True, 'resolume': {'layer': 1, 'clip': 2}},
+        {'id': 3, 'name': 'C', 'resolume': {'layer': 1, 'clip': 3}}]})
+    mapping = library.reorder([3, 1, 2])
+
+    assert mapping == {3: 1, 1: 2, 2: 3}, mapping
+    assert library.scenes[1]['name'] == 'C'
+    assert library.scenes[3]['name'] == 'B', 'the main moved with the drag'
+    assert library.scenes[3].get('main') is True, 'the flag travels with the scene'
+    assert library.mains == [3], library.mains
+    assert library.scenes[3]['resolume']['clip'] == 2, 'clips travel with the scene'
