@@ -76,6 +76,7 @@ def run():
     _light_overrides_have_one_precedence()
     _light_sequences_loop()
     _peripherals_get_their_own_light_config()
+    _audition_is_a_held_preview()
     _restart_refires_without_rearming()
     _next_main_is_a_dead_button_with_no_mains()
 
@@ -408,6 +409,64 @@ def _peripherals_get_their_own_light_config():
         assert all(l['mode'] == 'off' for l in sent[-1].values()), sent[-1]
     finally:
         vizrock_settings.light_groups = groups
+
+
+def _audition_is_a_held_preview():
+    """
+    Auditioning shows a scene without cueing it: LIVE and ARMED never move, and
+    releasing puts back exactly what was on stage.
+    """
+    sent = []
+
+    class Spy:
+        name = 'spy'
+
+        def apply(self, scene):
+            sent.append(scene)
+
+        def on_state(self, _):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    brain = Brain()
+    brain.outputs = [Spy()]
+    brain.handle('goto', 2)
+    live_before, armed_before = brain.live, brain.armed
+    sent.clear()
+
+    brain.handle('audition_scene', 3)
+    assert (brain.live, brain.armed) == (live_before, armed_before), 'a preview is not a cue'
+    assert sent[-1]['resolume']['clip'] == 3, 'the audited scene reaches the outputs'
+
+    brain.handle('audition_end')
+    assert sent[-1]['resolume']['clip'] == 2, 'release puts back what was on stage'
+    assert (brain.live, brain.armed) == (live_before, armed_before)
+
+    # lights-only leaves the visuals alone
+    brain.scene_library.scenes[3]['lights'] = {'default': {'mode': 'chase', 'hue': 90}}
+    brain.handle('audition_lights', 3)
+    assert sent[-1]['lights'][0]['mode'] == 'chase', sent[-1]['lights']
+    assert sent[-1]['resolume']['clip'] == 2, 'the visuals must not change'
+    brain.handle('audition_end')
+
+    # it shows the scene as authored, not whatever was fiddled with mid-set
+    brain.handle('cycle_color')
+    brain.handle('audition_lights', 3)
+    assert sent[-1]['lights'][0]['hue'] == 90, 'authored hue, not the override'
+    brain.handle('audition_end')
+
+    # blackout blocks it — nothing but blackout clears blackout
+    brain.handle('blackout')
+    sent.clear()
+    brain.handle('audition_scene', 3)
+    assert not any(s.get('resolume', {}).get('clip') == 3 for s in sent), \
+        f'a preview must not light a stage someone killed: {sent}'
+    brain.handle('blackout')
 
 
 def _restart_refires_without_rearming():

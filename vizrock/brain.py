@@ -49,6 +49,7 @@ class Brain:
         self._burst_timer = None
         self._light_step = 0             # position in a scene's looping light sequence
         self._light_timer = None
+        self._auditioning = False        # holding a preview of a scene being edited
         self.last_event = 'armed · waiting for trigger'
 
     # MARK: - Actions (called from MIDI or the UI)
@@ -89,6 +90,12 @@ class Brain:
             self._toggle_lights()
         elif action == 'cycle_color':
             self._cycle_color()
+        elif action == 'audition_scene':
+            self._audition(scene, lights_only=False)
+        elif action == 'audition_lights':
+            self._audition(scene, lights_only=True)
+        elif action == 'audition_end':
+            self._end_audition()
         elif action == 'light_burst':
             self._light_burst()
         elif action == 'blackout':
@@ -128,6 +135,8 @@ class Brain:
             'blackout': self.blackout,
             'lights_off': self.lights_off,
             'color_index': self.color_index,
+            'auditioning': self._auditioning,
+            'light_groups': vizrock_settings.light_groups,
             'burst_active': self._burst_until > time.monotonic(),
             'mains': self.scene_library.mains,
             'update': self.updater.snapshot() if self.updater else None,
@@ -356,6 +365,57 @@ class Brain:
         self._render()
         self.push_state()
         self._schedule_light_step()
+
+    def _audition(self, scene_id, lights_only):
+        """
+        Show a scene while a button is held, without committing it.
+
+        Never touches LIVE or ARMED — this is a preview of something being edited,
+        not a cue. It shows the scene **as authored**: step 1, its own hue, no burst,
+        because the question being asked is "what did I just write".
+
+        Blackout blocks it: nothing but blackout clears blackout, and a preview
+        lighting up a stage someone deliberately killed would be the worst kind of
+        surprise. `lights_off` does not block it — that is a convenience mute, and
+        you are plainly asking to see the lights.
+        """
+        if self.blackout:
+            self.last_event = 'audition blocked · blackout is on'
+            self.push_state()
+            return
+        scene = self.scene_library.scenes.get(scene_id)
+        if scene is None:
+            logger.warning('audition of missing scene %s', scene_id)
+            return
+        preview = dict(scene)
+        configs = self._light_configs(scene)
+        fallback = configs[self._default_config_name(configs)]
+        preview['lights'] = {
+            group: self._authored_light(configs.get(name, fallback))
+            for name, group in vizrock_settings.light_groups.items()}
+        if lights_only:
+            # keep whatever is actually on screen; only the lights change
+            live = self.scene_library.scenes.get(self.live) or {}
+            preview['resolume'] = live.get('resolume') or {'clear': True}
+            preview['dmx'] = live.get('dmx') or {'cue': 'off'}
+        self._auditioning = True
+        self._dispatch(preview)
+        self.last_event = f'auditioning {self.scene_library.label(scene_id)}'
+        self.push_state()
+
+    @staticmethod
+    def _authored_light(steps):
+        light = dict(steps[0])
+        light.pop('seconds', None)
+        return light
+
+    def _end_audition(self):
+        if not self._auditioning:
+            return
+        self._auditioning = False
+        self._render()
+        self.last_event = 'audition ended'
+        self.push_state()
 
     def _cancel_burst(self):
         if self._burst_timer:

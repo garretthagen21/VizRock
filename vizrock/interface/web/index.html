@@ -127,6 +127,32 @@
   .osk .done{color:var(--live); border-color:#2f6b48}
   .osk button.on{background:#1a1533; border-color:var(--home); color:var(--home)}
 
+  /* --- light editor: both extra dimensions stay hidden until they are used, so a
+     one-peripheral one-step scene looks exactly as it always did --- */
+  .ltabs{display:flex; gap:5px; margin-bottom:8px; flex-wrap:wrap}
+  .ltab{font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:7px 10px;
+    border:1px solid var(--line); border-radius:7px; background:var(--panel2); color:var(--muted);
+    cursor:pointer; display:flex; align-items:center; gap:6px}
+  .ltab.on{border-color:var(--active); color:#fff; background:#14243a}
+  .ltab .x{color:var(--muted2); font-size:13px; line-height:1}
+  .ltab .x:hover{color:#ff8a8a}
+  /* Segments are proportional to duration and tinted by hue, so the shape of the
+     loop reads at a glance instead of having to be decoded from a list. */
+  .ltl{display:flex; gap:3px; height:34px; margin-bottom:10px; align-items:stretch}
+  .ltl .seg{flex:1 1 auto; border-radius:6px; border:1px solid var(--line); cursor:pointer;
+    position:relative; overflow:hidden; min-width:34px}
+  .ltl .seg.on{border-color:var(--active); box-shadow:inset 0 0 0 1px var(--active)}
+  .ltl .seg .lbl{position:absolute; inset:0; display:flex; align-items:center;
+    justify-content:center; font-family:var(--mono); font-size:10px; color:#fff;
+    text-shadow:0 1px 3px #000; letter-spacing:.04em}
+  .ltl .add{flex:0 0 34px; border:1px dashed var(--line); border-radius:6px; color:var(--muted);
+    background:none; cursor:pointer; font-size:15px}
+  .auditionbtn{width:100%; margin-top:10px; font-family:var(--mono); font-size:12px;
+    font-weight:700; letter-spacing:.1em; padding:14px; border-radius:8px; cursor:pointer;
+    background:var(--panel2); border:1px solid #4a3d78; color:var(--home)}
+  .auditionbtn.holding{background:var(--home); color:#12091f; border-color:var(--home)}
+  .auditionbtn.blocked{border-color:#3a2530; color:#ff8a8a}
+
   .transport{display:flex; align-items:center; gap:12px; padding:14px 22px; border-top:1px solid var(--line); background:var(--panel)}
   .log{flex:1; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .log .t{color:var(--muted2)}
@@ -539,6 +565,7 @@ const DEMO = {
                  dmx:{type:"artnet",host:"192.168.4.60"}, lights:{type:"serial"}, oled:{type:"oled"}},
   tap_fires:false,
   blackout:false, lights_off:false, color_index:null, mains:[1],
+  light_groups:{default:0, cabA:1, cabB:2},
   network:{hostname:"vizrock-box", addresses:["10.42.1.1","10.42.0.1"]},
   update:{online:true,current:"f20083c",subject:"Show every reachable URL in the UI",
           behind:1,incoming:[{sha:"a1b2c3d",subject:"Add the CUES view"}],busy:false,
@@ -797,11 +824,88 @@ function lightShape(s){
   const steps = names.reduce((n,k)=> n + (Array.isArray(c[k]) ? c[k].length : 1), 0);
   return {names, simple: names.length <= 1 && steps <= 1};
 }
+let lightTab = null, lightStep = 0;
+function activeTab(s){
+  const names = Object.keys(lightConfigs(s));
+  if(!names.length) return 'default';
+  return names.includes(lightTab) ? lightTab : (defaultName(s) ?? names[0]);
+}
+function tabSteps(s, name){
+  const entry = lightConfigs(s)[name];
+  return Array.isArray(entry) ? entry : [entry && typeof entry==='object' ? entry : {mode:"off"}];
+}
+function setLightTab(name){ lightTab=name; lightStep=0; renderInsp(); }
+function setLightStep(i){ lightStep=i; renderInsp(); }
+function groupNames(){ return Object.keys(state.light_groups || {default:0}); }
+
+function addPeripheral(){
+  const s=scene(selected); if(!s) return;
+  const used=Object.keys(lightConfigs(s));
+  // Names come from light_groups, never typed: an entry naming no group gets no
+  // packets at all, and it is the easiest way to misconfigure the rig.
+  const free=groupNames().filter(n=>!used.includes(n));
+  if(!free.length){ return; }
+  s.lights={...lightConfigs(s), [free[0]]: {...defaultLight(s)}};
+  setLightTab(free[0]); queueSceneEdit();
+}
+function removePeripheral(name, event){
+  event.stopPropagation();
+  const s=scene(selected); if(!s) return;
+  const next={...lightConfigs(s)}; delete next[name];
+  s.lights = Object.keys(next).length ? next : {default:{mode:"off"}};
+  lightTab=null; lightStep=0; renderInsp(); queueSceneEdit();
+}
+function copyToPeripheral(){
+  const s=scene(selected); if(!s) return;
+  const from=activeTab(s), entry=lightConfigs(s)[from];
+  const others=Object.keys(lightConfigs(s)).filter(n=>n!==from);
+  if(!others.length) return;
+  const next={...lightConfigs(s)};
+  others.forEach(n=>{ next[n]=JSON.parse(JSON.stringify(entry)); });
+  s.lights=next; renderInsp(); queueSceneEdit();
+}
+function addStep(){
+  const s=scene(selected); if(!s) return;
+  const name=activeTab(s), steps=tabSteps(s,name).slice();
+  steps.push({...steps[steps.length-1], seconds: steps[steps.length-1].seconds ?? 8});
+  if(steps.length===2 && steps[0].seconds===undefined) steps[0].seconds=8;
+  s.lights={...lightConfigs(s), [name]: steps};
+  lightStep=steps.length-1; renderInsp(); queueSceneEdit();
+}
+function removeStep(i, event){
+  event.stopPropagation();
+  const s=scene(selected); if(!s) return;
+  const name=activeTab(s); let steps=tabSteps(s,name).slice();
+  if(steps.length<2) return;
+  steps.splice(i,1);
+  s.lights={...lightConfigs(s), [name]: steps.length>1 ? steps : steps[0]};
+  lightStep=0; renderInsp(); queueSceneEdit();
+}
+
 function renderInsp(){
   const s=scene(selected); if(!s){document.getElementById('insp').innerHTML="";return;}
-  const r=defaultLight(s);
-  const shape=lightShape(s);
+  const name=activeTab(s), steps=tabSteps(s,name);
+  if(lightStep>=steps.length) lightStep=0;
+  const r=steps[lightStep]||{mode:"off"};
+  const names=Object.keys(lightConfigs(s));
   const opts=LIGHT_MODES.map(m=>`<option value="${m}"${r.mode===m?" selected":""}>${m}</option>`).join("");
+  const canAdd=groupNames().filter(n=>!names.includes(n)).length>0;
+
+  const tabs = (names.length>1 || canAdd) ? `<div class="ltabs">${
+    names.map(n=>`<span class="ltab${n===name?' on':''}" onclick="setLightTab('${n}')">${esc(n)}${
+      names.length>1?`<span class="x" onclick="removePeripheral('${n}',event)">×</span>`:''}</span>`).join("")
+    }${canAdd?`<span class="ltab" onclick="addPeripheral()">+</span>`:''}${
+      names.length>1?`<span class="ltab" onclick="copyToPeripheral()">copy to…</span>`:''}</div>` : '';
+
+  const total = steps.reduce((n,x)=>n+(Number(x.seconds)||8),0);
+  const timeline = steps.length>1 ? `<div class="ltl">${
+    steps.map((x,i)=>{
+      const secs=Number(x.seconds)||8;
+      return `<div class="seg${i===lightStep?' on':''}" style="flex-grow:${secs/total};background:${lightColor(x)}"
+        onclick="setLightStep(${i})"><span class="lbl">${esc(x.mode||'off')} ${secs}s
+        <span class="x" onclick="removeStep(${i},event)">×</span></span></div>`;
+    }).join("")}<button class="add" onclick="addStep()">+</button></div>` : '';
+
   document.getElementById('insp').innerHTML=`
     <div class="nm">${s.name}</div>
     <div class="sub">SCENE ${String(s.id).padStart(2,'0')} <span class="saved" id="savedTag">SAVED</span></div>
@@ -819,8 +923,8 @@ function renderInsp(){
            <input type="number" id="f_clip" min="1" value="${s.resolume?.clip??1}"></div></div>`}</div>
     <div class="field"><label>DMX CUE</label>
       <input type="text" id="f_cue" value="${(s.dmx?.cue||"").replace(/"/g,'&quot;')}"></div>
-    <div class="field"><label>LIGHTS${shape.simple?'':' — '+shape.names.join(' · ')}</label>
-      ${shape.simple ? `
+    <div class="field"><label>LIGHTS</label>
+      ${tabs}${timeline}
       <div class="slider"><div class="lightmini" id="mini"></div>
         <div style="flex:1"><select id="f_mode">${opts}</select></div></div>
       <div style="margin-top:12px">
@@ -830,34 +934,55 @@ function renderInsp(){
         <input type="range" id="f_bright" min="0" max="255" value="${r.bright??0}">
         <div class="rowlab"><span>speed</span><span id="l_speed">${r.speed??0}</span></div>
         <input type="range" id="f_speed" min="0" max="10" value="${r.speed??0}">
-      </div>` : `
-      <div class="val">This scene has ${shape.names.length} peripheral(s) and stepped
-        sequences. Editing it here would flatten that, so the controls are hidden —
-        edit <code>configs/scenes.json</code>. Everything else on this screen is safe.</div>`}
-      </div>`;
-  if(shape.simple) paintLight(document.getElementById('mini'),r);
-  ["f_name","f_layer","f_clip","f_cue","f_mode","f_hue","f_bright","f_speed"].forEach(id=>{
+        ${steps.length>1?`<div class="rowlab"><span>hold</span><span id="l_secs">${r.seconds??8}s</span></div>
+        <input type="range" id="f_secs" min="1" max="60" value="${r.seconds??8}">`:''}
+      </div>
+      <button class="auditionbtn" id="audLights" data-audition="audition_lights">HOLD TO AUDITION LIGHTS</button>
+      </div>
+    <button class="auditionbtn" id="audScene" data-audition="audition_scene">HOLD TO AUDITION SCENE</button>`;
+  paintLight(document.getElementById('mini'),r);
+  ["f_name","f_layer","f_clip","f_cue","f_mode","f_hue","f_bright","f_speed","f_secs"].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     el.addEventListener('input',()=>{
       ["hue","bright","speed"].forEach(k=>{
         const v=document.getElementById('f_'+k), lab=document.getElementById('l_'+k);
         if(v&&lab) lab.textContent=v.value;
       });
+      const sv=document.getElementById('f_secs'), sl=document.getElementById('l_secs');
+      if(sv&&sl) sl.textContent=sv.value+'s';
       paintLight(document.getElementById('mini'), readLight());
       queueSceneEdit();
     });
   });
+  wireAudition();
 }
-function toggleMain(){
-  const s=scene(selected); if(!s) return;
-  s.main = !s.main;
-  renderInsp(); renderList();
-  queueSceneEdit();
+
+// Press and hold to preview; release puts back exactly what was on stage. Never
+// changes LIVE, and blackout refuses it outright.
+function wireAudition(){
+  document.querySelectorAll('[data-audition]').forEach(button=>{
+    const stop = () => { button.classList.remove('holding'); send('audition_end'); };
+    const send = (action) => {
+      if(online && ws && ws.readyState===1)
+        ws.send(JSON.stringify({type:"action", action, scene:selected}));
+    };
+    button.addEventListener('pointerdown', e=>{
+      e.preventDefault();
+      if(state.blackout){ button.classList.add('blocked');
+        setTimeout(()=>button.classList.remove('blocked'),600); return; }
+      button.classList.add('holding'); send(button.dataset.audition);
+    });
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>button.addEventListener(ev, stop));
+  });
 }
+
 function readLight(){
   const num=id=>{const e=document.getElementById(id); return e?parseInt(e.value,10)||0:0;};
   const mode=document.getElementById('f_mode')?.value||"off";
-  return {mode, hue:num('f_hue'), bright:num('f_bright'), speed:num('f_speed')};
+  const light={mode, hue:num('f_hue'), bright:num('f_bright'), speed:num('f_speed')};
+  // only carried when the peripheral has a sequence — a lone step holds forever
+  if(document.getElementById('f_secs')) light.seconds=num('f_secs')||8;
+  return light;
 }
 // Debounced: sliders fire per pixel and every edit writes scenes.json to the SD card.
 let editTimer=null;
@@ -867,11 +992,13 @@ function sendSceneEdit(){
   const el=id=>document.getElementById(id);
   const edited={...s, name:el('f_name')?.value ?? s.name,
                 dmx:{...(s.dmx||{}), cue:el('f_cue')?.value ?? ""}};
-  // Only write lights back when the scene is the simple shape the controls can
-  // represent. A stepped or multi-peripheral config must survive a name edit.
-  if(lightShape(s).simple && el('f_mode')){
-    const name = defaultName(s) ?? 'default';
-    edited.lights = {...(s.lights||{}), [name]: readLight()};
+  // Write back only the step being edited, on the peripheral being edited. The
+  // whole scene is spread above, so touching `lights` wholesale would flatten every
+  // other peripheral and step the moment someone edited a name.
+  if(el('f_mode')){
+    const name=activeTab(s), steps=tabSteps(s,name).slice();
+    steps[Math.min(lightStep, steps.length-1)] = readLight();
+    edited.lights={...lightConfigs(s), [name]: steps.length>1 ? steps : steps[0]};
   }
   if(!s.resolume?.clear && el('f_layer') && el('f_clip')){
     edited.resolume={...(s.resolume||{}), layer:parseInt(el('f_layer').value,10)||1,
@@ -1111,7 +1238,10 @@ setInterval(()=>document.getElementById('clock').textContent=now(),1000);
 document.getElementById('clock').textContent=now();
 render(); connect();
 window.act=act; window.setView=setView; window.testFire=testFire; window.learn=learn;
-window.dropOn=dropOn; window.toggleMain=toggleMain; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
+window.dropOn=dropOn; window.toggleMain=toggleMain;
+window.setLightTab=setLightTab; window.setLightStep=setLightStep;
+window.addPeripheral=addPeripheral; window.removePeripheral=removePeripheral;
+window.copyToPeripheral=copyToPeripheral; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>
