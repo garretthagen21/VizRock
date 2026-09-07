@@ -10,6 +10,7 @@
 #
 
 import socket
+import time
 
 from vizrock.outputs.artnet_dmx import ArtNetDmx
 from vizrock.outputs.oled_display import OledDisplay
@@ -32,7 +33,47 @@ def run():
     _one_host_many_addresses()
     _honest_status()
     _oled_variants()
+    _osc_floats_and_effect_messages()
     _ring_wire_format()
+
+
+def _osc_floats_and_effect_messages():
+    """
+    Effect parameters are 0.0-1.0 floats. Sending an int where Resolume expects a
+    float is silently ignored rather than rejected, so the typetag has to be right.
+    """
+    listener = _listeners(1)[0]
+    port = listener.getsockname()[1]
+    osc = ResolumeOsc(hosts=['127.0.0.1'], port=port)
+    try:
+        for _ in range(40):
+            if osc.resolved.get('127.0.0.1'):
+                break
+            time.sleep(0.05)
+
+        osc.send_messages([{'address': '/composition/layers/1/video/opacity', 'value': 0.5}])
+        packet, _ = listener.recvfrom(2048)
+        assert b'/composition/layers/1/video/opacity' in packet, packet
+        assert b',f' in packet, f'a float parameter must use the ,f typetag: {packet}'
+
+        osc.send_messages([{'address': '/x/bypassed', 'value': 1}])
+        packet, _ = listener.recvfrom(2048)
+        assert b',i' in packet, f'an int should still use ,i: {packet}'
+
+        # repeat exists because a dropped reset means a stuck effect all song
+        osc.send_messages([{'address': '/x/bypassed', 'value': 1}], repeat=3)
+        seen = 0
+        listener.settimeout(1)
+        for _ in range(3):
+            listener.recvfrom(2048)
+            seen += 1
+        assert seen == 3, seen
+
+        osc.send_messages([{'novalue': 1}])   # malformed entries are skipped, not raised
+        osc.send_messages(None)
+    finally:
+        osc.close()
+        listener.close()
 
 
 def _ring_wire_format():

@@ -83,7 +83,20 @@
   "burst": {
     "mode": "strobe",
     "seconds": 5,
-    "speed": 9
+    "speed": 9,
+    "_comment": "osc fires on burst start, osc_end on burst end AND on every cue. Addresses depend on your Resolume composition \u2014 find them in its OSC monitor.",
+    "osc": [
+      {
+        "address": "/composition/layers/1/video/effects/strobe/bypassed",
+        "value": 0
+      }
+    ],
+    "osc_end": [
+      {
+        "address": "/composition/layers/1/video/effects/strobe/bypassed",
+        "value": 1
+      }
+    ]
   },
   "palette": [
     0,

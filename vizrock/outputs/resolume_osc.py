@@ -11,6 +11,7 @@
 
 import logging
 import socket
+import struct
 import threading
 import time
 
@@ -107,12 +108,37 @@ class ResolumeOsc(Output):
                         reported.add(host)
             time.sleep(RESOLVE_INTERVAL_SECONDS)
 
+    def send_messages(self, messages, repeat=1):
+        """
+        Send arbitrary OSC, for effect parameters and anything else Resolume exposes.
+
+        `repeat` exists because OSC is fire-and-forget: an effect left on because its
+        reset packet was dropped is a stuck visual for the rest of the song, and the
+        lights' 250ms heartbeat has no equivalent here. Repeating a reset costs three
+        UDP packets and removes the failure mode.
+        """
+        for _ in range(max(1, repeat)):
+            for message in messages or ():
+                address = message.get('address')
+                if not address:
+                    continue
+                self._send(address, message.get('value', 1))
+                logger.info('osc %s %s', address, message.get('value', 1))
+
     def _send(self, path, argument):
-        """Minimal OSC 1.0 encoder: address + ',i' typetag + int32 argument."""
+        """
+        Minimal OSC 1.0 encoder: address, typetag, one argument.
+
+        Floats matter — Resolume's effect parameters are 0.0-1.0, and sending an int
+        where a float is expected is silently ignored rather than rejected.
+        """
         def pad(raw):
             return raw + b'\x00' * (4 - len(raw) % 4)
 
-        message = pad(path.encode()) + pad(b',i') + int(argument).to_bytes(4, 'big', signed=True)
+        if isinstance(argument, float):
+            message = pad(path.encode()) + pad(b',f') + struct.pack('>f', argument)
+        else:
+            message = pad(path.encode()) + pad(b',i') + int(argument).to_bytes(4, 'big', signed=True)
         for addresses in list(self.resolved.values()):
             for address in addresses:
                 try:

@@ -21,6 +21,10 @@ from vizrock.managers.updater import Updater
 
 logger = logging.getLogger(__name__)
 
+# OSC has no delivery confirmation and no heartbeat the way the lights do, so a
+# reset is sent more than once rather than trusted to land.
+EFFECT_RESET_REPEAT = 3
+
 
 class Brain:
     """
@@ -283,6 +287,7 @@ class Brain:
         self._burst_timer = threading.Timer(seconds, lambda: self._from_thread(self._end_burst))
         self._burst_timer.daemon = True
         self._burst_timer.start()
+        self._send_effects('osc')
         self.last_event = f"{self._burst_spec().get('mode', 'strobe')} burst · {seconds:g}s"
         self._render()
         self.push_state()
@@ -423,7 +428,27 @@ class Brain:
             self._burst_timer = None
         self._burst_until = 0.0
 
+    def _send_effects(self, key, repeat=1):
+        """
+        Fire the burst's OSC at whichever output can carry it.
+
+        Duck-typed on `send_messages` rather than looking for the visuals output by
+        name — brain.py must not special-case a particular output.
+        """
+        messages = self._burst_spec().get(key)
+        if not messages:
+            return
+        for output in self.outputs:
+            sender = getattr(output, 'send_messages', None)
+            if not sender:
+                continue
+            try:
+                sender(messages, repeat=repeat)
+            except Exception as error:
+                logger.warning('effect send via %s failed: %s', output.name, error)
+
     def _end_burst(self):
+        self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT)
         self._burst_until = 0.0
         self._render()
         self.push_state()
@@ -513,6 +538,10 @@ class Brain:
             logger.warning('commit to missing scene %s', scene_id)
             return
         self.live = scene_id
+        # Every cue starts from a clean composition. OSC is fire-and-forget, so an
+        # effect left on because its reset was dropped would be a stuck visual for
+        # the rest of the song — cheaper to re-assert than to hope.
+        self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT)
         self._restart_light_loop()
         scene = self.scene_library.scenes[scene_id]
         # say what was actually targeted — "which clip did it fire?" is the first
