@@ -30,7 +30,7 @@ class VizRockSettings:
         # tapping a cue arms it by default; firing straight away is opt-in
         self.tap_fires = bool(ui.get('tap_fires', False))
         # What "make the lights pop" does. A scene may override any of these; hue is
-        # deliberately not overridable, so a burst never changes the colour on stage.
+        # deliberately not overridable, so a burst never changes the color on stage.
         self.burst = {'mode': 'strobe', 'seconds': 5, 'speed': 9}
         self.burst.update(self.raw.get('burst', {}))
         # Peripheral name -> ESP-NOW group. `default` is group 0, which is what a node

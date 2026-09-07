@@ -94,7 +94,7 @@
   .stack.live.ismain{background:linear-gradient(180deg, rgba(167,139,250,.08), transparent 60%)}
   .blackedout .stack.live{background:linear-gradient(180deg, rgba(255,138,138,.07), transparent 60%)}
   .eyebrow{font-family:var(--mono); font-size:15px; font-weight:600; letter-spacing:.26em; color:var(--muted); display:flex; align-items:center; gap:10px}
-  /* the LIVE dot should be the LIVE colour — blue was the interactive colour and
+  /* the LIVE dot should be the LIVE color — blue was the interactive color and
      said nothing about state */
   .eyebrow .tag{color:var(--live)}
   .deck .eyebrow .tag{color:var(--armamber)}
@@ -178,7 +178,7 @@
   .btn.fired{background:var(--active); color:#08131f}
   @media (hover:hover){ .btn.go:hover{background:#173626; border-color:var(--live)} }
   /* POP gets the same filled treatment as GO — they are the two buttons you reach
-     for without looking, so both read as a colour rather than an outline. Orange is
+     for without looking, so both read as a color rather than an outline. Orange is
      its own meaning: purple stays reserved for a main scene. */
   .btn.pop{background:#2a1a0c; border-color:#7a4a1e; color:var(--pop); font-weight:700}
   .btn.pop:active{background:#3a250f; border-color:var(--pop)}
@@ -301,7 +301,7 @@
   /* The main loop is the default state, not a step in the set — pinned above the
      sequence rather than buried in it, and always reachable without scrolling. */
   /* The main loop is a different kind of thing from the setlist, so it should not
-     look like a slightly different cue. Own colour, own glyph, own shape. */
+     look like a slightly different cue. Own color, own glyph, own shape. */
   .homecue{margin:10px 16px 0; display:flex; align-items:center; gap:14px; cursor:pointer;
     background:linear-gradient(90deg, rgba(167,139,250,.16), var(--panel));
     border:1px solid rgba(167,139,250,.42); border-left:5px solid var(--home);
@@ -514,7 +514,7 @@
   <div id="sharedTransport">
     <div class="transport">
       <button class="btn pop" data-short="light_burst" data-long="cycle_color"
-              data-longlabel="COLOUR">✦ POP</button>
+              data-longlabel="COLOR">✦ POP</button>
       <button class="btn" data-short="arm_prev" data-long="blackout"
               data-longlabel="BLACKOUT">◄ PREV</button>
       <button class="btn" data-short="arm_next" data-long="next_main"
@@ -622,7 +622,7 @@ function demoAct(action, sceneId){
   else if(action==="next_main"){ const h=nextMain(state.live); if(h!==null){ state.live=h; state.last_event=`LIVE → ${lbl(h)}`; } }
   else if(action==="restart_scene"){ state.last_event=`LIVE → ${lbl(state.live)} · restarted`; }
   else if(action==="toggle_lights"){ state.lights_off=!state.lights_off; state.last_event=state.lights_off?'lights off':'lights on'; }
-  else if(action==="cycle_color"){ state.last_event='light colour'; }
+  else if(action==="cycle_color"){ state.last_event='light color'; }
   else if(action==="light_burst"){ state.last_event='burst'; }
   else if(action==="blackout"){ state.blackout=!state.blackout; state.last_event=state.blackout?'blackout':'blackout off'; }
   blip(); render();
@@ -664,7 +664,7 @@ function paintLight(el, r){
              : r.mode==="strobe" ? `rstrobe ${(0.62-speed*0.05).toFixed(2)}s linear infinite`
              : "none";
   // Only restart when the timing actually changed — dragging the hue slider
-  // repaints the colour every frame and must not keep resetting the cycle. Compare
+  // repaints the color every frame and must not keep resetting the cycle. Compare
   // against our own copy: the browser re-serializes the shorthand, so "2.40s" would
   // read back as "2.4s" and never match.
   if(el.dataset.anim !== anim){

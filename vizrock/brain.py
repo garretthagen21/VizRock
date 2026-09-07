@@ -85,7 +85,7 @@ class Brain:
             else:
                 # Restart means the scene as authored: clip from the top, light
                 # sequence from step 1, the scene's own hue, no burst running. A
-                # colour picked by hand mid-set must not survive a restart, or the
+                # color picked by hand mid-set must not survive a restart, or the
                 # button does not actually get you back to a known state.
                 self.color_index = None
                 self._cancel_burst()
@@ -234,9 +234,9 @@ class Brain:
 
     def _cycle_color(self):
         """
-        Step the light colour through the palette, and back to the scene's own hue.
+        Step the light color through the palette, and back to the scene's own hue.
 
-        The scene's colour is one of the stops rather than something you can only
+        The scene's color is one of the stops rather than something you can only
         get back to by cycling all the way round — after fiddling mid-set you need a
         way home that does not depend on counting presses.
         """
@@ -250,7 +250,7 @@ class Brain:
         else:
             self.color_index += 1
         hue = 'scene' if self.color_index is None else palette[self.color_index]
-        self.last_event = f'light colour · {hue}'
+        self.last_event = f'light color · {hue}'
         self._render()
         self.push_state()
 
@@ -274,7 +274,7 @@ class Brain:
 
         Strobe is only the default — a scene can override the mode, speed, brightness
         or duration. Hue never changes, so a burst alters how the lights move rather
-        than what colour the stage is.
+        than what color the stage is.
 
         LightSerial re-sends the last payload every ~250ms and holds no timer of its
         own, so the brain has to push a fresh payload when the burst ends. The timer
@@ -456,7 +456,7 @@ class Brain:
     def _lights_for(self, scene):
         """
         Resolve a scene to {group number: light dict}, one entry per configured
-        peripheral, with the colour override and any burst applied.
+        peripheral, with the color override and any burst applied.
 
         Every group in `light_groups` gets a line, falling back to the default
         config. Nodes match their group exactly, so no node is ever addressed twice
@@ -473,15 +473,15 @@ class Brain:
         """
         One peripheral's light dict for the current step.
 
-        Precedence is blackout > lights off > burst > colour override > the scene.
-        The burst never sets hue, so a colour chosen by hand survives one.
+        Precedence is blackout > lights off > burst > color override > the scene.
+        The burst never sets hue, so a color chosen by hand survives one.
         """
         light = dict(steps[self._light_step % len(steps)])
         light.pop('seconds', None)        # timing is ours, not the wire's
         if self.color_index is not None and vizrock_settings.palette:
             light['hue'] = vizrock_settings.palette[self.color_index]
         if self._burst_until > time.monotonic():
-            # the burst changes how the lights move, never what colour they are, so
+            # the burst changes how the lights move, never what color they are, so
             # hue is pointedly not taken from the spec
             burst = self._burst_spec()
             light['mode'] = burst.get('mode', 'strobe')
@@ -510,7 +510,7 @@ class Brain:
 
     def _render(self):
         """
-        Push current state out. Precedence: blackout > lights off > burst > colour >
+        Push current state out. Precedence: blackout > lights off > burst > color >
         the scene, in one place so the UI and the outputs cannot disagree.
         """
         effective = self._effective_scene()

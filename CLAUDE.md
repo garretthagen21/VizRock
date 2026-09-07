@@ -129,11 +129,11 @@ every output degrades to a no-op and the web UI still drives the full state mach
   everything; `toggle_lights` mutes only the lights, because "lights off, visuals running" is
   a real ask and the reverse never is. A scoped blackout (mute either half independently) was
   built and thrown away — four combinations to reason about at 1am, buying a case nobody wants.
-- **One precedence order, in one place.** `blackout > lights off > burst > colour override >
+- **One precedence order, in one place.** `blackout > lights off > burst > color override >
   the scene`, resolved in `Brain._effective_scene`. An explicit mute always outranks a
   momentary effect. Put it anywhere else and the UI and the outputs will disagree.
 - **`restart_scene` puts the scene back as authored** — clip from the top, light sequence from
-  step 1, the scene's own hue, any burst cancelled. A colour picked by hand mid-set must not
+  step 1, the scene's own hue, any burst cancelled. A color picked by hand mid-set must not
   survive it, or the button does not actually get you back to a known state.
 - **Effects live on the composition, bypassed, and VizRock only flips `bypassed`.** A layer's
   effects process only that layer's content, so a clip on another layer would be untouched.
@@ -142,7 +142,7 @@ every output degrades to a no-op and the web UI still drives the full state mach
   the one just used — that makes the reset exhaustive rather than dependent on tracking what
   was switched on.
 - **A burst never changes hue.** `light_burst` alters how the lights move — mode, speed,
-  brightness — so a colour chosen by hand survives one. Strobe is only the default; a scene may
+  brightness — so a color chosen by hand survives one. Strobe is only the default; a scene may
   override the whole spec.
 - **Timers hop back onto the loop before touching state.** `UiServer.broadcast` looks up the
   running loop and gives up if there is not one, so a `push_state` from a `threading.Timer`
@@ -162,7 +162,7 @@ every output degrades to a no-op and the web UI still drives the full state mach
 - **CUES density is per device, not a fixed count.** Roughly 8 big targets on the 5" panel and
   on a phone, everything at once on a laptop. A partly visible row is the only affordance
   saying there is more below — do not tidy it away.
-- **One colour, one meaning. Never reuse one.**
+- **One color, one meaning. Never reuse one.**
   green `--live` = playing · amber `--armamber` = armed · purple `--home` = a main scene ·
   orange `--pop` = the light burst ·
   blue `--active` = interactive/addressable · orange `--warn` = the show title ·

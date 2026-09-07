@@ -237,7 +237,7 @@ def _light_overrides_have_one_precedence():
     blackout > lights off > burst > the scene.
 
     An explicit mute must always outrank a momentary effect, and a burst must never
-    change the colour on stage — only how the lights move.
+    change the color on stage — only how the lights move.
     """
     from vizrock.configurations.settings import vizrock_settings
 
@@ -268,7 +268,7 @@ def _light_overrides_have_one_precedence():
     # burst swaps the mode and keeps the hue
     brain.handle('light_burst')
     assert sent[-1]['mode'] == 'strobe', sent[-1]
-    assert sent[-1]['hue'] == 200, 'a burst must never change the colour'
+    assert sent[-1]['hue'] == 200, 'a burst must never change the color'
 
     # an explicit mute outranks the running burst
     brain.handle('toggle_lights')
@@ -296,7 +296,7 @@ def _light_overrides_have_one_precedence():
     brain.handle('light_burst')
     assert sent[-1]['mode'] == 'pulse', sent[-1]
     assert sent[-1]['speed'] == 4, sent[-1]
-    assert sent[-1]['hue'] == 200, 'still never the colour'
+    assert sent[-1]['hue'] == 200, 'still never the color'
     del brain.scene_library.scenes[2]['burst']
     brain._end_burst()
     assert vizrock_settings.burst['mode'] == 'strobe', 'the global default is strobe'
@@ -350,7 +350,7 @@ def _light_sequences_loop():
     assert sent[-1]['mode'] == 'solid', sent[-1]
     assert brain._light_timer is None, 'a single-step scene needs no timer'
 
-    # the colour override still applies on top of a sequenced scene
+    # the color override still applies on top of a sequenced scene
     brain.handle('goto', 2)
     brain.handle('cycle_color')
     from vizrock.configurations.settings import vizrock_settings
@@ -486,7 +486,7 @@ def _restart_refires_without_rearming():
     brain.handle('light_burst')
     assert brain.color_index is not None and brain._light_step == 1
     brain.handle('restart_scene')
-    assert brain.color_index is None, 'a hand-picked colour must not survive a restart'
+    assert brain.color_index is None, 'a hand-picked color must not survive a restart'
     assert brain._light_step == 0, 'the light sequence restarts at step 1'
     assert brain._burst_until == 0.0, 'a running burst is cancelled'
 
