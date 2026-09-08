@@ -96,6 +96,21 @@ def _null_port_means_autodetect():
         finally:
             serial_out.close()
 
+    # every other output raises on nonsense so the factory can reject it; this one
+    # silently accepted anything, which is how "port": null reached the running system
+    for bad in ({'port': 5}, {'port': ['/dev/x']}, {'baud': 'fast'},
+                {'baud': 0}, {'baud': True}):
+        try:
+            LightSerial(**bad).close()
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f'should have been refused: {bad}')
+
+    from vizrock.outputs import build_output
+    assert build_output('lights', {'type': 'serial', 'port': 5}) is None, \
+        'the factory must reject what the output refuses'
+
     explicit = LightSerial(port='/dev/light_tx')
     try:
         assert explicit._find_port() == '/dev/light_tx', 'an explicit path is still honoured'

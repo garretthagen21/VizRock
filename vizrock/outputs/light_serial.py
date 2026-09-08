@@ -31,6 +31,15 @@ class LightSerial(Output):
     name = 'lights'
 
     def __init__(self, port='auto', baud=115200, **_):
+        # Every other output validates here and raises; the factory turns that into a
+        # visible rejection and refuses to persist the edit. This one validated nothing,
+        # which is how `"port": null` reached the running system and sat on `retrying`
+        # forever. A null or empty port is legitimate and means auto-detect; anything
+        # that is not a string is a mistake worth refusing.
+        if port is not None and not isinstance(port, str):
+            raise ValueError(f'port must be a string or null, got {port!r}')
+        if not isinstance(baud, int) or isinstance(baud, bool) or not 1200 <= baud <= 2000000:
+            raise ValueError(f'baud out of range: {baud!r}')
         self.port_hint = port
         self.baud = baud
         self.latest_payload = 'LIGHT 0 off 0 0 0\n'   # one line per group, joined
