@@ -81,6 +81,9 @@ def run():
     _light_sequences_loop()
     _peripherals_get_their_own_light_config()
     _audition_is_a_held_preview()
+    _boot_mutes_outputs_even_with_no_scenes()
+    _every_peripheral_reaches_all_its_steps()
+    _commit_reset_ignores_the_incoming_scene_override()
     _restart_refires_without_rearming()
     _next_main_is_a_dead_button_with_no_mains()
 
@@ -475,6 +478,131 @@ def _audition_is_a_held_preview():
     assert not any(s.get('resolume', {}).get('clip') == 3 for s in sent), \
         f'a preview must not light a stage someone killed: {sent}'
     brain.handle('blackout')
+
+
+def _boot_mutes_outputs_even_with_no_scenes():
+    """
+    A fresh Pi with an empty scenes.json must still come up dark. `_render` returns
+    early when nothing is live, so blackout has to be asserted before that guard.
+    """
+    sent = []
+
+    class Spy:
+        name = 'spy'
+
+        def apply(self, scene):
+            sent.append(scene.get('name'))
+
+        def on_state(self, _):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    brain = Brain()
+    brain.scene_library.load({'meta': {}, 'scenes': []})
+    brain.live = brain.armed = None
+    brain.outputs = [Spy()]
+    brain.boot()
+
+    assert brain.blackout is True
+    assert sent == ['Blackout'], f'an empty setlist must still mute the outputs: {sent}'
+
+
+def _every_peripheral_reaches_all_its_steps():
+    """
+    The step counter is shared but monotonic, and each peripheral indexes it with
+    its own modulo. Wrapped to the default's length, a peripheral with more steps
+    than the default would cycle 0,1,0,1 and never reach its third.
+    """
+    from vizrock.configurations.settings import vizrock_settings
+
+    sent = []
+
+    class Spy:
+        name = 'rings'
+
+        def apply(self, scene):
+            sent.append(scene.get('lights') or {})
+
+        def on_state(self, _):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    groups = dict(vizrock_settings.light_groups)
+    vizrock_settings.light_groups = {'default': 0, 'cabAOuter': 1}
+    try:
+        brain = Brain()
+        brain.outputs = [Spy()]
+        brain.scene_library.scenes[2]['lights'] = {
+            'default': [{'mode': 'solid', 'hue': 1, 'seconds': 4},
+                        {'mode': 'pulse', 'hue': 2, 'seconds': 4}],
+            'cabAOuter': [{'mode': 'chase', 'hue': 10},
+                          {'mode': 'strobe', 'hue': 11},
+                          {'mode': 'solid', 'hue': 12}]}
+        brain.handle('goto', 2)
+
+        seen = []
+        for _ in range(6):
+            seen.append(sent[-1][1]['hue'])
+            brain._advance_light_step()
+        assert sorted(set(seen)) == [10, 11, 12], \
+            f'a 3-step peripheral must reach all three, got {seen}'
+        assert seen == [10, 11, 12, 10, 11, 12], seen
+    finally:
+        vizrock_settings.light_groups = groups
+
+
+def _commit_reset_ignores_the_incoming_scene_override():
+    """
+    On a cue, LIVE is already the new scene — so the effect reset must come from the
+    global spec, or a per-scene osc_end would send the incoming scene's reset for an
+    effect the outgoing one turned on.
+    """
+    from vizrock.configurations.settings import vizrock_settings
+
+    fired = []
+
+    class Spy:
+        name = 'resolume'
+
+        def apply(self, scene):
+            pass
+
+        def send_messages(self, messages, repeat=1):
+            fired.extend(m.get('address') for m in messages)
+
+        def on_state(self, _):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    burst = dict(vizrock_settings.burst)
+    vizrock_settings.burst = {**burst, 'osc_end': [{'address': '/global/reset', 'value': 1}]}
+    try:
+        brain = Brain()
+        brain.outputs = [Spy()]
+        brain.scene_library.scenes[3]['burst'] = {
+            'osc_end': [{'address': '/scene3/only', 'value': 1}]}
+        fired.clear()
+        brain.handle('goto', 3)
+        assert '/global/reset' in fired, fired
+        assert '/scene3/only' not in fired, \
+            f'the incoming scene must not supply the reset: {fired}'
+    finally:
+        vizrock_settings.burst = burst
 
 
 def _restart_refires_without_rearming():

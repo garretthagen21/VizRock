@@ -376,8 +376,11 @@ class Brain:
         self._light_timer.start()
 
     def _advance_light_step(self):
-        steps = self._light_steps(self.scene_library.scenes.get(self.live) or {})
-        self._light_step = (self._light_step + 1) % len(steps)
+        # Monotonic, not wrapped to the default's length: every peripheral indexes it
+        # with its own modulo, so one with three steps driven by a two-step default
+        # used to cycle 0,1,0,1 and never reach its third. Reset to 0 on every cue,
+        # so it never grows.
+        self._light_step += 1
         self._render()
         self.push_state()
         self._schedule_light_step()
@@ -439,14 +442,19 @@ class Brain:
             self._burst_timer = None
         self._burst_until = 0.0
 
-    def _send_effects(self, key, repeat=1):
+    def _send_effects(self, key, repeat=1, scene_override=True):
         """
         Fire the burst's OSC at whichever output can carry it.
+
+        `scene_override=False` reads the global spec only. The commit-time reset needs
+        that: by then LIVE is already the *incoming* scene, so a per-scene `osc_end`
+        would send the new scene's reset for an effect the old one turned on.
 
         Duck-typed on `send_messages` rather than looking for the visuals output by
         name — brain.py must not special-case a particular output.
         """
-        messages = self._burst_spec().get(key)
+        spec = self._burst_spec() if scene_override else vizrock_settings.burst
+        messages = spec.get(key)
         if not messages:
             return
         for output in self.outputs:
@@ -552,7 +560,7 @@ class Brain:
         # Every cue starts from a clean composition. OSC is fire-and-forget, so an
         # effect left on because its reset was dropped would be a stuck visual for
         # the rest of the song — cheaper to re-assert than to hope.
-        self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT)
+        self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT, scene_override=False)
         self._restart_light_loop()
         scene = self.scene_library.scenes[scene_id]
         # say what was actually targeted — "which clip did it fire?" is the first

@@ -151,6 +151,12 @@ every output degrades to a no-op and the web UI still drives the full state mach
   params to get wrong. `burst.osc_end` should bypass **every** effect you have added, not just
   the one just used — that makes the reset exhaustive rather than dependent on tracking what
   was switched on.
+- **The commit-time effect reset reads the global spec, never the scene's.** By the time
+  `_commit` fires it, LIVE is already the *incoming* scene — a per-scene `osc_end` would send
+  the new scene's reset for an effect the outgoing one turned on.
+- **The light step counter is monotonic and shared; each peripheral applies its own modulo.**
+  Wrapped to the default's length, a peripheral with three steps driven by a two-step default
+  cycled 0,1,0,1 and never reached its third. It resets to 0 on every cue, so it never grows.
 - **A burst never changes hue.** `light_burst` alters how the lights move — mode, speed,
   brightness — so a color chosen by hand survives one. Strobe is only the default; a scene may
   override the whole spec.
