@@ -75,7 +75,7 @@ def run():
     _arm_is_display_only()
     _blackout_is_a_toggle()
     _lights_are_a_separate_switch()
-    _boots_dark_with_main_queued()
+    _boots_dark_with_the_opener_loaded()
     _blackout_is_a_master_mute()
     _light_overrides_have_one_precedence()
     _light_sequences_loop()
@@ -200,7 +200,7 @@ def _lights_are_a_separate_switch():
     assert sent[-1].get('resolume', {}).get('clear') is True, sent[-1]
 
 
-def _boots_dark_with_main_queued():
+def _boots_dark_with_the_opener_loaded():
     """
     Powering on must not throw a visual at a screen nobody is ready for, but
     releasing blackout has to land on the main loop rather than nothing.
@@ -227,15 +227,17 @@ def _boots_dark_with_main_queued():
     brain.boot()
 
     assert brain.blackout is True, 'should come up dark'
-    assert brain.live == brain.scene_library.next_main(0), \
-        'the first main should be loaded so you can see what you will get back'
+    opener = brain.scene_library.order[0]
+    assert brain.live == opener, \
+        f'the set opens on scene 1, so that is what boots loaded, got {brain.live}'
     assert sent == ['Blackout'], f'outputs must still get all-off, got {sent}'
-    assert brain.armed == brain.scene_library.order[0], 'the first scene should be queued'
+    assert brain.armed == brain.scene_library.step_from(opener, +1), \
+        'the scene after the opener should be queued, not the opener itself'
 
     brain.handle('blackout')
     assert brain.blackout is False
-    assert brain.live == brain.scene_library.next_main(0), \
-        f'releasing blackout should land on the first main, got {brain.live}'
+    assert brain.live == opener, \
+        f'releasing blackout should reveal the opener, got {brain.live}'
 
 
 def _light_overrides_have_one_precedence():
@@ -544,7 +546,8 @@ def _blackout_is_a_master_mute():
 
     brain.handle('go')
     assert brain.blackout is True, 'GO must not clear blackout'
-    assert brain.live == 1, f'the scene should still load, got {brain.live}'
+    # boot loads the opener and arms the one after it, so GO commits scene 2
+    assert brain.live == 2, f'the scene should still load, got {brain.live}'
     # A cue under blackout re-asserts all-off rather than sending nothing at all, so
     # an output that came up late is still muted. What must never happen is a real
     # scene reaching the stage.

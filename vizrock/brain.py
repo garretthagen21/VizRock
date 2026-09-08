@@ -54,10 +54,17 @@ class Brain:
         self._light_step = 0             # position in a scene's looping light sequence
         self._light_timer = None
         self._auditioning = False        # holding a preview of a scene being edited
+        self.last_action = None
+        self._action_seq = 0
         self.last_event = 'armed · waiting for trigger'
 
     # MARK: - Actions (called from MIDI or the UI)
     def handle(self, action, scene=None):
+        # The UI flashes the matching transport button, so it needs to know an action
+        # fired even when the resulting state is identical — a counter, not a value,
+        # or two GOs in a row look like one.
+        self.last_action = action
+        self._action_seq += 1
         if action == 'arm_next':
             self._arm_step(+1)
         elif action == 'arm_prev':
@@ -115,16 +122,18 @@ class Brain:
         releasing blackout should land on the main loop rather than nothing, so the
         restore target is primed rather than left empty. Call once outputs exist.
         """
-        first_main = self.scene_library.next_main(0)
-        if first_main is None and self.scene_library.order:
-            first_main = self.scene_library.order[0]
+        # The set opens on scene 1, so that is what boots loaded — the first main is
+        # where you go when something breaks, not where the night starts.
+        opener = self.scene_library.order[0] if self.scene_library.order else None
         self.blackout = True
         # LIVE shows the scene so you can see what you will get back; every output is
         # muted, so nothing actually reaches the stage until blackout is released
-        self.live = first_main
+        self.live = opener
+        if opener is not None:
+            self.armed = self.scene_library.step_from(opener, +1)
         self._render()
-        self.last_event = 'booted blacked out · main loaded'
-        logger.info('booted blacked out with main scene %s loaded', first_main)
+        self.last_event = 'booted blacked out · opener loaded'
+        logger.info('booted blacked out with scene %s loaded, %s armed', opener, self.armed)
 
     def snapshot(self):
         return {
@@ -132,6 +141,8 @@ class Brain:
             'live': self.live,
             'armed': self.armed,
             'last_event': self.last_event,
+            'last_action': self.last_action,
+            'action_seq': self._action_seq,
             'outputs': {output.name: output.status() for output in self.outputs},
             'addresses': {output.name: output.address_label() for output in self.outputs},
             'output_config': vizrock_settings.outputs,
