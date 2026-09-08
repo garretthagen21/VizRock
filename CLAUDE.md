@@ -297,8 +297,8 @@ stacks differently:
   one look; two looks on one cab means two boards. Segments — one node splitting its strip
   across two groups — would save $5 a cab and is real engineering, but two boards need no new
   code, and a failed run takes out half a cab rather than all of it.
-- **Group names describe geometry, not intent.** `cabAOuter`, not `cabARail`: what the outer
-  run *does* changes scene to scene, where it *is* does not.
+- **Group names identify the fixture, not what it is doing.** `cabA`, not `cabARail`: what a
+  cab's lights *do* changes scene to scene, which cab it *is* does not.
 - **Every node's group must appear in `light_groups`** or it gets no packets and drops to the
   4s idle fallback. Visible rather than silent, but it is a new way to misconfigure.
 - **A ring is one kind of light**, like a cab stack — nothing is named `ring` any more.

@@ -116,9 +116,7 @@
   ],
   "light_groups": {
     "default": 0,
-    "cabAOuter": 1,
-    "cabAInner": 2,
-    "cabBOuter": 3,
-    "cabBInner": 4
+    "cabA": 1,
+    "cabB": 2
   }
 }

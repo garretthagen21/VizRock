@@ -538,14 +538,14 @@ def _every_peripheral_reaches_all_its_steps():
             return ''
 
     groups = dict(vizrock_settings.light_groups)
-    vizrock_settings.light_groups = {'default': 0, 'cabAOuter': 1}
+    vizrock_settings.light_groups = {'default': 0, 'cabA': 1}
     try:
         brain = Brain()
         brain.outputs = [Spy()]
         brain.scene_library.scenes[2]['lights'] = {
             'default': [{'mode': 'solid', 'hue': 1, 'seconds': 4},
                         {'mode': 'pulse', 'hue': 2, 'seconds': 4}],
-            'cabAOuter': [{'mode': 'chase', 'hue': 10},
+            'cabA': [{'mode': 'chase', 'hue': 10},
                           {'mode': 'strobe', 'hue': 11},
                           {'mode': 'solid', 'hue': 12}]}
         brain.handle('goto', 2)
