@@ -64,6 +64,10 @@ every output degrades to a no-op and the web UI still drives the full state mach
   something goes wrong. `SceneLibrary.order` is **every** scene; PREV/NEXT walk the lot.
   *(Superseded 2026-09-07: `meta.home_scene` and a single pinned main loop excluded from the
   order. It migrates to a flag on load.)*
+- **The setlist is a circular list, in both directions.** `step_from` wraps: NEXT past the
+  last scene lands on the first, PREV from the first lands on the last, and GO's auto-arm
+  wraps with it. Clamping made a step at the end of the set appear to do nothing, which reads
+  as a dead button — and the show is a loop anyway.
 - **`next_main` advances to the next main after LIVE, wrapping.** It lands on the loop that
   belongs to this part of the set rather than jumping to the top — it is a safety control, not
   navigation. With no scene marked main it is a **no-op that logs**: a dead button is honest,

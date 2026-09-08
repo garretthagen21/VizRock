@@ -118,11 +118,17 @@ class SceneLibrary:
         return [self.scenes[i] for i in sorted(self.scenes)]
 
     def step_from(self, scene_id, delta):
-        """Neighbouring scene in the setlist, clamped at both ends."""
+        """
+        Neighbouring scene in the setlist, wrapping at both ends.
+
+        Stepping past the encore lands on the opener rather than sticking. Clamping
+        meant NEXT at the end of the set appeared to do nothing, which reads as a
+        dead button — and the show is a loop anyway: soundcheck, set, encore, reset.
+        """
         if not self.order:
             return None
         index = self.order.index(scene_id) if scene_id in self.order else 0
-        return self.order[max(0, min(len(self.order) - 1, index + delta))]
+        return self.order[(index + delta) % len(self.order)]
 
     def next_main(self, from_id):
         """

@@ -25,8 +25,12 @@ def run():
     assert (brain.live, brain.armed) == (1, 2), (brain.live, brain.armed)
     brain.handle('go')
     assert (brain.live, brain.armed) == (2, 3), (brain.live, brain.armed)
+    # the setlist is circular in both directions — a step that appears to do nothing
+    # reads as a dead button, and the show is a loop anyway
     brain.handle('arm_next')
-    assert (brain.live, brain.armed) == (2, 3), 'must clamp at the end of the setlist'
+    assert (brain.live, brain.armed) == (2, 1), 'NEXT past the end wraps to the first'
+    brain.handle('arm_prev')
+    assert brain.armed == 3, 'PREV from the first wraps to the last'
     brain.handle('arm_prev')
     assert brain.armed == 2
 
@@ -50,7 +54,7 @@ def run():
         'blackout should not appear in the setlist'
 
     brain.handle('goto', 3)
-    assert (brain.live, brain.armed) == (3, 3)
+    assert (brain.live, brain.armed) == (3, 1), 'auto-arm wraps past the last scene'
     brain.handle('bogus')                       # unknown action must not raise
     brain.handle('goto', 99)
     assert brain.live == 3, 'commit to a missing scene must be a no-op'
@@ -117,8 +121,10 @@ def _arm_is_display_only():
     brain.handle('go')
     assert brain.live == 3 and fired == [3], (brain.live, fired)
 
+    # whatever the auto-arm landed on, a missing scene must not move it
+    armed_before = brain.armed
     brain.handle('arm', 99)
-    assert brain.armed == 3, 'arming a missing scene must be a no-op'
+    assert brain.armed == armed_before, 'arming a missing scene must be a no-op'
 
 
 def _blackout_is_a_toggle():
