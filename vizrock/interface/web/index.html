@@ -98,11 +98,12 @@
      said nothing about state */
   .eyebrow .tag{color:var(--live)}
   .deck .eyebrow .tag{color:var(--armamber)}
-  /* the light sits above its caption, so that column has to centre or the circle
-     reads as left-aligned against wider text */
-  .row{display:flex; align-items:center; gap:26px}
-  .row > div{min-width:0}
-  .lightwrap{display:flex; flex-direction:column; align-items:center; text-align:center}
+  /* The strip tucks in beside the number rather than beside the whole block — put it
+     next to the name and a long scene title shoves it off to the right. Left-aligned
+     throughout, so the number, the strip and the title all share one edge. */
+  .row{display:flex; flex-direction:column; align-items:flex-start; min-width:0}
+  .rowtop{display:flex; align-items:center; gap:18px; min-width:0}
+  .lightwrap{display:flex; flex-direction:column; align-items:flex-start}
   .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em}
   .live .num{font-size:clamp(78px,12vw,150px)}
   .deck .num{font-size:clamp(58px,9vw,104px); color:var(--armamber)}
@@ -110,7 +111,7 @@
   .deck .name{color:#f0e2c4}
   .minilight{width:clamp(120px,17vw,210px); height:clamp(20px,2.6vw,30px); border-radius:5px;
     flex:none; background-repeat:repeat, no-repeat}
-  .lightcap{font-family:var(--mono); font-size:13px; letter-spacing:.12em; color:var(--muted); margin-top:10px; text-align:center}
+  .lightcap{font-family:var(--mono); font-size:13px; letter-spacing:.12em; color:var(--muted); margin-top:7px}
   .goready{font-family:var(--mono); font-size:13px; letter-spacing:.16em; color:var(--armamber); margin-top:6px}
   .goready::before{content:"▸ "; }
 
@@ -415,7 +416,7 @@
     .lightcap,.goready{margin-top:4px; font-size:10px}
     .minilight{width:clamp(96px,14vw,150px); height:18px}
     .live .minilight{width:clamp(116px,17vw,180px); height:22px}
-    .row{gap:16px}
+    .rowtop{gap:12px}
     .eyebrow{font-size:15px; letter-spacing:.2em}
     .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
       padding-bottom:max(7px, env(safe-area-inset-bottom))}
@@ -480,28 +481,28 @@
       <div class="stack live">
         <div class="eyebrow"><span class="tag">●</span> LIVE <span id="liveMark"></span></div>
         <div class="row">
-          <div>
+          <div class="rowtop">
             <div class="num" id="lNum">--</div>
-            <div class="name" id="lName">—</div>
+            <div class="lightwrap">
+              <div class="minilight" id="lLight"></div>
+              <div class="lightcap" id="lCap"></div>
+            </div>
           </div>
-          <div class="lightwrap">
-            <div class="minilight" id="lLight"></div>
-            <div class="lightcap" id="lCap"></div>
-          </div>
+          <div class="name" id="lName">—</div>
         </div>
       </div>
       <div class="stack deck">
         <div class="eyebrow"><span class="tag">◇</span> ON DECK</div>
         <div class="row">
-          <div>
+          <div class="rowtop">
             <div class="num" id="aNum">--</div>
-            <div class="name" id="aName">—</div>
-            <div class="goready">GO fires this</div>
+            <div class="lightwrap">
+              <div class="minilight" id="aLight"></div>
+              <div class="lightcap" id="aCap"></div>
+            </div>
           </div>
-          <div class="lightwrap">
-            <div class="minilight" id="aLight"></div>
-            <div class="lightcap" id="aCap"></div>
-          </div>
+          <div class="name" id="aName">—</div>
+          <div class="goready">GO fires this</div>
         </div>
       </div>
     </div>
