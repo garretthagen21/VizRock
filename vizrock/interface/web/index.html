@@ -107,14 +107,16 @@
      the readout belongs — stacked, because a portrait rectangle has no width for a
      single line. */
   .lightwrap{position:relative; display:block; flex:none}
-  .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em}
-  .live .num{font-size:clamp(78px,12vw,150px)}
-  .deck .num{font-size:clamp(58px,9vw,104px); color:var(--armamber)}
+  .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em;
+    font-size:var(--numsize)}
+  .stack.live{--numsize:clamp(78px,12vw,150px)}
+  .stack.deck{--numsize:clamp(58px,9vw,104px)}
+  .deck .num{color:var(--armamber)}
   .name{font-size:clamp(20px,2.6vw,34px); font-weight:600; margin-top:10px}
   .deck .name{color:#f0e2c4}
   /* The preview is the shape of the fixture: a vertical 2x12 cab seen face on, lit
      around its perimeter. A horizontal bar said "strip" when the thing is a loop. */
-  .minilight{width:clamp(76px,9.5vw,112px); aspect-ratio:2/3; flex:none}
+  .minilight{height:calc(var(--numsize,110px) * .82); width:auto; aspect-ratio:3/4; flex:none}
   .minilight svg,.lightmini svg{width:100%; height:100%; display:block; overflow:visible}
   .lightcap{position:absolute; inset:0; display:flex; flex-direction:column;
     align-items:center; justify-content:center; gap:3px; pointer-events:none;
@@ -164,7 +166,7 @@
   .auditionbtn.holding{background:var(--home); color:#12091f; border-color:var(--home)}
   .auditionbtn.blocked{border-color:#3a2530; color:#ff8a8a}
 
-  .transport{display:flex; align-items:center; gap:12px; padding:14px 22px; border-top:1px solid var(--line); background:var(--panel)}
+  .transport{display:flex; align-items:center; gap:9px; padding:12px 16px; border-top:1px solid var(--line); background:var(--panel)}
   .log{flex:1; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .log .t{color:var(--muted2)}
   .btn{font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.1em; cursor:pointer; background:var(--panel2);
@@ -176,15 +178,16 @@
   .btn.go:active{background:#173626; border-color:var(--live)}
   /* A long press with no feedback reads as a broken button, so show the hold
      filling and name the action it will fire. */
-  /* A long action you can only discover by holding is a hidden feature. It is
-     always printed, tinted by what it does — so the palette explains the button. */
-  .btn[data-long]::after{content:"⟲ " attr(data-longlabel); position:absolute; left:0; right:0;
-    bottom:3px; font-size:9px; letter-spacing:.08em; color:var(--muted2); opacity:.85}
-  .btn[data-long]{position:relative; padding-bottom:17px}
-  .btn[data-long="blackout"]::after{color:#c96b7a}
-  .btn[data-long="next_main"]::after{color:var(--home)}
-  .btn[data-long="cycle_color"]::after{color:var(--pop)}
-  .btn.holding::after{opacity:1; font-weight:700}
+  /* A long action you can only discover by holding is a hidden feature, so it is
+     always printed and tinted by what it does. In flow rather than absolutely placed:
+     positioned, it did not size the button and BLACKOUT overflowed one sized by PREV. */
+  .btn[data-long]{display:flex; flex-direction:column; align-items:center; gap:3px;
+    line-height:1.1; padding-left:11px; padding-right:11px}
+  .bsub{font-size:8.5px; letter-spacing:.03em; color:var(--muted2); opacity:.9; font-weight:500}
+  .btn[data-long="blackout"] .bsub{color:#c96b7a}
+  .btn[data-long="next_main"] .bsub{color:var(--home)}
+  .btn[data-long="cycle_color"] .bsub{color:var(--pop)}
+  .btn.holding .bsub{opacity:1; font-weight:700}
   .btn.holding{border-color:var(--active)}
   .btn.fired{background:var(--active); color:#08131f}
   /* A stomp on the pedal flashes the matching button, so the screen confirms the
@@ -394,12 +397,12 @@
     /* transport becomes a sticky footer bar — GO must always be reachable */
     .transport{position:sticky; bottom:0; z-index:5; flex-wrap:wrap; gap:8px; padding:10px 14px;
       padding-bottom:max(10px, env(safe-area-inset-bottom))}
-    .transport .btn{flex:1 1 0; min-width:0; padding:22px 8px}
-    .transport .btn.go{flex:1 1 0; order:1; padding:22px 8px}
+    .transport .btn{flex:1 1 0; min-width:0; padding:16px 4px}
+    .transport .btn.go{flex:1 1 0; order:1; padding:16px 4px}
     .log{order:5; flex:1 1 100%; white-space:normal}
     .foot-note{display:none}
     .row2{grid-template-columns:1fr}
-    .minilight{width:clamp(68px,16vw,92px)}
+
   }
   /* Portrait phone: stack LIVE over ON DECK, since there is no room side by side. */
   @media (max-width:860px) and (orientation:portrait){
@@ -425,21 +428,22 @@
     .stack{padding:10px 20px; gap:8px; justify-content:center}
     .stack.deck{border-left:1px solid var(--line); border-top:0}
     .eyebrow{font-size:10px; letter-spacing:.2em}
-    .live .num{font-size:clamp(86px,17vw,160px); line-height:.84}
-    .deck .num{font-size:clamp(44px,8.5vw,78px); line-height:.84}
+    .stack.live{--numsize:clamp(86px,17vw,160px)}
+    .stack.deck{--numsize:clamp(44px,8.5vw,78px)}
+    .num{line-height:.84}
     .live .name{font-size:clamp(24px,4.2vw,38px); margin-top:10px; line-height:1.12}
     .deck .name{font-size:clamp(17px,2.7vw,24px); margin-top:6px; line-height:1.15}
     .goready{margin-top:4px; font-size:10px}
     .lightcap .m{font-size:11px} .lightcap .v{font-size:9.5px}
-    .minilight{width:clamp(60px,7vw,80px)}
-    .live .minilight{width:clamp(74px,9vw,100px)}
+
     .rowtop{gap:12px}
     .eyebrow{font-size:15px; letter-spacing:.2em}
     .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
       padding-bottom:max(7px, env(safe-area-inset-bottom))}
     /* every button shares the width equally — no dead space in the bar */
-    .transport .btn{flex:1 1 0; min-width:0; padding:25px 4px; font-size:14px; letter-spacing:.06em}
-    .transport .btn.go{flex:1 1 0; order:0; padding:25px 4px}
+    .transport .btn{flex:1 1 0; min-width:0; padding:18px 2px; font-size:13px; letter-spacing:.04em}
+    .transport .btn.go{flex:1 1 0; order:0; padding:18px 2px}
+    .bsub{font-size:8px}
     /* the event log is not worth width on a 5in panel; desktop keeps it */
     .log{display:none}
     /* EDIT has to scroll on a short screen, or the inspector is unreachable */
@@ -534,13 +538,13 @@
   <div id="sharedTransport">
     <div class="transport">
       <button class="btn pop" data-short="light_burst" data-long="cycle_color"
-              data-longlabel="COLOR">✦ POP</button>
+        ><span>✦ POP</span><span class="bsub">COLOR</span></button>
       <button class="btn" data-short="arm_prev" data-long="blackout"
-              data-longlabel="BLACKOUT">◄ PREV</button>
+        ><span>◄ PREV</span><span class="bsub">BLACKOUT</span></button>
       <button class="btn" data-short="arm_next" data-long="next_main"
-              data-longlabel="⌂ MAIN">NEXT ►</button>
+        ><span>NEXT ►</span><span class="bsub">⌂ MAIN</span></button>
       <button class="btn go" data-short="go" data-long="restart_scene"
-              data-longlabel="RESTART">GO ▸</button>
+        ><span>GO ▸</span><span class="bsub">RESTART</span></button>
       <div class="log" id="log"><span class="t">[--:--:--]</span> connecting…</div>
     </div>
   </div>
