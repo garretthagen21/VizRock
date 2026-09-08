@@ -103,7 +103,10 @@
      throughout, so the number, the strip and the title all share one edge. */
   .row{display:flex; flex-direction:column; align-items:flex-start; min-width:0}
   .rowtop{display:flex; align-items:center; gap:18px; min-width:0}
-  .lightwrap{display:flex; flex-direction:column; align-items:flex-start}
+  /* The cab outline is lit at its perimeter and empty in the middle, so that is where
+     the readout belongs — stacked, because a portrait rectangle has no width for a
+     single line. */
+  .lightwrap{position:relative; display:block; flex:none}
   .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em}
   .live .num{font-size:clamp(78px,12vw,150px)}
   .deck .num{font-size:clamp(58px,9vw,104px); color:var(--armamber)}
@@ -111,9 +114,13 @@
   .deck .name{color:#f0e2c4}
   /* The preview is the shape of the fixture: a vertical 2x12 cab seen face on, lit
      around its perimeter. A horizontal bar said "strip" when the thing is a loop. */
-  .minilight{width:clamp(48px,6.5vw,78px); aspect-ratio:2/3; flex:none}
+  .minilight{width:clamp(76px,9.5vw,112px); aspect-ratio:2/3; flex:none}
   .minilight svg,.lightmini svg{width:100%; height:100%; display:block; overflow:visible}
-  .lightcap{font-family:var(--mono); font-size:13px; letter-spacing:.12em; color:var(--muted); margin-top:7px}
+  .lightcap{position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:3px; pointer-events:none;
+    font-family:var(--mono); letter-spacing:.1em; color:var(--muted); text-align:center}
+  .lightcap .m{font-size:clamp(10px,1.25vw,14px); font-weight:600; color:var(--ink)}
+  .lightcap .v{font-size:clamp(9px,1.05vw,12px)}
   .goready{font-family:var(--mono); font-size:13px; letter-spacing:.16em; color:var(--armamber); margin-top:6px}
   .goready::before{content:"▸ "; }
 
@@ -392,7 +399,7 @@
     .log{order:5; flex:1 1 100%; white-space:normal}
     .foot-note{display:none}
     .row2{grid-template-columns:1fr}
-    .minilight{width:clamp(44px,11vw,64px)}
+    .minilight{width:clamp(68px,16vw,92px)}
   }
   /* Portrait phone: stack LIVE over ON DECK, since there is no room side by side. */
   @media (max-width:860px) and (orientation:portrait){
@@ -422,9 +429,10 @@
     .deck .num{font-size:clamp(44px,8.5vw,78px); line-height:.84}
     .live .name{font-size:clamp(24px,4.2vw,38px); margin-top:10px; line-height:1.12}
     .deck .name{font-size:clamp(17px,2.7vw,24px); margin-top:6px; line-height:1.15}
-    .lightcap,.goready{margin-top:4px; font-size:10px}
-    .minilight{width:clamp(40px,5vw,58px)}
-    .live .minilight{width:clamp(50px,6.5vw,72px)}
+    .goready{margin-top:4px; font-size:10px}
+    .lightcap .m{font-size:11px} .lightcap .v{font-size:9.5px}
+    .minilight{width:clamp(60px,7vw,80px)}
+    .live .minilight{width:clamp(74px,9vw,100px)}
     .rowtop{gap:12px}
     .eyebrow{font-size:15px; letter-spacing:.2em}
     .transport{padding:7px 10px; gap:6px; flex-wrap:nowrap;
@@ -720,7 +728,13 @@ kf.textContent=`@keyframes rpulse{0%,100%{opacity:calc(var(--peak,1)*.28)}50%{op
   +`@keyframes rstrobe{0%,49.9%{opacity:var(--peak,1)}50%,100%{opacity:.05}}`
   +`@keyframes lchase{to{stroke-dashoffset:-${LAP}}}`;
 document.head.appendChild(kf);
-const capOf = r => r.mode==="off" ? "OFF" : `${r.mode.toUpperCase()} · H${r.hue} · ${r.bright}`;
+// two lines, because the readout lives inside a portrait rectangle now
+const capOf = r => r.mode==="off"
+  ? '<span class="m">OFF</span>'
+  : `<span class="m">${esc(r.mode.toUpperCase())}</span>`
+    + `<span class="v">H${r.hue ?? 0} · ${r.bright ?? 0}</span>`;
+const capText = r => r.mode==="off" ? "OFF"
+  : `${r.mode.toUpperCase()} · H${r.hue ?? 0} · ${r.bright ?? 0}`;
 
 // ---- render ----
 let lastLive, sentUntil = 0, sentTimer = null;
@@ -784,10 +798,10 @@ function renderShow(){
   const A=scene(state.armed)||{name:"—"};
   document.getElementById('lNum').textContent=String(state.live??0).padStart(2,'0');
   document.getElementById('lName').textContent=L.name;
-  paintLight(document.getElementById('lLight'),defaultLight(L)); document.getElementById('lCap').textContent=capOf(defaultLight(L));
+  paintLight(document.getElementById('lLight'),defaultLight(L)); document.getElementById('lCap').innerHTML=capOf(defaultLight(L));
   document.getElementById('aNum').textContent=String(state.armed??0).padStart(2,'0');
   document.getElementById('aName').textContent=A.name;
-  paintLight(document.getElementById('aLight'),defaultLight(A)); document.getElementById('aCap').textContent=capOf(defaultLight(A));
+  paintLight(document.getElementById('aLight'),defaultLight(A)); document.getElementById('aCap').innerHTML=capOf(defaultLight(A));
 }
 function lightColor(r){
   if(!r || r.mode==="off") return "#3a4657";
@@ -1142,7 +1156,7 @@ function renderCues(){
     el.innerHTML=`<div class="cn">${String(s.id).padStart(2,'0')} ${flag}</div>
       <div class="cname">${esc(s.name)}</div>
       <div class="cmeta"><span class="swatch" style="background:${lightColor(ring)}"></span>
-        ${esc(capOf(ring))}</div>`;
+        ${esc(capText(ring))}</div>`;
     grid.appendChild(el);
   });
 }
