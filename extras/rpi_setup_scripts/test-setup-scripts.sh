@@ -58,6 +58,17 @@ echo "${FAKE_UID:-0}"
 EOF
 chmod +x "$FAKE/id"
 
+# The UI is a single file with no build step, so nothing else would ever catch a
+# ReferenceError in a render path — it only shows when a human opens that tab.
+if command -v node >/dev/null 2>&1; then
+    UI="$HERE/../../vizrock/interface/web/index.html"
+    SMOKE="$HERE/../../vizrock/test/web/render_smoke.js"
+    if [ -f "$SMOKE" ] && [ -f "$UI" ]; then
+        echo "--- UI render paths ---"
+        node "$SMOKE" "$UI" || { echo "  FAIL ui render smoke"; exit 1; }
+    fi
+fi
+
 PASS=0; FAIL=0
 check(){ if [ "$2" = "$3" ]; then echo "  ok   $1"; PASS=$((PASS+1));
          else echo "  FAIL $1 (got '$2' want '$3')"; FAIL=$((FAIL+1)); fi; }

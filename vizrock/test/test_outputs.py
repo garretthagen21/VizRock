@@ -34,6 +34,7 @@ def run():
     _honest_status()
     _oled_variants()
     _osc_floats_and_effect_messages()
+    _null_port_means_autodetect()
     _ring_wire_format()
 
 
@@ -74,6 +75,32 @@ def _osc_floats_and_effect_messages():
     finally:
         osc.close()
         listener.close()
+
+
+def _null_port_means_autodetect():
+    """
+    A config that says nothing about the port must search for one.
+
+    `"port": null` was treated as an explicit path, so the output reported
+    `retrying` forever with a working transmitter attached — the single symptom
+    that is indistinguishable from dead hardware.
+    """
+    for hint in (None, '', 'auto'):
+        serial_out = LightSerial(port=hint)
+        try:
+            assert serial_out.port_hint == hint
+            # _find_port must go looking rather than hand back the empty hint
+            found = serial_out._find_port()
+            assert found != hint or found is None, (hint, found)
+            assert 'None' not in serial_out.address_label(), serial_out.address_label()
+        finally:
+            serial_out.close()
+
+    explicit = LightSerial(port='/dev/light_tx')
+    try:
+        assert explicit._find_port() == '/dev/light_tx', 'an explicit path is still honoured'
+    finally:
+        explicit.close()
 
 
 def _ring_wire_format():

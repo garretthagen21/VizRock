@@ -119,10 +119,10 @@
   .minilight{height:calc(var(--numsize,110px) * .82); width:auto; aspect-ratio:3/4; flex:none}
   .minilight svg,.lightmini svg{width:100%; height:100%; display:block; overflow:visible}
   .lightcap{position:absolute; inset:0; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; gap:3px; pointer-events:none;
+    align-items:center; justify-content:center; gap:2px; pointer-events:none;
     font-family:var(--mono); letter-spacing:.1em; color:var(--muted); text-align:center}
   .lightcap .m{font-size:clamp(10px,1.25vw,14px); font-weight:600; color:var(--ink)}
-  .lightcap .v{font-size:clamp(9px,1.05vw,12px)}
+  .lightcap .v{font-size:clamp(9px,1.05vw,12px); line-height:1.15}
   .goready{font-family:var(--mono); font-size:13px; letter-spacing:.16em; color:var(--armamber); margin-top:6px}
   .goready::before{content:"▸ "; }
 
@@ -653,7 +653,7 @@ function demoAct(action, sceneId){
 }
 const lbl = id => { const s=scene(id); return s?`${String(id).padStart(2,'0')} ${s.name}`:String(id); };
 
-// ---- ring visualization ----
+// ---- light visualization ----
 // The preview draws the fixture: a cab outline whose perimeter is the strip. A dashed
 // stroke gives real pixels, and animating the dash offset runs a chase around the loop
 // the way it actually travels — LAP is the path length, rounded to a whole number of
@@ -736,7 +736,8 @@ document.head.appendChild(kf);
 const capOf = r => r.mode==="off"
   ? '<span class="m">OFF</span>'
   : `<span class="m">${esc(r.mode.toUpperCase())}</span>`
-    + `<span class="v">H${r.hue ?? 0} · ${r.bright ?? 0}</span>`;
+    + `<span class="v">H${r.hue ?? 0}</span>`
+    + `<span class="v">${r.bright ?? 0}</span>`;
 const capText = r => r.mode==="off" ? "OFF"
   : `${r.mode.toUpperCase()} · H${r.hue ?? 0} · ${r.bright ?? 0}`;
 
@@ -835,11 +836,12 @@ function renderList(){
   const canDrag = matchMedia('(hover:hover) and (pointer:fine)').matches;
   state.scenes.forEach(s=>{
     const el=document.createElement('div');
-    const isHome = s.id===home;
+    // mains are a flag now, and every scene is draggable — nothing is pinned
+    const isHome = !!s.main;
     el.className="scene"+(s.id===selected?" sel":"")+(s.id===state.live?" islive":"")
                 +(s.id===state.armed?" isarmed":"")+(isHome?" ishome":"");
     el.onclick=()=>{ selected=s.id; setDetailMode('scene'); setEditDetail(true); renderList(); renderInsp(); };
-    if(canDrag && !isHome){
+    if(canDrag){
       el.draggable=true;
       el.ondragstart=e=>{ dragId=s.id; el.classList.add('dragging');
                           e.dataTransfer.effectAllowed='move'; };
@@ -858,7 +860,7 @@ function renderList(){
         <span class="chip">✦ ${s.dmx?.cue||"—"}</span>
         <span class="chip" style="color:${lightColor(defaultLight(s))}"><span class="sw" style="background:${lightColor(defaultLight(s))}"></span>${lightShape(s).simple ? defaultLight(s).mode : lightShape(s).names.join('+')}</span>
         <span class="chip">${s.audio?"♪ audio":"muted"}</span></div></div>
-      ${canDrag && !isHome?`<span class="grip" title="drag to reorder">⠿</span>`:""}
+      ${canDrag?`<span class="grip" title="drag to reorder">⠿</span>`:""}
       <button class="fire" title="test-fire" onclick="event.stopPropagation(); testFire(${s.id})">▸</button>`;
     wrap.appendChild(el);
   });
@@ -901,6 +903,12 @@ function activeTab(s){
 function tabSteps(s, name){
   const entry = lightConfigs(s)[name];
   return Array.isArray(entry) ? entry : [entry && typeof entry==='object' ? entry : {mode:"off"}];
+}
+function toggleMain(){
+  const s=scene(selected); if(!s) return;
+  s.main = !s.main;
+  renderInsp(); renderList();
+  queueSceneEdit();
 }
 function setLightTab(name){ lightTab=name; lightStep=0; renderInsp(); }
 function setLightStep(i){ lightStep=i; renderInsp(); }
@@ -1154,13 +1162,14 @@ function renderCues(){
     // mis-tap that only changes what is queued costs nothing
     el.onclick=()=>act(state.tap_fires ? 'goto' : 'arm', s.id);
     if(s.main) el.classList.add('home');
+    const light = defaultLight(s);
     const flag = isLive?'<span class="cueflag l">LIVE</span>'
                : isArmed?'<span class="cueflag a">ARMED</span>'
                : s.main?'<span class="cueflag m">⌂ MAIN</span>' : '';
     el.innerHTML=`<div class="cn">${String(s.id).padStart(2,'0')} ${flag}</div>
       <div class="cname">${esc(s.name)}</div>
-      <div class="cmeta"><span class="swatch" style="background:${lightColor(ring)}"></span>
-        ${esc(capText(ring))}</div>`;
+      <div class="cmeta"><span class="swatch" style="background:${lightColor(light)}"></span>
+        ${esc(capText(light))}</div>`;
     grid.appendChild(el);
   });
 }

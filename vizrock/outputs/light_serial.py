@@ -61,7 +61,7 @@ class LightSerial(Output):
     def address_label(self):
         if self.serial_port and self.serial_port.is_open:
             return self.serial_port.port
-        return f'{self.port_hint} (searching)'
+        return f'{self.port_hint or "auto"} (searching)'
 
     def close(self):
         self.is_running = False
@@ -69,7 +69,10 @@ class LightSerial(Output):
             self.serial_port.close()
 
     def _find_port(self):
-        if self.port_hint != 'auto':
+        # A null or empty port means "find it", not "use nothing". Treating null as an
+        # explicit path made the output sit on `retrying` forever with a transmitter
+        # plugged in and working — the one symptom indistinguishable from dead hardware.
+        if self.port_hint and self.port_hint != 'auto':
             return self.port_hint
         import serial.tools.list_ports
 
