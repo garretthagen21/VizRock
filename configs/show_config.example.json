@@ -56,7 +56,7 @@
         "kind": "pc",
         "program": 0
       },
-      "do": "next_main"
+      "do": "light_burst"
     },
     {
       "midi": {
@@ -78,6 +78,34 @@
         "program": 3
       },
       "do": "go"
+    },
+    {
+      "midi": {
+        "kind": "pc",
+        "program": 4
+      },
+      "do": "cycle_color"
+    },
+    {
+      "midi": {
+        "kind": "pc",
+        "program": 5
+      },
+      "do": "blackout"
+    },
+    {
+      "midi": {
+        "kind": "pc",
+        "program": 6
+      },
+      "do": "next_main"
+    },
+    {
+      "midi": {
+        "kind": "pc",
+        "program": 7
+      },
+      "do": "restart_scene"
     }
   ],
   "burst": {

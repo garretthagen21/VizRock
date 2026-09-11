@@ -1379,7 +1379,7 @@ function renderTriggers(){
   box.innerHTML=rows.map(r=>{
     const m=r.midi||{};
     const what=m.kind==="pc" ? `PC ${m.program}`
-             : m.kind==="cc" ? `CC ${m.control}${m.value!==undefined?"="+m.value:""}`
+             : m.kind==="cc" ? `CC ${m.cc}${m.value!==undefined?"="+m.value:""}`
              : m.kind==="note" ? `NOTE ${m.note}` : JSON.stringify(m);
     const known=(state.known_actions||[]).length===0 || (state.known_actions||[]).includes(r.do);
     return `<div class="learn"><span>${what} → <b${known?"":' style="color:var(--warn)"'}>${r.do}</b>`
