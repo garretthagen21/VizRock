@@ -672,10 +672,10 @@
 const DEMO = {
   live:3, armed:4, last_event:"demo mode · no brain connected",
   meta:{show:"THC Halloween 2026-10-30"},
-  outputs:{resolume:"ready", dmx:"off", lights:"retrying", oled:"ok"},
-  addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", dmx:"", lights:"/dev/light_tx (searching)", oled:"i2c 0x3c ssd1306"},
+  outputs:{resolume:"ready", lights:"retrying"},
+  addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", lights:"/dev/light_tx (searching)"},
   output_config:{resolume:{type:"osc",hosts:["Garretts-M2-MacBook-Pro.local"],port:38200},
-                 dmx:{type:"artnet",host:"192.168.4.60"}, lights:{type:"serial"}, oled:{type:"oled"}},
+                 lights:{type:"serial",port:"auto"}},
   tap_fires:false,
   triggers:[{midi:{kind:"pc",program:0},do:"next_main"},{midi:{kind:"pc",program:1},do:"arm_prev"},
             {midi:{kind:"pc",program:2},do:"arm_next"},{midi:{kind:"pc",program:3},do:"go"}],
@@ -919,7 +919,9 @@ function render(){
 }
 const outputKeys = () => Object.keys(state.outputs||{});
 function renderPills(){
-  const labels={resolume:"VISUALS",dmx:"DMX",lights:"LIGHTS",oled:"DISPLAY"};
+  // Adapters the repo still carries but the show does not run are simply absent from
+  // show_config, so they never reach here. The fallback names anything unlisted.
+  const labels={resolume:"VISUALS",lights:"LIGHTS",dmx:"DMX",oled:"OLED HUD"};
   const wrap=document.getElementById('pills'); wrap.innerHTML="";
   outputKeys().forEach(k=>{
     const st=state.outputs?.[k]||"off";
