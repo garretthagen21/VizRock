@@ -258,7 +258,7 @@
   /* Each pane scrolls on its own — the scene list was unreachable when the whole
      page scrolled as one. */
   .col{min-height:0; overflow:auto; -webkit-overflow-scrolling:touch; padding:18px 22px}
-  .settingsbtn{display:block; width:100%; margin-top:16px; font-family:var(--mono);
+  .settingsbtn{display:block; width:100%; margin-bottom:16px; font-family:var(--mono);
     font-size:12px; font-weight:700; letter-spacing:.12em; color:var(--muted);
     background:var(--panel2); border:1px solid var(--line); border-radius:9px;
     padding:14px; cursor:pointer; text-align:left}
@@ -621,8 +621,8 @@
   <div id="viewEdit" class="hidden">
     <div class="edit">
       <div class="col master" id="editMaster">
-        <div class="sectlab">SCENE TABLE</div><div id="sceneList"></div>
         <button class="settingsbtn" onclick="openSettings()">⚙ GLOBAL SETTINGS</button>
+        <div class="sectlab">SCENE TABLE</div><div id="sceneList"></div>
       </div>
       <div class="col right detail" id="editDetail">
         <button class="backbtn" id="editBack" onclick="setEditDetail(false)">‹ SCENES</button>
