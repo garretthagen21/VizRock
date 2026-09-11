@@ -922,9 +922,10 @@ const LIGHT_MODES = ["off","solid","pulse","chase","strobe",
 // opacity. A mode in the wrong set leaves its animation running on the element the
 // next mode is not driving, which is the stale-animation bug the clear below exists
 // to prevent — so add to this set when adding a stroke-driven mode.
-// Fill time by speed for `progress`, mirroring FILL_MS in LightReceiver: speed 10
-// is about a second, 0 is ten minutes (longer than any song), 2 minutes is speed 2.
-const PROGRESS_SECONDS = [600, 330, 173, 91, 50, 27, 14.5, 7.9, 4.3, 2.3, 1.2];
+// Fill time by speed for `progress`, mirroring FILL_MS in LightReceiver. Round
+// numbers so a fill can be aimed at a song section by name: 10min, 5min, 2min,
+// 1min, 30s, 15s, 10s, 6s, 4s, 2s, 1s.
+const PROGRESS_SECONDS = [600, 300, 120, 60, 30, 15, 10, 6, 4, 2, 1];
 const RECT_MODES = new Set(["chase","scan","rainbow","confetti","progress"]);
 // Lights are keyed by peripheral and each entry may be a list of steps. The
 // inspector edits the common shape — one `default` entry, one step — and refuses to
