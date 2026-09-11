@@ -172,6 +172,7 @@
     letter-spacing:.1em; color:var(--muted); background:var(--panel2); border:1px solid var(--line);
     border-radius:8px; padding:12px; margin-bottom:10px; cursor:pointer; text-align:left}
   .copyall:hover{color:var(--ink); border-color:var(--muted2)}
+  .copyall[data-armed]{color:var(--warn); border-color:var(--warn); background:transparent}
   .ltab .x:hover{color:#ff8a8a}
   /* Segments are proportional to duration and tinted by hue, so the shape of the
      loop reads at a glance instead of having to be decoded from a list. */
@@ -1037,7 +1038,7 @@ function toggleMain(){
   renderInsp(); renderList();
   queueSceneEdit();
 }
-function setLightTab(name){ lightTab=name; lightStep=0; renderInsp(); }
+function setLightTab(name){ disarmCopy(); lightTab=name; lightStep=0; renderInsp(); }
 function setLightStep(i){ lightStep=i; renderInsp(); }
 function groupNames(){ return Object.keys(state.light_groups || {default:0}); }
 
@@ -1058,11 +1059,27 @@ function removePeripheral(name, event){
   s.lights = Object.keys(next).length ? next : {default:{mode:"off"}};
   lightTab=null; lightStep=0; renderInsp(); queueSceneEdit();
 }
+// Which group a pending copy is from. The copy overwrites every other group with no
+// undo, so it arms on the first tap and commits on the second — the same shape as the
+// rest of the show, and without a modal, which on the panel would be untappable.
+// Keyed by group rather than a bare flag so switching tabs while armed re-arms instead
+// of firing a copy from a source you are no longer looking at.
+let copyArmed = null, copyArmTimer = null;
+function disarmCopy(){ clearTimeout(copyArmTimer); copyArmTimer = null; copyArmed = null; }
 function copyToPeripheral(){
   const s=scene(selected); if(!s) return;
   const from=activeTab(s), entry=lightConfigs(s)[from];
   const others=Object.keys(lightConfigs(s)).filter(n=>n!==from);
   if(!others.length) return;
+  if(copyArmed !== from){
+    disarmCopy();
+    copyArmed = from;
+    const button=document.querySelector('.copyall');
+    if(button){ button.dataset.armed='1'; button.textContent='TAP AGAIN TO OVERWRITE'; }
+    copyArmTimer = setTimeout(()=>{ disarmCopy(); renderInsp(); }, 4000);
+    return;
+  }
+  disarmCopy();
   const next={...lightConfigs(s)};
   others.forEach(n=>{ next[n]=JSON.parse(JSON.stringify(entry)); });
   s.lights=next; renderInsp(); queueSceneEdit();
@@ -1136,8 +1153,9 @@ function renderInsp(){
            <input type="number" id="f_layer" min="1" value="${s.resolume?.layer??1}"></div>
          <div><div class="rowlab"><span>clip</span></div>
            <input type="number" id="f_clip" min="1" value="${s.resolume?.clip??1}"></div></div>`}</div>
+    ${state.output_config?.dmx?.enabled===false ? '' : `
     <div class="field"><label>DMX CUE</label>
-      <input type="text" id="f_cue" value="${(s.dmx?.cue||"").replace(/"/g,'&quot;')}"></div>
+      <input type="text" id="f_cue" value="${(s.dmx?.cue||"").replace(/"/g,'&quot;')}"></div>`}
     <div class="field"><label>LIGHTS</label>
       ${tabs}${timeline}
       <div class="slider"><div class="lightmini" id="mini"></div>
@@ -1247,8 +1265,10 @@ function queueSceneEdit(){ clearTimeout(editTimer); editTimer=setTimeout(sendSce
 function sendSceneEdit(){
   const s=scene(selected); if(!s) return;
   const el=id=>document.getElementById(id);
+  // Falls back to the scene's own cue, not "": the DMX field is hidden while the
+  // output is disabled, and an absent field must not wipe what is stored.
   const edited={...s, name:el('f_name')?.value ?? s.name,
-                dmx:{...(s.dmx||{}), cue:el('f_cue')?.value ?? ""}};
+                dmx:{...(s.dmx||{}), cue:el('f_cue')?.value ?? (s.dmx?.cue ?? "")}};
   // Write back only the step being edited, on the peripheral being edited. The
   // whole scene is spread above, so touching `lights` wholesale would flatten every
   // other peripheral and step the moment someone edited a name.
