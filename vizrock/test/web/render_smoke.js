@@ -32,7 +32,7 @@ const fs = require('fs');
 const html = fs.readFileSync(process.argv[2], 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 eval(script + `\n;globalThis.__ui = {state, renderCues, renderList, renderShow, render, renderInsp, renderCues, pick(id){ selected = id; },
-  paintLight, LIGHT_MODES, RECT_MODES, kf};`);
+  paintLight, LIGHT_MODES, RECT_MODES, kf, setLightPane};`);
 const ui = globalThis.__ui;
 const state = ui.state;
 
@@ -59,6 +59,17 @@ for (const s of state.scenes) {
   try { ui.pick(s.id); ui.renderInsp(); console.log('  ok   renderInsp scene ' + s.id); }
   catch (e) { failed++; console.log('  FAIL renderInsp scene ' + s.id + ' -> ' + e.message); }
 }
+// Both light panes, and a scene with its own pop as well as one inheriting the global.
+state.burst = {mode: 'strobe', seconds: 1, speed: 9};
+state.scenes[0].burst = {mode: 'solid', seconds: 2, bright: 200, speed: 0, hue: 96, sat: 0};
+for (const pane of ['main', 'pop']) {
+  for (const s of state.scenes) {
+    try { ui.pick(s.id); ui.setLightPane(pane);
+          console.log(`  ok   ${pane} pane, scene ${s.id}`); }
+    catch (e) { failed++; console.log(`  FAIL ${pane} pane, scene ${s.id} -> ${e.message}`); }
+  }
+}
+ui.setLightPane('main');
 
 // Every mode in the dropdown must paint, name a keyframe that exists, and run that
 // animation on the element the keyframe can actually affect. The check derives the

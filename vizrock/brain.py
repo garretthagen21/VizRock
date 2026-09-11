@@ -163,6 +163,7 @@ class Brain:
             'output_config': vizrock_settings.outputs,
             'tap_fires': vizrock_settings.tap_fires,
             'triggers': vizrock_settings.triggers,
+            'burst': vizrock_settings.burst,
             'known_actions': list(KNOWN_ACTIONS),
             'blackout': self.blackout,
             'lights_off': self.lights_off,

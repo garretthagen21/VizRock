@@ -173,6 +173,24 @@
     border-radius:8px; padding:12px; margin-bottom:10px; cursor:pointer; text-align:left}
   .copyall:hover{color:var(--ink); border-color:var(--muted2)}
   .copyall[data-armed]{color:var(--warn); border-color:var(--warn); background:transparent}
+  .seg2{display:flex; gap:0; margin-bottom:12px; border:1px solid var(--line); border-radius:9px;
+    overflow:hidden}
+  .seg2 button{flex:1; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.12em;
+    padding:12px; background:var(--panel2); color:var(--muted); border:0; cursor:pointer}
+  .seg2 button.on{background:#14243a; color:#fff}
+  .lsteps{display:flex; flex-direction:column; gap:6px; margin-bottom:10px}
+  .lrow{display:flex; align-items:center; gap:10px; padding:0 12px; min-height:46px;
+    border:1px solid var(--line); border-radius:8px; background:var(--panel2); cursor:pointer}
+  .lrow.on{border-color:var(--active); background:#14243a}
+  .lrow.dragging{opacity:.4}
+  .lrow.dropinto{border-color:var(--active); border-style:dashed}
+  .lidx{font-family:var(--mono); font-size:11px; color:var(--muted2); min-width:14px}
+  .lrow .sw{width:14px; height:14px; border-radius:4px; flex:none}
+  .lname{font-family:var(--mono); font-size:13px; color:var(--ink); min-width:74px}
+  .lmeta{font-family:var(--mono); font-size:11px; color:var(--muted); flex:1; text-align:right}
+  .lx{color:var(--muted2); font-size:17px; padding:0 4px}
+  .lx:hover{color:var(--warn)}
+  .lgrip{color:var(--muted2); cursor:grab; font-size:14px}
   .ltab .x:hover{color:#ff8a8a}
   /* Segments are proportional to duration and tinted by hue, so the shape of the
      loop reads at a glance instead of having to be decoded from a list. */
@@ -288,6 +306,10 @@
   .flag{font-family:var(--mono); font-size:9px; letter-spacing:.12em; padding:2px 6px; border-radius:4px}
   .flag.live{background:#12271c; color:var(--live)} .flag.armed{background:#2a2413; color:var(--armamber)}
   .chips{display:flex; gap:6px; flex-wrap:wrap}
+  .chip.own{color:var(--pop); border-color:color-mix(in srgb, var(--pop) 45%, transparent)}
+  .cclip{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--muted);
+    margin-left:8px; font-weight:600}
+  .cpop{color:var(--pop); letter-spacing:.04em}
   .chip{font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--muted); border:1px solid var(--line);
     border-radius:5px; padding:3px 7px; display:flex; align-items:center; gap:5px; background:var(--panel2)}
   .chip .sw{width:9px;height:9px;border-radius:50%;box-shadow:0 0 6px currentColor}
@@ -919,6 +941,28 @@ function paintClip(el, s){
   el.classList.toggle('clear', !!(r && r.clear));
   el.textContent = !r ? '\u00a0' : r.clear ? 'CLEAR' : `CLIP ${r.clip}`;
 }
+// The pop a scene actually fires: its own if it overrides, the global otherwise.
+function burstOf(s){ return {...(state.burst||{}), ...(s.burst||{})}; }
+function clipLabel(s){
+  const r=s.resolume||{};
+  if(r.clear) return 'CLEAR';
+  return (r.layer && r.layer!==1) ? `L${r.layer}·CLIP ${r.clip}` : `CLIP ${r.clip}`;
+}
+// The chip row under a scene name. Clip is always present: scene id and clip diverge
+// as soon as the setlist is reordered, so the number on the left is not the clip.
+function sceneChips(s){
+  const light=defaultLight(s), shape=lightShape(s), pop=burstOf(s);
+  return `<span class="chip">▚ ${clipLabel(s)}</span>`
+    + (state.output_config?.dmx?.enabled===false ? ''
+       : `<span class="chip">✦ ${esc(s.dmx?.cue||"—")}</span>`)
+    + `<span class="chip" style="color:${lightColor(light)}">`
+    + `<span class="sw" style="background:${lightColor(light)}"></span>`
+    + `${esc(shape.simple ? light.mode : shape.names.join('+'))}</span>`
+    + (pop.mode ? `<span class="chip${s.burst?' own':''}" title="${s.burst?'this scene':'global'} pop">`
+                + `◎ ${esc(pop.mode)} ${pop.seconds ?? 1}s</span>` : '')
+    // only when there IS sound — a chip reading "muted" on every scene is noise
+    + (s.audio ? `<span class="chip">♪ SOUND</span>` : '');
+}
 function lightColor(r){
   if(!r || r.mode==="off") return "#3a4657";
   const bright=Math.min(255, Math.max(0, r.bright||0))/255;
@@ -970,10 +1014,7 @@ function renderList(){
     el.innerHTML=`<div class="id">${String(s.id).padStart(2,'0')}</div>
       <div class="body"><div class="nm">${esc(s.name)} ${flags}</div>
       <div class="chips">
-        <span class="chip">▚ ${s.resolume?.clear?"clear":("L"+s.resolume.layer+"·C"+s.resolume.clip)}</span>
-        <span class="chip">✦ ${s.dmx?.cue||"—"}</span>
-        <span class="chip" style="color:${lightColor(defaultLight(s))}"><span class="sw" style="background:${lightColor(defaultLight(s))}"></span>${lightShape(s).simple ? defaultLight(s).mode : lightShape(s).names.join('+')}</span>
-        <span class="chip">${s.audio?"♪ audio":"muted"}</span></div></div>
+        ${sceneChips(s)}</div></div>
       ${canDrag?`<span class="grip" title="drag to reorder">⠿</span>`:""}
       <button class="fire" title="test-fire" onclick="event.stopPropagation(); testFire(${s.id})">▸</button>`;
     wrap.appendChild(el);
@@ -1038,7 +1079,78 @@ function toggleMain(){
   renderInsp(); renderList();
   queueSceneEdit();
 }
+let lightPane='main';
+function setLightPane(which){ lightPane=which; renderInsp(); }
 function setLightTab(name){ disarmCopy(); lightTab=name; lightStep=0; renderInsp(); }
+
+// The pop, edited on the scene itself. A scene with no burst of its own shows the
+// global one; touching any control materialises it onto the scene, so what you see is
+// always what will fire.
+function popPane(s){
+  const own=!!s.burst, pop=burstOf(s);
+  const coloured = own && 'hue' in s.burst;
+  const option=m=>`<option value="${m}"${pop.mode===m?" selected":""}>${m}</option>`;
+  const opts=LIGHT_TIERS.map(([label,modes])=>label
+    ? `<optgroup label="${label}">${modes.map(option).join("")}</optgroup>`
+    : modes.map(option).join("")).join("");
+  return `<div class="sublab">${own?'SET ON THIS SCENE'
+          :'FROM THE GLOBAL POP \u00b7 EDITING MAKES IT THIS SCENE\u2019S'}</div>
+    <div class="slider"><div class="lightmini" id="popmini"></div>
+      <div style="flex:1"><select id="p_mode">${opts}</select></div></div>
+    <div style="margin-top:12px">
+      <div class="rowlab"><span>seconds</span><span id="l_psecs">${pop.seconds??1}s</span></div>
+      <input type="range" id="p_secs" min="0.5" max="10" step="0.5" value="${pop.seconds??1}">
+      <div class="rowlab"><span>bright</span><span id="l_pbright">${pop.bright??255}</span></div>
+      <input type="range" id="p_bright" min="0" max="255" value="${pop.bright??255}">
+      <div class="rowlab"><span>speed</span><span id="l_pspeed">${pop.speed??9}</span></div>
+      <input type="range" id="p_speed" min="0" max="10" value="${pop.speed??9}">
+      <div class="togglerow" style="margin-top:14px">
+        <span class="hint">Give the pop its own colour. Off, it keeps the scene\u2019s.</span>
+        <button class="toggle" id="p_colorOn" role="switch" aria-checked="${coloured}"
+                aria-label="Pop has its own colour" onclick="togglePopColor()"></button>
+      </div>
+      ${coloured?`<div class="rowlab"><span>hue</span><span id="l_phue">${pop.hue??0}</span></div>
+      <input type="range" id="p_hue" min="0" max="255" value="${pop.hue??0}">
+      <div class="rowlab"><span>saturation</span><span id="l_psat">${pop.sat??255}</span></div>
+      <input type="range" id="p_sat" min="0" max="255" value="${pop.sat??255}">`:''}
+    </div>
+    ${own?`<button class="copyall" style="margin-top:12px" onclick="togglePopOverride()">USE THE GLOBAL POP</button>`:''}`;
+}
+function ownBurst(s){ if(!s.burst) s.burst={...burstOf(s)}; return s.burst; }
+function togglePopOverride(){
+  const s=scene(selected); if(!s) return;
+  delete s.burst; renderInsp(); queueSceneEdit();
+}
+function togglePopColor(){
+  const s=scene(selected); if(!s) return;
+  const b=ownBurst(s);
+  if('hue' in b){ delete b.hue; delete b.sat; } else { b.hue=0; b.sat=255; }
+  renderInsp(); queueSceneEdit();
+}
+// Drag to reorder, mirroring the scene table one level down.
+let stepDrag=null;
+function wireStepDrag(){
+  const rows=document.querySelectorAll('#lsteps .lrow');
+  if(!rows.length || !matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+  rows.forEach(row=>{
+    row.draggable=true;
+    row.ondragstart=e=>{ stepDrag=+row.dataset.i; row.classList.add('dragging');
+                         e.dataTransfer.effectAllowed='move'; };
+    row.ondragend=()=>{ stepDrag=null; renderInsp(); };
+    row.ondragover=e=>{ if(stepDrag!==null && stepDrag!==+row.dataset.i){ e.preventDefault();
+                        row.classList.add('dropinto'); } };
+    row.ondragleave=()=>row.classList.remove('dropinto');
+    row.ondrop=e=>{ e.preventDefault(); row.classList.remove('dropinto');
+                    moveStep(stepDrag, +row.dataset.i); };
+  });
+}
+function moveStep(from, to){
+  const s=scene(selected); if(!s || from===null || from===to) return;
+  const name=activeTab(s), steps=tabSteps(s,name).slice();
+  steps.splice(to, 0, steps.splice(from, 1)[0]);
+  s.lights={...lightConfigs(s), [name]: steps.length>1 ? steps : steps[0]};
+  lightStep=to; renderInsp(); queueSceneEdit();
+}
 function setLightStep(i){ lightStep=i; renderInsp(); }
 function groupNames(){ return Object.keys(state.light_groups || {default:0}); }
 
@@ -1113,6 +1225,8 @@ function renderInsp(){
     ? `<optgroup label="${label}">${modes.map(option).join("")}</optgroup>`
     : modes.map(option).join("")).join("");
   const canAdd=groupNames().filter(n=>!names.includes(n)).length>0;
+  // Reordering is authoring, done on a laptop — the same call the scene table makes.
+  const canReorder=matchMedia('(hover:hover) and (pointer:fine)').matches;
 
   // "copy to…" read as a picker and was not one — it overwrote every other group at
   // once, silently. The button now names the source, the targets and the count, so what
@@ -1127,14 +1241,25 @@ function renderInsp(){
     }${canAdd?`<span class="ltab" onclick="addPeripheral()">+ GROUP</span>`:''}</div>${
       others.length?`<button class="copyall" onclick="copyToPeripheral()">${copyLabel}</button>`:''}` : '';
 
-  const total = steps.reduce((n,x)=>n+(Number(x.seconds)||8),0);
-  const timeline = steps.length>1 ? `<div class="ltl">${
+  // A stacked, reorderable list rather than a proportional strip: the strip could not
+  // be reordered, and a 2-second step was a sliver you could not hit on the panel.
+  // Same shape as the scene table, because it is the same job one level down.
+  const stepList = `<div class="lsteps" id="lsteps">${
     steps.map((x,i)=>{
       const secs=Number(x.seconds)||8;
-      return `<div class="seg${i===lightStep?' on':''}" style="flex-grow:${secs/total};background:${lightColor(x)}"
-        onclick="setLightStep(${i})"><span class="lbl">${esc(x.mode||'off')} ${secs}s
-        <span class="x" onclick="removeStep(${i},event)">×</span></span></div>`;
-    }).join("")}<button class="add" onclick="addStep()">+</button></div>` : '';
+      const pal=(x.colors==='random') ? 'random'
+              : Array.isArray(x.colors) ? `${x.colors.length} colors` : '';
+      return `<div class="lrow${i===lightStep?' on':''}" data-i="${i}" onclick="setLightStep(${i})">
+        <span class="lidx">${i+1}</span>
+        <span class="sw" style="background:${lightColor(x)}"></span>
+        <span class="lname">${esc(x.mode||'off')}</span>
+        <span class="lmeta">${pal||('H'+String(x.hue??0).padStart(3,'0'))} · ${Math.round((x.bright??0)/255*100)}%`
+        + `${steps.length>1?' · '+secs+'s':''}</span>
+        ${steps.length>1?`<span class="lx" title="remove step" onclick="removeStep(${i},event)">×</span>`:''}
+        ${steps.length>1&&canReorder?`<span class="lgrip" title="drag to reorder">⠿</span>`:''}
+      </div>`;
+    }).join("")}</div>
+    <button class="copyall" onclick="addStep()">+ ADD STEP</button>`;
 
   document.getElementById('insp').innerHTML=`
     <div class="nm">${s.name}</div>
@@ -1157,7 +1282,12 @@ function renderInsp(){
     <div class="field"><label>DMX CUE</label>
       <input type="text" id="f_cue" value="${(s.dmx?.cue||"").replace(/"/g,'&quot;')}"></div>`}
     <div class="field"><label>LIGHTS</label>
-      ${tabs}${timeline}
+      ${tabs}
+      <div class="seg2" role="tablist">
+        <button class="${lightPane==='main'?'on':''}" role="tab" onclick="setLightPane('main')">MAIN</button>
+        <button class="${lightPane==='pop'?'on':''}" role="tab" onclick="setLightPane('pop')">POP</button>
+      </div>
+      ${lightPane==='pop' ? popPane(s) : `${stepList}
       <div class="slider"><div class="lightmini" id="mini"></div>
         <div style="flex:1"><select id="f_mode">${opts}</select></div></div>
       <div style="margin-top:12px">
@@ -1174,13 +1304,32 @@ function renderInsp(){
         ${r.mode!=='off'?`<div class="rowlab"><span>colors</span><span id="l_pal"></span></div>
         <div class="palrow" id="palRow"></div>`:''}
       </div>
-      <button class="auditionbtn" id="audLights" data-audition="audition_lights">HOLD TO AUDITION LIGHTS</button>
+      <button class="auditionbtn" id="audLights" data-audition="audition_lights">HOLD TO AUDITION LIGHTS</button>`}
       </div>
     <button class="auditionbtn" id="audScene" data-audition="audition_scene">HOLD TO AUDITION SCENE</button>`;
   paintLight(document.getElementById('mini'),r);
+  if(lightPane==='pop') paintLight(document.getElementById('popmini'), burstOf(s));
+  wireStepDrag();
   paletteDraft = (r.colors==='random' || Array.isArray(r.colors)) ? r.colors : null;
   renderPalette();
   document.getElementById('palRow')?.addEventListener('click', e=>palAction(e.target));
+  ["p_mode","p_secs","p_bright","p_speed","p_hue","p_sat"].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.addEventListener('input',()=>{
+      const s=scene(selected); if(!s) return;
+      const b=ownBurst(s);                       // first touch makes it this scene's
+      b.mode=document.getElementById('p_mode').value;
+      const num=i=>parseFloat(document.getElementById(i)?.value);
+      b.seconds=num('p_secs'); b.bright=Math.round(num('p_bright')); b.speed=Math.round(num('p_speed'));
+      if(document.getElementById('p_hue')){ b.hue=Math.round(num('p_hue')); b.sat=Math.round(num('p_sat')); }
+      [['l_psecs',b.seconds+'s'],['l_pbright',b.bright],['l_pspeed',b.speed],
+       ['l_phue',b.hue],['l_psat',b.sat]].forEach(([lab,v])=>{
+        const e=document.getElementById(lab); if(e && v!==undefined) e.textContent=v;
+      });
+      paintLight(document.getElementById('popmini'), burstOf(s));
+      queueSceneEdit();
+    });
+  });
   ["f_name","f_layer","f_clip","f_cue","f_mode","f_hue","f_sat","f_bright","f_speed","f_secs"].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     el.addEventListener('input',()=>{
@@ -1365,10 +1514,12 @@ function renderCues(){
     const flag = isLive?'<span class="cueflag l">LIVE</span>'
                : isArmed?'<span class="cueflag a">ARMED</span>'
                : s.main?'<span class="cueflag m">⌂ MAIN</span>' : '';
-    el.innerHTML=`<div class="cn">${String(s.id).padStart(2,'0')} ${flag}</div>
+    const pop=burstOf(s);
+    el.innerHTML=`<div class="cn">${String(s.id).padStart(2,'0')}`
+      + `<span class="cclip">${clipLabel(s)}</span> ${flag}</div>
       <div class="cname">${esc(s.name)}</div>
       <div class="cmeta"><span class="swatch" style="background:${lightColor(light)}"></span>
-        ${esc(capText(light))}</div>`;
+        ${esc(capText(light))}${pop.mode?` <span class="cpop">◎ ${esc(pop.mode)}</span>`:''}</div>`;
     grid.appendChild(el);
   });
 }
@@ -1562,7 +1713,7 @@ window.act=act; window.setView=setView; window.testFire=testFire;
 window.dropOn=dropOn; window.toggleMain=toggleMain;
 window.setLightTab=setLightTab; window.setLightStep=setLightStep;
 window.addPeripheral=addPeripheral; window.removePeripheral=removePeripheral;
-window.copyToPeripheral=copyToPeripheral; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
+window.copyToPeripheral=copyToPeripheral; window.setLightPane=setLightPane; window.togglePopOverride=togglePopOverride; window.togglePopColor=togglePopColor; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>
