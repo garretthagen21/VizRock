@@ -9,6 +9,8 @@
 # @date    2026-08-08
 #
 
+import time
+
 from vizrock.test.stubs import message
 from vizrock.managers.midi_interface import MidiInterface
 from vizrock.brain import Brain
@@ -753,3 +755,36 @@ def _scene_effects():
     brain.blackout = True
     brain.handle('goto', 2)
     assert '/echo/on' not in sent, ('blackout must suppress scene effects', sent)
+    brain.blackout = False
+
+    # with osc_seconds the effect is a burst that clears itself; without it the effect
+    # holds for the scene and only the next cue takes it down
+    brain.scene_library.scenes[2]['osc_seconds'] = 0.05
+    brain.handle('goto', 2)
+    assert brain._scene_effect_timer is not None, 'a timed effect must schedule its reset'
+    time.sleep(0.15)
+    assert brain._scene_effect_timer is None, 'the timer must clear itself'
+
+    # a timer from the previous scene must never fire into the next one's effect
+    brain.handle('goto', 2)
+    running = brain._scene_effect_timer
+    brain.handle('goto', 3)
+    assert not running.is_alive(), 'a stale effect timer must be cancelled on the next cue'
+    assert brain._scene_effect_timer is None, brain._scene_effect_timer
+    del brain.scene_library.scenes[2]['osc_seconds']
+
+    # the escape hatch: clears effects without moving the show
+    brain.handle('goto', 2)
+    live, armed = brain.live, brain.armed
+    sent.clear()
+    brain.handle('clear_effects')
+    assert sent and all('bypassed' in a for a in sent), ('must send the reset', sent)
+    assert (brain.live, brain.armed) == (live, armed), 'clearing effects must not move the show'
+
+    # blackout is the panic control, so it has to take effects down too — otherwise it
+    # hides the clip and leaves the effect running on nothing
+    brain.handle('goto', 2)
+    sent.clear()
+    brain.handle('blackout')
+    assert sent, ('blackout must clear effects', sent)
+    brain.handle('blackout')

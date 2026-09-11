@@ -51,6 +51,7 @@ class Brain:
         self.color_index = None          # None = the scene's own hue
         self._burst_until = 0.0          # light burst expiry, monotonic
         self._restart_visuals = False    # re-fire the clip on the next dispatch
+        self._scene_effect_timer = None  # clears a timed scene effect
         self._burst_timer = None
         self._light_step = 0             # position in a scene's looping light sequence
         self._light_timer = None
@@ -100,6 +101,8 @@ class Brain:
                 # the only thing that re-fires a clip that is already playing
                 self._restart_visuals = True
                 self._commit(self.live, rearm=False)
+        elif action == 'clear_effects':
+            self._clear_effects()
         elif action == 'toggle_lights':
             self._toggle_lights()
         elif action == 'cycle_color':
@@ -233,6 +236,11 @@ class Brain:
         reveals the scene instead of the brain having to remember and restore one.
         """
         self.blackout = not self.blackout
+        if self.blackout:
+            # every output off has to mean effects too — otherwise a blackout hides
+            # the clip and leaves the effect running on nothing
+            self._cancel_scene_effect()
+            self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT, scene_override=False)
         self.last_event = 'blackout · press again to restore' if self.blackout else 'blackout off'
         logger.info(self.last_event)
         self._render()
@@ -477,6 +485,36 @@ class Brain:
             except Exception as error:
                 logger.warning('effect send via %s failed: %s', output.name, error)
 
+    def _clear_effects(self):
+        """
+        Force every effect off, without touching the clip, the lights or LIVE.
+
+        OSC is fire-and-forget with no acknowledgement and no heartbeat, so a reset
+        packet that gets dropped leaves an effect stuck on for the rest of the night.
+        A scene change or `restart_scene` would also clear it, but both move the show;
+        this is the one that does nothing else, so it is safe to hit mid-song.
+        """
+        self._cancel_scene_effect()
+        self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT, scene_override=False)
+        self.last_event = 'effects cleared'
+        logger.info(self.last_event)
+        self.push_state()
+
+    def _cancel_scene_effect(self):
+        if self._scene_effect_timer:
+            self._scene_effect_timer.cancel()
+            self._scene_effect_timer = None
+
+    def _end_scene_effect(self):
+        """
+        Take down a timed scene effect.
+
+        Uses the global reset rather than anything the scene carries: the scene says
+        what to turn on, and only the global list knows how to turn everything off.
+        """
+        self._scene_effect_timer = None
+        self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT, scene_override=False)
+
     def _end_burst(self):
         self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT)
         self._burst_until = 0.0
@@ -604,8 +642,19 @@ class Brain:
         # when the clip does not change: several scenes share one video and differ by
         # the effect laid over it. Skipped under blackout — an effect on a composition
         # nobody can see is just a stuck parameter waiting to surprise someone.
+        # Cancelled unconditionally, outside the blackout guard: a timer left running
+        # from the previous scene would fire later and clear *this* scene's effect.
+        self._cancel_scene_effect()
         if not self.blackout:
             self._send_osc(scene.get('osc'))
+            # `osc_seconds` makes it a burst that clears itself; without it the effect
+            # holds for the whole scene and the next cue's reset takes it down.
+            seconds = float(scene.get('osc_seconds') or 0)
+            if seconds > 0:
+                self._scene_effect_timer = threading.Timer(
+                    seconds, lambda: self._from_thread(self._end_scene_effect))
+                self._scene_effect_timer.daemon = True
+                self._scene_effect_timer.start()
         # auto-arm the next scene so a linear set is just GO, GO, GO
         if rearm and scene_id in self.scene_library.order:
             self.armed = self.scene_library.step_from(scene_id, +1)
