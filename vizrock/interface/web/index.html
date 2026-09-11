@@ -1697,15 +1697,7 @@ const ACTION_LABELS = {
   audition_end:'Release a preview',
 };
 const actionLabel = a => ACTION_LABELS[a] || a;
-// Our convention is short on PC 0-3 and long on PC 4-7. Name it that way when it fits
-// and stay quiet when it does not, rather than asserting a layout the pedal may not have.
-function switchLabel(midi){
-  if(midi.kind!=='pc' || midi.program===undefined) return '';
-  const p=midi.program;
-  if(p>=0 && p<=3) return `SW${p+1} \u00b7 SHORT`;
-  if(p>=4 && p<=7) return `SW${p-3} \u00b7 LONG`;
-  return '';
-}
+
 function renderTriggers(){
   const box=document.getElementById('trigBox'); if(!box) return;
   // only what the switch grid above could not place
