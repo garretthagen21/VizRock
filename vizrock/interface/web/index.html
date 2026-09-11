@@ -821,7 +821,8 @@ function paintLight(el, r){
   rect.setAttribute('stroke', col);
   // chase lights a short arc of the perimeter; everything else lights all of it
   rect.setAttribute('stroke-dasharray', r.mode==="chase" ? `14 ${LAP-14}`
-                                      : r.mode==="scan"  ? `20 ${LAP-20}` : '2 3');
+                                      : r.mode==="scan"  ? `20 ${LAP-20}`
+                                      : r.mode==="theater" ? "6 12" : '2 3');
   const glow=1+bright*4;
   rect.style.filter=`drop-shadow(0 0 ${glow.toFixed(1)}px ${col})`;
   el.style.boxShadow="none";
@@ -843,6 +844,11 @@ function paintLight(el, r){
     confetti: ['lconfetti', 1.60 - speed * 0.12, 'linear infinite'],
     fire:     ['lfire',     1.40 - speed * 0.09, 'ease-in-out infinite'],
     rainbow:  ['lrainbow',  4.00 - speed * 0.30, 'linear infinite'],
+    theater:  ['ltheater',  1.20 - speed * 0.09, 'steps(3, end) infinite'],
+    wave:     ['lwave',     2.60 - speed * 0.20, 'ease-in-out infinite'],
+    noise:    ['lnoise',    3.40 - speed * 0.25, 'ease-in-out infinite'],
+    heartbeat:['lheart',    1.80 - speed * 0.12, 'linear infinite'],
+    glitch:   ['lglitch',   1.30 - speed * 0.09, 'steps(7, end) infinite'],
     // mirrors the receiver's FILL_MS table, so the preview is a fair guide to what a
     // speed setting does on the cab. Keep the two in step — they are the same curve
     // written twice, and 600s really is meant to look like it is barely moving.
@@ -896,6 +902,22 @@ kf.textContent=`@keyframes rpulse{0%,100%{opacity:calc(var(--peak,1)*.28)}50%{op
   // same mechanic as confetti but one colour, so the preview breathes irregularly
   // instead of cycling hues
   +`@keyframes lfireflies{0%,100%{opacity:var(--peak,1)}17%{opacity:calc(var(--peak,1)*.3)}32%{opacity:calc(var(--peak,1)*.95)}`+`51%{opacity:calc(var(--peak,1)*.35)}68%{opacity:var(--peak,1)}86%{opacity:calc(var(--peak,1)*.4)}}`
+  // the marquee steps rather than slides, so the preview steps too
+  +`@keyframes ltheater{to{stroke-dashoffset:-18}}`
+  // no edges: a swell with nothing to catch the eye as an object
+  +`@keyframes lwave{0%,100%{opacity:calc(var(--peak,1)*.35)}50%{opacity:var(--peak,1)}}`
+  // drifting and irregular, never returning to the same place twice in a cycle
+  +`@keyframes lnoise{0%,100%{opacity:calc(var(--peak,1)*.5)}23%{opacity:var(--peak,1)}`
+  +`41%{opacity:calc(var(--peak,1)*.42)}62%{opacity:calc(var(--peak,1)*.9)}`
+  +`81%{opacity:calc(var(--peak,1)*.58)}}`
+  // lub-dub, then a rest
+  +`@keyframes lheart{0%{opacity:var(--peak,1)}9%{opacity:calc(var(--peak,1)*.25)}`
+  +`18%{opacity:var(--peak,1)}27%{opacity:calc(var(--peak,1)*.2)}`
+  +`100%{opacity:calc(var(--peak,1)*.2)}}`
+  // hard, irregular jumps — something failing rather than a pattern
+  +`@keyframes lglitch{0%,100%{opacity:var(--peak,1)}14%{opacity:.15}28%{opacity:var(--peak,1)}`
+  +`43%{opacity:calc(var(--peak,1)*.6)}57%{opacity:.1}71%{opacity:var(--peak,1)}`
+  +`86%{opacity:calc(var(--peak,1)*.45)}}`
   +`@keyframes lrainbow{0%,100%{stroke:#ff4040}17%{stroke:#ffd040}33%{stroke:#40ff60}`
   +`50%{stroke:#40e0ff}67%{stroke:#6040ff}83%{stroke:#ff40c0}}`;
 document.head.appendChild(kf);
@@ -1093,8 +1115,9 @@ function dropOn(targetId){
 // any colour for any duration; the grouping just puts like next to like while you scan.
 const LIGHT_TIERS = [
   ['', ['off']],
-  ['BED',     ['solid','pulse','chase','scan','progress','fire','rainbow']],
-  ['TEXTURE', ['sparkle','confetti']],
+  ['BED',     ['solid','pulse','chase','scan','wave','theater','progress','noise',
+               'heartbeat','fire','rainbow']],
+  ['TEXTURE', ['sparkle','confetti','glitch']],
   ['HIT',     ['strobe','firework']],
 ];
 const LIGHT_MODES = LIGHT_TIERS.flatMap(([, modes]) => modes);
@@ -1102,7 +1125,7 @@ const LIGHT_MODES = LIGHT_TIERS.flatMap(([, modes]) => modes);
 // numbers so a fill can be aimed at a song section by name: 10min, 5min, 2min,
 // 90s, 60s, 45s, 30s, 15s, 8s, 4s, 1s.
 const PROGRESS_SECONDS = [600, 300, 120, 90, 60, 45, 30, 15, 8, 4, 1];
-const RECT_MODES = new Set(["chase","scan","rainbow","confetti","progress"]);
+const RECT_MODES = new Set(["chase","scan","rainbow","confetti","progress","theater"]);
 // Lights are keyed by peripheral and each entry may be a list of steps. The
 // inspector edits the common shape — one `default` entry, one step — and refuses to
 // touch anything richer rather than silently flattening it on the next name edit.
