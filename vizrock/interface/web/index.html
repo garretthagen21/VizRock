@@ -157,12 +157,21 @@
 
   /* --- light editor: both extra dimensions stay hidden until they are used, so a
      one-peripheral one-step scene looks exactly as it always did --- */
-  .ltabs{display:flex; gap:5px; margin-bottom:8px; flex-wrap:wrap}
-  .ltab{font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:7px 10px;
-    border:1px solid var(--line); border-radius:7px; background:var(--panel2); color:var(--muted);
-    cursor:pointer; display:flex; align-items:center; gap:6px}
+  .sublab{font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:var(--muted);
+    margin:4px 0 7px}
+  .ltabs{display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap}
+  /* Sized for a fingertip on the 5in panel — these were 11px chips with 7px padding,
+     and the x sits inside the cell, so a near-miss removed a group instead of picking it. */
+  .ltab{font-family:var(--mono); font-size:13px; letter-spacing:.06em; padding:0 14px;
+    border:1px solid var(--line); border-radius:8px; background:var(--panel2); color:var(--muted);
+    cursor:pointer; display:flex; align-items:center; gap:12px; min-height:44px}
   .ltab.on{border-color:var(--active); color:#fff; background:#14243a}
-  .ltab .x{color:var(--muted2); font-size:13px; line-height:1}
+  .ltab .x{color:var(--muted2); font-size:17px; line-height:1; padding:0 4px; margin-right:-6px}
+  .ltab .x:hover{color:var(--warn)}
+  .copyall{display:block; width:100%; font-family:var(--mono); font-size:11px; font-weight:700;
+    letter-spacing:.1em; color:var(--muted); background:var(--panel2); border:1px solid var(--line);
+    border-radius:8px; padding:12px; margin-bottom:10px; cursor:pointer; text-align:left}
+  .copyall:hover{color:var(--ink); border-color:var(--muted2)}
   .ltab .x:hover{color:#ff8a8a}
   /* Segments are proportional to duration and tinted by hue, so the shape of the
      loop reads at a glance instead of having to be decoded from a list. */
@@ -1088,11 +1097,18 @@ function renderInsp(){
     : modes.map(option).join("")).join("");
   const canAdd=groupNames().filter(n=>!names.includes(n)).length>0;
 
-  const tabs = (names.length>1 || canAdd) ? `<div class="ltabs">${
+  // "copy to…" read as a picker and was not one — it overwrote every other group at
+  // once, silently. The button now names the source, the targets and the count, so what
+  // it will do is legible before it is pressed rather than after.
+  const others = names.filter(n => n !== name);
+  const copyLabel = others.length === 1
+    ? `COPY ${esc(name)} → ${esc(others[0])}`
+    : `COPY ${esc(name)} → ALL ${others.length} OTHER GROUPS`;
+  const tabs = (names.length>1 || canAdd) ? `<div class="sublab">GROUPS</div><div class="ltabs">${
     names.map(n=>`<span class="ltab${n===name?' on':''}" onclick="setLightTab('${n}')">${esc(n)}${
-      names.length>1?`<span class="x" onclick="removePeripheral('${n}',event)">×</span>`:''}</span>`).join("")
-    }${canAdd?`<span class="ltab" onclick="addPeripheral()">+</span>`:''}${
-      names.length>1?`<span class="ltab" onclick="copyToPeripheral()">copy to…</span>`:''}</div>` : '';
+      names.length>1?`<span class="x" title="remove this group" onclick="removePeripheral('${n}',event)">×</span>`:''}</span>`).join("")
+    }${canAdd?`<span class="ltab" onclick="addPeripheral()">+ GROUP</span>`:''}</div>${
+      others.length?`<button class="copyall" onclick="copyToPeripheral()">${copyLabel}</button>`:''}` : '';
 
   const total = steps.reduce((n,x)=>n+(Number(x.seconds)||8),0);
   const timeline = steps.length>1 ? `<div class="ltl">${
