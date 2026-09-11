@@ -721,6 +721,9 @@ function paintLight(el, r){
     confetti: ['lconfetti', 1.24 - speed * 0.10, 'linear infinite'],
     fire:     ['lfire',     1.40 - speed * 0.09, 'ease-in-out infinite'],
     rainbow:  ['lrainbow',  4.00 - speed * 0.30, 'linear infinite'],
+    // matches the firmware's (12 - speed) frames-at-60 fill, so the preview is a
+    // fair guide to what a speed setting will actually look like on the cab
+    progress: ['lprogress', (12 - speed) * 0.60, 'linear infinite'],
   };
   const spec = LIGHT_ANIM[r.mode];
   const anim = spec ? `${spec[0]} ${spec[1].toFixed(2)}s ${spec[2]}` : "none";
@@ -761,6 +764,9 @@ kf.textContent=`@keyframes rpulse{0%,100%{opacity:calc(var(--peak,1)*.28)}50%{op
   +`@keyframes lfire{0%,100%{opacity:var(--peak,1)}15%{opacity:calc(var(--peak,1)*.72)}`
   +`30%{opacity:calc(var(--peak,1)*.92)}45%{opacity:calc(var(--peak,1)*.6)}`
   +`60%{opacity:calc(var(--peak,1)*.88)}80%{opacity:calc(var(--peak,1)*.7)}}`
+  // dasharray grows from nothing to the full perimeter — a filling bar, where
+  // lchase slides a fixed-length dash around instead
+  +`@keyframes lprogress{from{stroke-dasharray:0 ${LAP}}to{stroke-dasharray:${LAP} 0}}`
   +`@keyframes lrainbow{0%,100%{stroke:#ff4040}17%{stroke:#ffd040}33%{stroke:#40ff60}`
   +`50%{stroke:#40e0ff}67%{stroke:#6040ff}83%{stroke:#ff40c0}}`;
 document.head.appendChild(kf);
@@ -910,12 +916,12 @@ function dropOn(targetId){
   dragId=null;
 }
 const LIGHT_MODES = ["off","solid","pulse","chase","strobe",
-                     "sparkle","firework","confetti","scan","fire","rainbow"];
+                     "sparkle","firework","confetti","scan","fire","rainbow","progress"];
 // Modes animated on the SVG outline (stroke/dash) rather than the container's
 // opacity. A mode in the wrong set leaves its animation running on the element the
 // next mode is not driving, which is the stale-animation bug the clear below exists
 // to prevent — so add to this set when adding a stroke-driven mode.
-const RECT_MODES = new Set(["chase","scan","rainbow","confetti"]);
+const RECT_MODES = new Set(["chase","scan","rainbow","confetti","progress"]);
 // Lights are keyed by peripheral and each entry may be a list of steps. The
 // inspector edits the common shape — one `default` entry, one step — and refuses to
 // touch anything richer rather than silently flattening it on the next name edit.
