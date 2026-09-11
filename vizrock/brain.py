@@ -506,7 +506,7 @@ class Brain:
             # what makes the common case a change of movement rather than of look.
             burst = self._burst_spec()
             light['mode'] = burst.get('mode', 'strobe')
-            for key in ('speed', 'bright'):
+            for key in ('speed', 'bright', 'sat'):
                 if key in burst:
                     light[key] = burst[key]
             if 'hue' in burst or 'colors' in burst:

@@ -59,9 +59,10 @@ class LightSerial(Output):
         if not isinstance(lights, dict) or not lights:
             lights = {0: {'mode': 'off'}}
         self.latest_payload = ''.join(
-            'LIGHT {} {} {} {} {} {}\n'.format(
+            'LIGHT {} {} {} {} {} {} {}\n'.format(
                 group, light.get('mode', 'off'), light.get('hue', 0),
-                light.get('bright', 0), light.get('speed', 0), _palette(light))
+                light.get('bright', 0), light.get('speed', 0), _palette(light),
+                _saturation(light))
             for group, light in sorted(lights.items()))
 
     def status(self):
@@ -139,3 +140,17 @@ def _palette(light):
         return '-'
     hues = [int(c) & 0xFF for c in colors[:5] if isinstance(c, (int, float))]
     return ','.join(str(h) for h in hues) if hues else '-'
+
+
+def _saturation(light):
+    """
+    How coloured the light is: 255 fully saturated, 0 white.
+
+    Defaults to 255 so a scene that never mentions saturation looks exactly as it did
+    before the field existed, and degrades to the same rather than raising — this runs
+    in the dispatch path.
+    """
+    try:
+        return max(0, min(255, int(light.get('sat', 255))))
+    except (TypeError, ValueError):
+        return 255

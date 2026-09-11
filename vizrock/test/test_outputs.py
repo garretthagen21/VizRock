@@ -124,17 +124,17 @@ def _ring_wire_format():
     try:
         # the brain hands outputs {group: light}, already resolved
         serial.apply({'lights': {0: {'mode': 'pulse', 'hue': 200, 'bright': 90, 'speed': 3}}})
-        assert serial.latest_payload == 'LIGHT 0 pulse 200 90 3 -\n', serial.latest_payload
+        assert serial.latest_payload == 'LIGHT 0 pulse 200 90 3 - 255\n', serial.latest_payload
 
         # one line per peripheral group, every tick, sorted so it is stable
         serial.apply({'lights': {0: {'mode': 'solid', 'hue': 10, 'bright': 20, 'speed': 1},
                                2: {'mode': 'chase', 'hue': 90, 'bright': 30, 'speed': 5}}})
-        assert serial.latest_payload == ('LIGHT 0 solid 10 20 1 -\n'
-                                       'LIGHT 2 chase 90 30 5 -\n'), serial.latest_payload
+        assert serial.latest_payload == ('LIGHT 0 solid 10 20 1 - 255\n'
+                                       'LIGHT 2 chase 90 30 5 - 255\n'), serial.latest_payload
 
         # a scene with no light block must still be a well-formed line
         serial.apply({})
-        assert serial.latest_payload == 'LIGHT 0 off 0 0 0 -\n', serial.latest_payload
+        assert serial.latest_payload == 'LIGHT 0 off 0 0 0 - 255\n', serial.latest_payload
 
         # the palette field: absent, random, an explicit list, and capped at five
         for colors, expected in [(None, '-'), ('random', 'random'), ([96, 0], '96,0'),
@@ -144,8 +144,16 @@ def _ring_wire_format():
             if colors is not None:
                 light['colors'] = colors
             serial.apply({'lights': {0: light}})
-            assert serial.latest_payload == f'LIGHT 0 confetti 96 200 5 {expected}\n', (
+            assert serial.latest_payload == f'LIGHT 0 confetti 96 200 5 {expected} 255\n', (
                 colors, serial.latest_payload)
+        # saturation: absent is full colour, 0 is white, junk degrades rather than raises
+        for sat, expected in [(None, 255), (0, 0), (128, 128), (999, 255), (-5, 0), ('x', 255)]:
+            light = {'mode': 'solid', 'hue': 96, 'bright': 200, 'speed': 0}
+            if sat is not None:
+                light['sat'] = sat
+            serial.apply({'lights': {0: light}})
+            assert serial.latest_payload == f'LIGHT 0 solid 96 200 0 - {expected}\n', (
+                sat, serial.latest_payload)
     finally:
         serial.close()
 

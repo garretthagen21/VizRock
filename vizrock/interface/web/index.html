@@ -887,7 +887,10 @@ function paintClip(el, s){
 function lightColor(r){
   if(!r || r.mode==="off") return "#3a4657";
   const bright=Math.min(255, Math.max(0, r.bright||0))/255;
-  return `hsl(${H(r.hue)} 90% ${(30+bright*38).toFixed(0)}%)`;
+  // Desaturating has to raise lightness too, or sat 0 previews as grey when the
+  // strip will actually be white.
+  const sat=Math.min(255, Math.max(0, r.sat??255))/255;
+  return `hsl(${H(r.hue)} ${(sat*90).toFixed(0)}% ${(30+bright*38+(1-sat)*22).toFixed(0)}%)`;
 }
 let dragId = null, editShowingDetail = false, detailMode = 'scene';
 function setEditDetail(on){
@@ -1099,6 +1102,8 @@ function renderInsp(){
       <div style="margin-top:12px">
         <div class="rowlab"><span>hue</span><span id="l_hue">${r.hue??0}</span></div>
         <input type="range" id="f_hue" min="0" max="255" value="${r.hue??0}">
+        <div class="rowlab"><span>saturation</span><span id="l_sat">${r.sat??255}</span></div>
+        <input type="range" id="f_sat" min="0" max="255" value="${r.sat??255}">
         <div class="rowlab"><span>bright</span><span id="l_bright">${r.bright??0}</span></div>
         <input type="range" id="f_bright" min="0" max="255" value="${r.bright??0}">
         <div class="rowlab"><span>speed</span><span id="l_speed">${r.speed??0}</span></div>
@@ -1115,7 +1120,7 @@ function renderInsp(){
   paletteDraft = (r.colors==='random' || Array.isArray(r.colors)) ? r.colors : null;
   renderPalette();
   document.getElementById('palRow')?.addEventListener('click', e=>palAction(e.target));
-  ["f_name","f_layer","f_clip","f_cue","f_mode","f_hue","f_bright","f_speed","f_secs"].forEach(id=>{
+  ["f_name","f_layer","f_clip","f_cue","f_mode","f_hue","f_sat","f_bright","f_speed","f_secs"].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     el.addEventListener('input',()=>{
       ["hue","bright","speed"].forEach(k=>{
@@ -1185,6 +1190,9 @@ function readLight(){
   const num=id=>{const e=document.getElementById(id); return e?parseInt(e.value,10)||0:0;};
   const mode=document.getElementById('f_mode')?.value||"off";
   const light={mode, hue:num('f_hue'), bright:num('f_bright'), speed:num('f_speed')};
+  // omitted at full saturation: absent and 255 mean the same thing, and every scene
+  // carrying a redundant sat:255 would just be noise in the config
+  const sat=document.getElementById('f_sat'); if(sat && +sat.value!==255) light.sat=+sat.value;
   // only carried when the peripheral has a sequence — a lone step holds forever
   if(document.getElementById('f_secs')) light.seconds=num('f_secs')||8;
   if(paletteDraft) light.colors=paletteDraft;
