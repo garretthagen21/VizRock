@@ -235,6 +235,20 @@
     background:var(--panel2); border:1px solid var(--line); border-radius:9px;
     padding:14px; cursor:pointer; text-align:left}
   .settingsbtn.on{color:var(--active); border-color:var(--active)}
+  /* A real switch, so a control's label can say what the setting IS and stop having
+     to also carry its state and an explanation. Sized for a fingertip on the panel. */
+  .toggle{position:relative; width:56px; height:32px; flex:none; padding:0; cursor:pointer;
+    border:1px solid var(--line); border-radius:999px; background:var(--void);
+    transition:background .16s ease, border-color .16s ease}
+  .toggle::after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px;
+    border-radius:50%; background:var(--muted); transition:transform .16s ease, background .16s ease}
+  .toggle[aria-checked="true"]{background:color-mix(in srgb, var(--home) 28%, transparent);
+    border-color:var(--home)}
+  .toggle[aria-checked="true"]::after{transform:translateX(24px); background:var(--home)}
+  .toggle:focus-visible{outline:2px solid var(--home); outline-offset:2px}
+  @media (prefers-reduced-motion: reduce){ .toggle, .toggle::after{transition:none} }
+  .togglerow{display:flex; align-items:center; justify-content:space-between; gap:14px}
+  .togglerow .hint{font-size:12px; color:var(--muted); line-height:1.35}
   @media (hover:hover){ .settingsbtn:hover{color:var(--ink); border-color:var(--muted2)} }
   .backbtn{display:none; font-family:var(--mono); font-size:12px; font-weight:700;
     letter-spacing:.1em; color:var(--active); background:transparent;
@@ -596,8 +610,11 @@
           </div></div>
           <div class="sectlab mt">CUES</div>
           <div class="upd"><div class="learn" style="margin:0;border-style:solid">
-            <span>Tapping a cue <b id="tapWhat">arms it</b></span>
-            <button class="learnbtn" id="tapBtn" onclick="toggleTapFires()">TOGGLE</button>
+            <div class="togglerow" style="width:100%">
+              <span class="hint">Tapping a cue fires it immediately, rather than arming it.</span>
+              <button class="toggle" id="tapBtn" role="switch" aria-checked="false"
+                      aria-label="Tapping a cue fires it" onclick="toggleTapFires()"></button>
+            </div>
           </div></div>
           <div class="sectlab mt">TRIGGERS · M-VAVE CHOCOLATE</div>
           <div id="trigBox"></div>
@@ -1091,10 +1108,12 @@ function renderInsp(){
     <div class="sub">SCENE ${String(s.id).padStart(2,'0')} <span class="saved" id="savedTag">SAVED</span></div>
     <div class="field"><label>NAME</label>
       <input type="text" id="f_name" value="${s.name.replace(/"/g,'&quot;')}"></div>
-    <div class="field"><label>MAIN</label>
-      <button class="settingsbtn${s.main?' on':''}" id="f_main" onclick="toggleMain()">
-        ${s.main ? '⌂ MAIN — a looping visual to fall back to' : 'mark as a main looping visual'}
-      </button></div>
+    <div class="field"><label>MAIN LOOP</label>
+      <div class="togglerow">
+        <span class="hint">NEXT MAIN steps between the scenes marked here.</span>
+        <button class="toggle" id="f_main" role="switch" aria-checked="${s.main?'true':'false'}"
+                aria-label="Mark as a main loop" onclick="toggleMain()"></button>
+      </div></div>
     <div class="field"><label>VISUALS — RESOLUME</label>${s.resolume?.clear
       ? `<div class="val">clear all</div>`
       : `<div class="row2"><div><div class="rowlab"><span>layer</span></div>
@@ -1232,10 +1251,8 @@ function sendSceneEdit(){
   if(tag){ tag.classList.add('on'); setTimeout(()=>tag.classList.remove('on'),900); }
 }
 function renderTapMode(){
-  const what=document.getElementById('tapWhat'); if(!what) return;
-  what.textContent = state.tap_fires ? "fires it immediately" : "arms it";
-  const btn=document.getElementById('tapBtn');
-  if(btn) btn.textContent = state.tap_fires ? "MAKE IT ARM" : "MAKE IT FIRE";
+  const btn=document.getElementById('tapBtn'); if(!btn) return;
+  btn.setAttribute('aria-checked', state.tap_fires ? 'true' : 'false');
 }
 function toggleTapFires(){
   if(online && ws && ws.readyState===1)

@@ -62,15 +62,28 @@ def run():
     brain.handle('goto', 99)
     assert brain.live == 3, 'commit to a missing scene must be a no-op'
 
-    # The M-VAVE Chocolate ships sending Program Change 0-3, one per press, left to
-    # right. Confirmed on hardware. Layout is HOME / PREV / NEXT / GO — GO sits under
-    # the strong foot on the right, and HOME is furthest from it so the two committing
-    # actions cannot be confused mid-song.
+    # The pedal sends Program Change, one per press, left to right — PC 0-3 short and
+    # PC 4-7 long. The Pi cannot time a long press (a Program Change has no release
+    # event), so the pedal decides and sends a different message; these two blocks are
+    # the contract between its configuration and ours. GO sits under the strong foot on
+    # the right, and POP is furthest from it so the two cannot be confused mid-song.
     midi = MidiInterface(lambda action, scene: None)
-    assert midi.match_trigger(message(type='program_change', program=0)) == ('next_main', None)
-    assert midi.match_trigger(message(type='program_change', program=1)) == ('arm_prev', None)
-    assert midi.match_trigger(message(type='program_change', program=2)) == ('arm_next', None)
-    assert midi.match_trigger(message(type='program_change', program=3)) == ('go', None)
+    short = ['light_burst', 'arm_prev', 'arm_next', 'go']
+    long_ = ['cycle_color', 'blackout', 'next_main', 'restart_scene']
+    for program, action in enumerate(short):
+        assert midi.match_trigger(message(type='program_change', program=program)) \
+            == (action, None), f'PC {program} should be {action}'
+    for index, action in enumerate(long_):
+        assert midi.match_trigger(message(type='program_change', program=4 + index)) \
+            == (action, None), f'PC {4 + index} should be {action}'
+
+    # every action a trigger names must be one the brain actually handles — this is
+    # what `home` failed for months after the action was removed
+    from vizrock.brain import KNOWN_ACTIONS
+    from vizrock.managers.midi_interface import vizrock_settings
+    for trigger in vizrock_settings.triggers:
+        assert trigger['do'] in KNOWN_ACTIONS, f"trigger maps to unknown {trigger['do']}"
+
     assert midi.match_trigger(message(type='program_change', program=9)) is None
     assert midi.match_trigger(message(type='note_on', note=60, velocity=100)) is None, \
         'notes are not mapped on this pedal'
