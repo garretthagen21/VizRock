@@ -264,19 +264,21 @@
     padding:14px; cursor:pointer; text-align:left}
   .settingsbtn.on{color:var(--active); border-color:var(--active)}
   /* A real switch, so a control's label can say what the setting IS and stop having
-     to also carry its state and an explanation. Sized for a fingertip on the panel. */
-  .toggle{position:relative; width:56px; height:32px; flex:none; padding:0; cursor:pointer;
+     to also carry its state and an explanation. Sized for a fingertip on the panel.
+     NOT `.toggle` — that is the SHOW/CUES/EDIT tab group, and naming this the same
+     turned the whole nav into a 56x32 pill. */
+  .switch{position:relative; width:56px; height:32px; flex:none; padding:0; cursor:pointer;
     border:1px solid var(--line); border-radius:999px; background:var(--void);
     transition:background .16s ease, border-color .16s ease}
-  .toggle::after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px;
+  .switch::after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px;
     border-radius:50%; background:var(--muted); transition:transform .16s ease, background .16s ease}
-  .toggle[aria-checked="true"]{background:color-mix(in srgb, var(--home) 28%, transparent);
+  .switch[aria-checked="true"]{background:color-mix(in srgb, var(--home) 28%, transparent);
     border-color:var(--home)}
-  .toggle[aria-checked="true"]::after{transform:translateX(24px); background:var(--home)}
-  .toggle:focus-visible{outline:2px solid var(--home); outline-offset:2px}
-  @media (prefers-reduced-motion: reduce){ .toggle, .toggle::after{transition:none} }
-  .togglerow{display:flex; align-items:center; justify-content:space-between; gap:14px}
-  .togglerow .hint{font-size:12px; color:var(--muted); line-height:1.35}
+  .switch[aria-checked="true"]::after{transform:translateX(24px); background:var(--home)}
+  .switch:focus-visible{outline:2px solid var(--home); outline-offset:2px}
+  @media (prefers-reduced-motion: reduce){ .switch, .switch::after{transition:none} }
+  .switchrow{display:flex; align-items:center; justify-content:space-between; gap:14px}
+  .switchrow .hint{font-size:12px; color:var(--muted); line-height:1.35}
   @media (hover:hover){ .settingsbtn:hover{color:var(--ink); border-color:var(--muted2)} }
   .backbtn{display:none; font-family:var(--mono); font-size:12px; font-weight:700;
     letter-spacing:.1em; color:var(--active); background:transparent;
@@ -346,9 +348,9 @@
      rather than hidden — you need to see that it is deliberately off, not missing. */
   .out.muted{opacity:.55}
   .out.muted .led{background:var(--muted2); box-shadow:none}
-  .toggle.sm{width:46px; height:26px; flex:none}
-  .toggle.sm::after{width:20px; height:20px}
-  .toggle.sm[aria-checked="true"]::after{transform:translateX(20px)}
+  .switch.sm{width:46px; height:26px; flex:none}
+  .switch.sm::after{width:20px; height:20px}
+  .switch.sm[aria-checked="true"]::after{transform:translateX(20px)}
   .outcfg{flex-basis:100%;display:flex;gap:8px;align-items:center;margin-top:9px}
   .outcfg input{flex:1;min-width:0;font-family:var(--mono);font-size:12px;color:var(--ink);
     background:var(--void);border:1px solid var(--line);border-radius:6px;padding:8px 10px;outline:none}
@@ -651,9 +653,9 @@
           </div></div>
           <div class="sectlab mt">CUES</div>
           <div class="upd"><div class="learn" style="margin:0;border-style:solid">
-            <div class="togglerow" style="width:100%">
+            <div class="switchrow" style="width:100%">
               <span class="hint">Tapping a cue fires it immediately, rather than arming it.</span>
-              <button class="toggle" id="tapBtn" role="switch" aria-checked="false"
+              <button class="switch" id="tapBtn" role="switch" aria-checked="false"
                       aria-label="Tapping a cue fires it" onclick="toggleTapFires()"></button>
             </div>
           </div></div>
@@ -1133,9 +1135,9 @@ function popPane(s){
       <input type="range" id="p_bright" min="0" max="255" value="${pop.bright??255}">
       <div class="rowlab"><span>speed</span><span id="l_pspeed">${pop.speed??9}</span></div>
       <input type="range" id="p_speed" min="0" max="10" value="${pop.speed??9}">
-      <div class="togglerow" style="margin-top:14px">
+      <div class="switchrow" style="margin-top:14px">
         <span class="hint">Give the pop its own colour. Off, it keeps the scene\u2019s.</span>
-        <button class="toggle" id="p_colorOn" role="switch" aria-checked="${coloured}"
+        <button class="switch" id="p_colorOn" role="switch" aria-checked="${coloured}"
                 aria-label="Pop has its own colour" onclick="togglePopColor()"></button>
       </div>
       ${coloured?`<div class="rowlab"><span>hue</span><span id="l_phue">${pop.hue??0}</span></div>
@@ -1296,9 +1298,9 @@ function renderInsp(){
     <div class="field"><label>NAME</label>
       <input type="text" id="f_name" value="${s.name.replace(/"/g,'&quot;')}"></div>
     <div class="field"><label>MAIN LOOP</label>
-      <div class="togglerow">
+      <div class="switchrow">
         <span class="hint">NEXT MAIN steps between the scenes marked here.</span>
-        <button class="toggle" id="f_main" role="switch" aria-checked="${s.main?'true':'false'}"
+        <button class="switch" id="f_main" role="switch" aria-checked="${s.main?'true':'false'}"
                 aria-label="Mark as a main loop" onclick="toggleMain()"></button>
       </div></div>
     <div class="field"><label>VISUALS — RESOLUME</label>${s.resolume?.clear
@@ -1574,7 +1576,7 @@ function renderOuts(){
     if(!on) el.classList.add('muted');
     el.innerHTML=`<span class="led"></span><span class="nm">${k.toUpperCase()}</span>`
       + `<span class="addr">${on?addr:'muted'}</span>`
-      + `<button class="toggle sm" role="switch" aria-checked="${on}" aria-label="${k} enabled"`
+      + `<button class="switch sm" role="switch" aria-checked="${on}" aria-label="${k} enabled"`
       + ` onclick="setOutputEnabled('${k}',${!on})"></button>`
       + (fields?`<div class="outcfg">${fields}<button class="applybtn" onclick="applyOutput('${k}',this)">APPLY</button></div>`:"");
     wrap.appendChild(el);

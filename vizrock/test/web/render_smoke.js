@@ -109,4 +109,35 @@ for (const mode of ui.LIGHT_MODES) {
                 + (needsRect ? ' (rect)' : ' (container)'));
   } catch (e) { failed++; console.log('  FAIL paintLight ' + mode + ' -> ' + e.message); }
 }
+// CSS class collisions are invisible to a DOM test — the nav tab group and a new
+// switch component both claimed `.toggle`, and the nav silently became a 56x32 pill.
+// Only base rules count: a class restyled inside @media is a responsive override, not
+// a collision, so those blocks are stripped before scanning.
+const css = (html.match(/<style>([\s\S]*?)<\/style>/) || [, ''])[1];
+let base = '';
+for (let i = 0; i < css.length; ) {
+  if (css.startsWith('@media', i)) {
+    let j = css.indexOf('{', i), depth = 0;
+    for (; j < css.length; j++) {
+      if (css[j] === '{') depth++;
+      else if (css[j] === '}' && --depth === 0) break;
+    }
+    i = j + 1;
+  } else base += css[i++];
+}
+const structural = /[{;\s](position|display|width|height|border-radius)\s*:/;
+const seen = {};
+for (const m of base.matchAll(/(^|[\n};])\s*\.([a-zA-Z][\w-]*)\s*\{/g)) {
+  // from the opening brace, not m.index — that sits on the previous rule's `}`
+  const open = base.indexOf('{', m.index);
+  const body = base.slice(open, base.indexOf('}', open));
+  if (structural.test(body)) (seen[m[2]] ||= []).push(m.index);
+}
+const collisions = Object.entries(seen).filter(([, at]) => at.length > 1);
+for (const [name] of collisions) {
+  failed++;
+  console.log(`  FAIL .${name} is structurally defined twice outside @media — collision?`);
+}
+if (!collisions.length) console.log('  ok   no colliding class definitions');
+
 process.exit(failed ? 1 : 0);
