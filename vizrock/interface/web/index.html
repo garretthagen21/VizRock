@@ -109,6 +109,13 @@
   .lightwrap{position:relative; display:block; flex:none}
   .num{font-family:var(--mono); font-weight:700; line-height:.82; letter-spacing:-.03em;
     font-size:var(--numsize)}
+  /* Scene id and clip number diverge once the setlist is reordered — the video
+     travels with the scene, not the number — so the pairing has to be visible
+     rather than assumed. Sits under the number and reads as its subtitle. */
+  .numwrap{display:flex; flex-direction:column; align-items:flex-start; flex:none}
+  .clipref{font-family:var(--mono); font-size:clamp(11px,1.15vw,14px); font-weight:600;
+    letter-spacing:.08em; color:var(--muted); margin-top:6px; white-space:nowrap}
+  .clipref.clear{color:var(--armamber)}
   .stack.live{--numsize:clamp(78px,12vw,150px)}
   .stack.deck{--numsize:clamp(58px,9vw,104px)}
   .deck .num{color:var(--armamber)}
@@ -503,7 +510,10 @@
         <div class="eyebrow"><span class="tag">●</span> LIVE <span id="liveMark"></span></div>
         <div class="row">
           <div class="rowtop">
-            <div class="num" id="lNum">--</div>
+            <div class="numwrap">
+              <div class="num" id="lNum">--</div>
+              <div class="clipref" id="lClip">&nbsp;</div>
+            </div>
             <div class="lightwrap">
               <div class="minilight" id="lLight"></div>
               <div class="lightcap" id="lCap"></div>
@@ -516,7 +526,10 @@
         <div class="eyebrow"><span class="tag">◇</span> ON DECK</div>
         <div class="row">
           <div class="rowtop">
-            <div class="num" id="aNum">--</div>
+            <div class="numwrap">
+              <div class="num" id="aNum">--</div>
+              <div class="clipref" id="aClip">&nbsp;</div>
+            </div>
             <div class="lightwrap">
               <div class="minilight" id="aLight"></div>
               <div class="lightcap" id="aCap"></div>
@@ -842,10 +855,20 @@ function renderShow(){
   const A=scene(state.armed)||{name:"—"};
   document.getElementById('lNum').textContent=String(state.live??0).padStart(2,'0');
   document.getElementById('lName').textContent=L.name;
+  paintClip(document.getElementById('lClip'), L);
   paintLight(document.getElementById('lLight'),defaultLight(L)); document.getElementById('lCap').innerHTML=capOf(defaultLight(L));
   document.getElementById('aNum').textContent=String(state.armed??0).padStart(2,'0');
   document.getElementById('aName').textContent=A.name;
+  paintClip(document.getElementById('aClip'), A);
   paintLight(document.getElementById('aLight'),defaultLight(A)); document.getElementById('aCap').innerHTML=capOf(defaultLight(A));
+}
+// The clip a scene plays, shown under its number. `clear` is a real state, not a
+// missing value, so it says so rather than showing a blank.
+function paintClip(el, s){
+  if(!el) return;
+  const r = s && s.resolume;
+  el.classList.toggle('clear', !!(r && r.clear));
+  el.textContent = !r ? '\u00a0' : r.clear ? 'CLEAR' : `CLIP ${r.clip}`;
 }
 function lightColor(r){
   if(!r || r.mode==="off") return "#3a4657";
