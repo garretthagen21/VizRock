@@ -13,6 +13,7 @@ import logging
 import threading
 import time
 
+from vizrock.configurations.settings import vizrock_settings
 from vizrock.outputs.output import Output
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,17 @@ class LightSerial(Output):
                 light.get('bright', 0), light.get('speed', 0), _palette(light),
                 _saturation(light))
             for group, light in sorted(lights.items()))
+
+    def silence(self):
+        """
+        Hold every group off.
+
+        Deliberately keeps transmitting rather than stopping: a receiver that hears
+        nothing for four seconds falls back to its idle pattern, so a muted output
+        that went quiet would glow instead of going dark.
+        """
+        self.apply({'lights': {group: {'mode': 'off'}
+                               for group in vizrock_settings.light_groups.values()}})
 
     def status(self):
         return 'ok' if self.serial_port and self.serial_port.is_open else 'retrying'

@@ -341,6 +341,14 @@
   .out.ok .led{background:var(--live);box-shadow:0 0 8px var(--live)}
   .out.ready .led{background:var(--active);box-shadow:0 0 8px var(--active)}
   .out{flex-wrap:wrap}
+  .out .addr{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  /* A muted output keeps its connection and holds its safe-off, so it is dimmed
+     rather than hidden — you need to see that it is deliberately off, not missing. */
+  .out.muted{opacity:.55}
+  .out.muted .led{background:var(--muted2); box-shadow:none}
+  .toggle.sm{width:46px; height:26px; flex:none}
+  .toggle.sm::after{width:20px; height:20px}
+  .toggle.sm[aria-checked="true"]::after{transform:translateX(20px)}
   .outcfg{flex-basis:100%;display:flex;gap:8px;align-items:center;margin-top:9px}
   .outcfg input{flex:1;min-width:0;font-family:var(--mono);font-size:12px;color:var(--ink);
     background:var(--void);border:1px solid var(--line);border-radius:6px;padding:8px 10px;outline:none}
@@ -553,7 +561,6 @@
       <button id="tCues" onclick="setView('cues')">CUES</button>
       <button id="tEdit" onclick="setView('edit')">EDIT</button>
     </div>
-    <button class="blackoutbtn" id="lightsBtn" onclick="act('toggle_lights')">LIGHTS</button>
     <button class="blackoutbtn" id="blackoutBtn" onclick="act('blackout')">BLACKOUT</button>
     <div class="clock" id="clock">--:--:--</div>
   </header>
@@ -673,8 +680,8 @@ const DEMO = {
   triggers:[{midi:{kind:"pc",program:0},do:"next_main"},{midi:{kind:"pc",program:1},do:"arm_prev"},
             {midi:{kind:"pc",program:2},do:"arm_next"},{midi:{kind:"pc",program:3},do:"go"}],
   known_actions:["go","goto","arm","arm_prev","arm_next","next_main","restart_scene","blackout",
-                 "toggle_lights","clear_effects","light_burst","cycle_color"],
-  blackout:false, lights_off:false, color_index:null, mains:[1], action_seq:0, last_action:null,
+                 "clear_effects","light_burst","cycle_color"],
+  blackout:false, color_index:null, mains:[1], action_seq:0, last_action:null,
   light_groups:{default:0, cabA:1, cabB:2},
   network:{hostname:"vizrock-box", addresses:["10.42.1.1","10.42.0.1"]},
   update:{online:true,current:"f20083c",subject:"Show every reachable URL in the UI",
@@ -725,7 +732,6 @@ function demoAct(action, sceneId){
   else if(action==="goto"){ state.live=sceneId; state.last_event=`LIVE → ${lbl(sceneId)}`; }
   else if(action==="next_main"){ const h=nextMain(state.live); if(h!==null){ state.live=h; state.last_event=`LIVE → ${lbl(h)}`; } }
   else if(action==="restart_scene"){ state.last_event=`LIVE → ${lbl(state.live)} · restarted`; }
-  else if(action==="toggle_lights"){ state.lights_off=!state.lights_off; state.last_event=state.lights_off?'lights off':'lights on'; }
   else if(action==="cycle_color"){ state.last_event='light color'; }
   else if(action==="light_burst"){ state.last_event='burst'; }
   else if(action==="blackout"){ state.blackout=!state.blackout; state.last_event=state.blackout?'blackout':'blackout off'; }
@@ -882,14 +888,10 @@ function render(){
   document.querySelector('.stack.live')?.classList.toggle('ismain', isMain(state.live));
   const lm=document.getElementById('liveMark');
   if(lm) lm.innerHTML = (state.blackout ? '<span class="blackoutmark">· BLACKED OUT</span>' : '')
-                      + (state.lights_off ? '<span class="blackoutmark">· LIGHTS OFF</span>' : '')
                       + (isMain(state.live) ? '<span class="mainmark">· ⌂ MAIN</span>' : '');
   const bb=document.getElementById('blackoutBtn');
   if(bb){ bb.classList.toggle('on', !!state.blackout);
           bb.textContent = state.blackout ? "BLACKOUT ON" : "BLACKOUT"; }
-  const lb=document.getElementById('lightsBtn');
-  if(lb){ lb.classList.toggle('on', !!state.lights_off);
-          lb.textContent = state.lights_off ? "LIGHTS OFF" : "LIGHTS"; }
   document.getElementById('showId').textContent = state.meta?.show || "—";
   renderPills();
   flashRemoteAction();
@@ -1505,10 +1507,9 @@ function renderCues(){
   const hint=document.getElementById('cueHint');
   if(hint){
     const mode = state.tap_fires ? "tap fires immediately" : "tap arms · GO fires";
-    hint.classList.toggle('blacked', !!(state.blackout || state.lights_off));
+    hint.classList.toggle('blacked', !!state.blackout);
     hint.textContent = state.blackout
       ? "⬛ BLACKED OUT · nothing is reaching the screen · " + mode
-      : state.lights_off ? "◐ LIGHTS OFF · visuals still running · " + mode
       : mode;
   }
   grid.innerHTML="";
@@ -1540,7 +1541,8 @@ function renderCues(){
 }
 function renderOuts(){
   const wrap=document.getElementById('outList'); if(!wrap) return;
-  if(wrap.contains(document.activeElement)) return;   // don't clobber a field mid-edit
+  // only a half-typed field is worth protecting — a focused button must not freeze the list
+  if(wrap.querySelector('input:focus')) return;
   wrap.innerHTML="";
   outputKeys().forEach(k=>{
     const st=state.outputs?.[k]||"off";
@@ -1556,10 +1558,21 @@ function renderOuts(){
     if("port" in cfg) fields += cfg.type==="serial"
       ? `<input type="text" id="c_${k}_port" value="${cfg.port??""}" placeholder="auto, or /dev/light_tx">`
       : `<input type="number" class="port" id="c_${k}_port" value="${cfg.port}" min="1" max="65535">`;
-    el.innerHTML=`<span class="led"></span><span class="nm">${k.toUpperCase()}</span><span class="addr">${addr}</span>`
+    const on = cfg.enabled !== false;
+    if(!on) el.classList.add('muted');
+    el.innerHTML=`<span class="led"></span><span class="nm">${k.toUpperCase()}</span>`
+      + `<span class="addr">${on?addr:'muted'}</span>`
+      + `<button class="toggle sm" role="switch" aria-checked="${on}" aria-label="${k} enabled"`
+      + ` onclick="setOutputEnabled('${k}',${!on})"></button>`
       + (fields?`<div class="outcfg">${fields}<button class="applybtn" onclick="applyOutput('${k}',this)">APPLY</button></div>`:"");
     wrap.appendChild(el);
   });
+}
+function setOutputEnabled(name, enabled){
+  if(!(online && ws && ws.readyState===1)) return;
+  // Muting sends the output's safe-off first, then stops dispatching to it. The
+  // brain does that; the UI only asks.
+  ws.send(JSON.stringify({type:"set_output_enabled", name, enabled}));
 }
 function applyOutput(name,btn){
   const val=id=>document.getElementById(id)?.value;
@@ -1728,7 +1741,7 @@ window.act=act; window.setView=setView; window.testFire=testFire;
 window.dropOn=dropOn; window.toggleMain=toggleMain;
 window.setLightTab=setLightTab; window.setLightStep=setLightStep;
 window.addPeripheral=addPeripheral; window.removePeripheral=removePeripheral;
-window.copyToPeripheral=copyToPeripheral; window.setLightPane=setLightPane; window.togglePopOverride=togglePopOverride; window.togglePopColor=togglePopColor; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
+window.copyToPeripheral=copyToPeripheral; window.setLightPane=setLightPane; window.togglePopOverride=togglePopOverride; window.togglePopColor=togglePopColor; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.setOutputEnabled=setOutputEnabled; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>

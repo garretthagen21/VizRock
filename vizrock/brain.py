@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # — which is how `home` survived in the pedal config after the action was removed.
 KNOWN_ACTIONS = (
     'go', 'goto', 'arm', 'arm_prev', 'arm_next', 'next_main', 'restart_scene',
-    'blackout', 'toggle_lights', 'clear_effects', 'light_burst', 'cycle_color',
+    'blackout', 'clear_effects', 'light_burst', 'cycle_color',
     'audition_scene', 'audition_lights', 'audition_end',
 )
 
@@ -56,7 +56,6 @@ class Brain:
         # never is. Both are pure output mutes: LIVE stays set throughout, so
         # releasing either reveals the scene rather than restoring a remembered one.
         self.blackout = False
-        self.lights_off = False
         self.color_index = None          # None = the scene's own hue
         self._burst_until = 0.0          # light burst expiry, monotonic
         self._restart_visuals = False    # re-fire the clip on the next dispatch
@@ -112,8 +111,6 @@ class Brain:
                 self._commit(self.live, rearm=False)
         elif action == 'clear_effects':
             self._clear_effects()
-        elif action == 'toggle_lights':
-            self._toggle_lights()
         elif action == 'cycle_color':
             self._cycle_color()
         elif action == 'audition_scene':
@@ -166,7 +163,6 @@ class Brain:
             'burst': vizrock_settings.burst,
             'known_actions': list(KNOWN_ACTIONS),
             'blackout': self.blackout,
-            'lights_off': self.lights_off,
             'color_index': self.color_index,
             'palette': vizrock_settings.palette,
             'live_light': self._live_light(),
@@ -256,14 +252,6 @@ class Brain:
             self._cancel_scene_effect()
             self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT, scene_override=False)
         self.last_event = 'blackout · press again to restore' if self.blackout else 'blackout off'
-        logger.info(self.last_event)
-        self._render()
-        self.push_state()
-
-    def _toggle_lights(self):
-        """Mute the lights alone, leaving the visuals running."""
-        self.lights_off = not self.lights_off
-        self.last_event = 'lights off' if self.lights_off else 'lights on'
         logger.info(self.last_event)
         self._render()
         self.push_state()
@@ -420,8 +408,8 @@ class Brain:
 
         Blackout blocks it: nothing but blackout clears blackout, and a preview
         lighting up a stage someone deliberately killed would be the worst kind of
-        surprise. `lights_off` does not block it — that is a convenience mute, and
-        you are plainly asking to see the lights.
+        surprise. A muted lights output does not block it either — you are plainly
+        asking to see the lights, and the mute is a convenience, not a safety.
         """
         if self.blackout:
             self.last_event = 'audition blocked · blackout is on'
@@ -612,7 +600,7 @@ class Brain:
         if scene is None:
             return None
         effective = dict(scene)
-        effective['lights'] = self._all_off() if self.lights_off else self._lights_for(scene)
+        effective['lights'] = self._lights_for(scene)
         return effective
 
     def _render(self):
@@ -627,9 +615,46 @@ class Brain:
             self._dispatch(effective)
         self._restart_visuals = False
 
+    def _output_enabled(self, name):
+        return bool(vizrock_settings.outputs.get(name, {}).get('enabled', True))
+
+    def set_output_enabled(self, name, enabled):
+        """
+        Mute or unmute an output for the rest of the show.
+
+        Muting sends that output's safe-off first and then stops dispatching to it, so
+        the stage goes dark rather than freezing on the last cue. The connection stays
+        open on purpose: the light transmitter has to keep holding "off" on the wire,
+        because a receiver that hears nothing for four seconds falls back to its idle
+        pattern and would glow rather than go dark.
+        """
+        if name not in vizrock_settings.outputs:
+            logger.warning('no such output: %s', name)
+            return
+        vizrock_settings.update_output(name, {'enabled': bool(enabled)})
+        vizrock_settings.save()
+        if enabled:
+            self._render()                      # catch up on whatever it missed
+        else:
+            for output in self.outputs:
+                if output.name != name:
+                    continue
+                silence = getattr(output, 'silence', None)
+                if not silence:
+                    continue
+                try:
+                    silence()
+                except Exception as error:
+                    logger.warning('silencing %s failed: %s', name, error)
+        self.last_event = f"{name} {'on' if enabled else 'muted'}"
+        logger.info('output %s %s', name, 'enabled' if enabled else 'muted')
+        self.push_state()
+
     def _dispatch(self, scene):
         """Fan a scene out to every output, each isolated so one failure cannot spread."""
         for output in self.outputs:
+            if not self._output_enabled(output.name):
+                continue
             try:
                 output.apply(scene)
             except Exception as error:

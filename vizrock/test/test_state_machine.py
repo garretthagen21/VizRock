@@ -199,24 +199,50 @@ def _lights_are_a_separate_switch():
     brain.handle('goto', 2)
     sent.clear()
 
-    brain.handle('toggle_lights')
-    assert brain.lights_off is True
-    assert sent[-1]['lights'][0]['mode'] == 'off', sent[-1]['lights']
-    assert not sent[-1].get('resolume', {}).get('clear'), \
-        'the visuals must keep running with the lights off'
+    # Muting an output sends its safe-off and then stops dispatching to it, while
+    # every other output keeps running. The connection is deliberately left open.
+    from vizrock.configurations.settings import vizrock_settings
+    silenced = []
+    lights_sent, visuals_sent = [], []
 
-    # a cue still fires visuals while the lights stay muted
+    class Muteable:
+        def __init__(self, name, log):
+            self.name, self.log = name, log
+        def apply(self, scene):
+            self.log.append(scene)
+        def silence(self):
+            silenced.append(self.name)
+        def on_state(self, _):
+            pass
+        def status(self):
+            return 'ok'
+        def address_label(self):
+            return ''
+
+    vizrock_settings.outputs.setdefault('lights', {'type': 'serial'})
+    vizrock_settings.outputs.setdefault('resolume', {'type': 'osc'})
+    brain.outputs = [Muteable('lights', lights_sent), Muteable('resolume', visuals_sent)]
+    brain.handle('goto', 2)
+    lights_sent.clear(); visuals_sent.clear()
+
+    brain.set_output_enabled('lights', False)
+    assert silenced == ['lights'], ('the output must be told to go safe-off', silenced)
+
     brain.handle('goto', 3)
-    assert sent[-1]['lights'][0]['mode'] == 'off', 'lights stay off across a cue'
-    assert sent[-1]['resolume']['clip'] == 3, sent[-1]['resolume']
+    assert not lights_sent, ('a muted output must receive nothing further', lights_sent)
+    assert visuals_sent, 'every other output keeps running'
+    assert visuals_sent[-1]['resolume']['clip'] == 3, visuals_sent[-1]['resolume']
 
-    brain.handle('toggle_lights')
-    assert brain.lights_off is False
-    assert sent[-1]['lights'][0]['mode'] != 'off', 'lights come back'
+    # unmuting catches the output up rather than waiting for the next cue
+    brain.set_output_enabled('lights', True)
+    assert lights_sent, 'unmuting must re-render immediately'
 
-    # blackout outranks the lights switch either way round
+    assert lights_sent[-1]['lights'][0]['mode'] != 'off', 'lights come back'
+
+    # blackout is still the momentary panic control, and outranks everything
     brain.handle('blackout')
-    assert sent[-1].get('resolume', {}).get('clear') is True, sent[-1]
+    assert visuals_sent[-1].get('resolume', {}).get('clear') is True, visuals_sent[-1]
+    assert lights_sent[-1]['lights'][0]['mode'] == 'off', lights_sent[-1]['lights']
 
 
 def _boots_dark_with_the_opener_loaded():
@@ -261,7 +287,7 @@ def _boots_dark_with_the_opener_loaded():
 
 def _light_overrides_have_one_precedence():
     """
-    blackout > lights off > burst > the scene.
+    blackout > burst > color > the scene.
 
     An explicit mute must always outrank a momentary effect, and a burst must never
     change the color on stage — only how the lights move.
@@ -318,15 +344,8 @@ def _light_overrides_have_one_precedence():
     brain.handle('goto', 2)
     brain.handle('light_burst')
 
-    # an explicit mute outranks the running burst
-    brain.handle('toggle_lights')
-    assert brain.lights_off is True
-    assert sent[-1]['mode'] == 'off', sent[-1]
-    brain.handle('light_burst')
-    assert sent[-1]['mode'] == 'off', 'lights off must outrank a burst'
-
-    brain.handle('toggle_lights')
-    assert brain.lights_off is False
+    # Muting the lights output is no longer part of this chain — it stops dispatch
+    # altogether rather than resolving to an off scene, and is covered separately.
 
     # blackout outranks everything, and the light block is the blackout scene's own
     brain.handle('blackout')
@@ -452,9 +471,10 @@ def _peripherals_get_their_own_light_config():
         assert sent[-1][0]['mode'] == 'pulse', sent[-1]
         assert sent[-1][2]['mode'] == 'pulse', 'everything falls back to the first entry'
 
-        # muting still covers every group
-        brain.handle('toggle_lights')
+        # blackout still covers every group, not just the ones with their own entry
+        brain.handle('blackout')
         assert all(l['mode'] == 'off' for l in sent[-1].values()), sent[-1]
+        brain.handle('blackout')
     finally:
         vizrock_settings.light_groups = groups
 

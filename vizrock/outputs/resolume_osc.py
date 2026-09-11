@@ -88,6 +88,11 @@ class ResolumeOsc(Output):
         self.connected = target
         self._send(f"/composition/layers/{target[0]}/clips/{target[1]}/connect", 1)
 
+    def silence(self):
+        """Disconnect everything, so muting the output leaves a black screen."""
+        self._send('/composition/disconnectall', 1)
+        self.connected = None
+
     def status(self):
         # nothing resolved means we cannot even address a target — say so
         return 'ready' if self.resolved else 'retrying'

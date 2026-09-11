@@ -24,9 +24,15 @@ OUTPUT_KINDS = {'osc': ResolumeOsc, 'artnet': ArtNetDmx,
 
 
 def build_output(name, spec):
-    """One output, or None if it is disabled or malformed. Never raises."""
-    if not spec.get('enabled', True):
-        return None
+    """
+    One output, or None if it is malformed. Never raises.
+
+    A disabled output is still built. `enabled` mutes dispatch rather than gating
+    construction, so a disabled output holds its connection and its safe-off state —
+    which the light transmitter in particular needs: stop sending entirely and the
+    receivers fall back to their idle pattern after four seconds and glow instead of
+    going dark.
+    """
     output_class = OUTPUT_KINDS.get(spec.get('type'))
     if not output_class:
         logger.warning('unknown output type: %s', spec.get('type'))
@@ -43,7 +49,7 @@ def build_output(name, spec):
 
 
 def build_outputs():
-    """Instantiate every enabled output named in vizrock_settings."""
+    """Instantiate every output named in vizrock_settings, enabled or not."""
     return [output for output in
             (build_output(name, spec) for name, spec in vizrock_settings.outputs.items())
             if output is not None]

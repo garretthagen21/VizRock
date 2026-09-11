@@ -92,6 +92,8 @@ class UiServer:
             self.brain.apply_output_config(data['name'], data['spec'])
         elif data.get('type') == 'reorder':
             self.brain.reorder(data.get('order') or [])
+        elif data.get('type') == 'set_output_enabled':
+            self.brain.set_output_enabled(data['name'], bool(data.get('enabled')))
         elif data.get('type') == 'set_tap_fires':
             vizrock_settings.set_tap_fires(data.get('value'))
             self.brain.push_state()

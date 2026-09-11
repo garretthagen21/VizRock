@@ -40,6 +40,10 @@ class ArtNetDmx(Output):
             frame[int(channel) - 1] = max(0, min(255, int(value)))
         self._send(frame)
 
+    def silence(self):
+        """Every channel to zero, so muting the output kills the fixtures."""
+        self._send(bytearray(512))
+
     def status(self):
         return 'ready'
 
