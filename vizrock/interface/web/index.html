@@ -352,6 +352,14 @@
   .swrow select{flex:1; min-width:0; font-family:var(--mono); font-size:12px; color:var(--ink);
     background:var(--void); border:1px solid var(--line); border-radius:6px; padding:9px}
   .swnone{font-family:var(--mono); font-size:11px; color:var(--muted2)}
+  .dirty{display:inline-flex; gap:7px; margin-left:10px}
+  .dirty button{font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.1em;
+    border-radius:6px; padding:6px 10px; cursor:pointer; border:1px solid var(--line);
+    background:var(--panel2); color:var(--muted)}
+  .savebtn{color:#06121f; background:var(--live); border-color:transparent}
+  .discardbtn:hover{color:var(--warn); border-color:var(--warn)}
+  .switchwarn{font-family:var(--mono); font-size:11px; color:var(--warn); margin:8px 0 4px;
+    border:1px solid var(--warn); border-radius:7px; padding:9px 11px}
   .trig{display:flex; align-items:center; gap:10px; padding:9px 12px; margin-bottom:7px;
     border:1px solid var(--line); border-radius:8px; background:var(--panel);
     font-family:var(--mono); font-size:12px}
@@ -1046,7 +1054,7 @@ function renderList(){
     const isHome = !!s.main;
     el.className="scene"+(s.id===selected?" sel":"")+(s.id===state.live?" islive":"")
                 +(s.id===state.armed?" isarmed":"")+(isHome?" ishome":"");
-    el.onclick=()=>{ selected=s.id; setDetailMode('scene'); setEditDetail(true); renderList(); renderInsp(); };
+    el.onclick=()=>selectScene(s.id);
     if(canDrag){
       el.draggable=true;
       el.ondragstart=e=>{ dragId=s.id; el.classList.add('dragging');
@@ -1121,8 +1129,44 @@ function tabSteps(s, name){
   const entry = lightConfigs(s)[name];
   return Array.isArray(entry) ? entry : [entry && typeof entry==='object' ? entry : {mode:"off"}];
 }
+// Edits land in a working copy and reach the Pi only on SAVE. Every slider used to
+// write scenes.json 300ms later with no way back — fine at a desk, and a stray touch on
+// the panel permanently rewriting a scene mid-set is not.
+let draft = null, draftFor = null, pendingSelect = null;
+function editing(){
+  if(draftFor !== selected){ const s=scene(selected); draft = s ? structuredClone(s) : null; draftFor = selected; }
+  return draft;
+}
+function savedScene(){ return scene(selected); }
+function isDirty(){
+  const s = savedScene();
+  return !!(s && draft && draftFor === selected && JSON.stringify(s) !== JSON.stringify(draft));
+}
+function discardEdits(){ draft = null; draftFor = null; renderInsp(); renderList(); applyPending(); }
+function saveEdits(){
+  const s = editing(); if(!s) return;
+  if(online && ws && ws.readyState===1) ws.send(JSON.stringify({type:"edit_scene", scene:s}));
+  else { state.scenes = state.scenes.map(x => x.id===s.id ? s : x); }
+  draft = null; draftFor = null;
+  const tag=document.getElementById('savedTag');
+  if(tag){ tag.classList.add('on'); setTimeout(()=>tag.classList.remove('on'),900); }
+  renderInsp(); renderList(); applyPending();
+}
+// Switching scenes with unsaved work does not silently drop it, and does not open a
+// modal either — a blocking dialog on the panel cannot be dismissed by touch.
+function applyPending(){
+  if(pendingSelect===null) return;
+  const id=pendingSelect; pendingSelect=null;
+  selected=id; draft=null; draftFor=null;
+  setDetailMode('scene'); setEditDetail(true); renderList(); renderInsp();
+}
+function selectScene(id){
+  if(isDirty() && id!==selected){ pendingSelect=id; renderInsp(); return; }
+  selected=id; draft=null; draftFor=null;
+  setDetailMode('scene'); setEditDetail(true); renderList(); renderInsp();
+}
 function toggleMain(){
-  const s=scene(selected); if(!s) return;
+  const s=editing(); if(!s) return;
   s.main = !s.main;
   renderInsp(); renderList();
   queueSceneEdit();
@@ -1166,11 +1210,11 @@ function popPane(s){
 }
 function ownBurst(s){ if(!s.burst) s.burst={...burstOf(s)}; return s.burst; }
 function togglePopOverride(){
-  const s=scene(selected); if(!s) return;
+  const s=editing(); if(!s) return;
   delete s.burst; renderInsp(); queueSceneEdit();
 }
 function togglePopColor(){
-  const s=scene(selected); if(!s) return;
+  const s=editing(); if(!s) return;
   const b=ownBurst(s);
   if('hue' in b){ delete b.hue; delete b.sat; } else { b.hue=0; b.sat=255; }
   renderInsp(); queueSceneEdit();
@@ -1193,7 +1237,7 @@ function wireStepDrag(){
   });
 }
 function moveStep(from, to){
-  const s=scene(selected); if(!s || from===null || from===to) return;
+  const s=editing(); if(!s || from===null || from===to) return;
   const name=activeTab(s), steps=tabSteps(s,name).slice();
   steps.splice(to, 0, steps.splice(from, 1)[0]);
   s.lights={...lightConfigs(s), [name]: steps.length>1 ? steps : steps[0]};
@@ -1203,7 +1247,7 @@ function setLightStep(i){ lightStep=i; renderInsp(); }
 function groupNames(){ return Object.keys(state.light_groups || {default:0}); }
 
 function addPeripheral(){
-  const s=scene(selected); if(!s) return;
+  const s=editing(); if(!s) return;
   const used=Object.keys(lightConfigs(s));
   // Names come from light_groups, never typed: an entry naming no group gets no
   // packets at all, and it is the easiest way to misconfigure the rig.
@@ -1214,7 +1258,7 @@ function addPeripheral(){
 }
 function removePeripheral(name, event){
   event.stopPropagation();
-  const s=scene(selected); if(!s) return;
+  const s=editing(); if(!s) return;
   const next={...lightConfigs(s)}; delete next[name];
   s.lights = Object.keys(next).length ? next : {default:{mode:"off"}};
   lightTab=null; lightStep=0; renderInsp(); queueSceneEdit();
@@ -1227,7 +1271,7 @@ function removePeripheral(name, event){
 let copyArmed = null, copyArmTimer = null;
 function disarmCopy(){ clearTimeout(copyArmTimer); copyArmTimer = null; copyArmed = null; }
 function copyToPeripheral(){
-  const s=scene(selected); if(!s) return;
+  const s=editing(); if(!s) return;
   const from=activeTab(s), entry=lightConfigs(s)[from];
   const others=Object.keys(lightConfigs(s)).filter(n=>n!==from);
   if(!others.length) return;
@@ -1245,7 +1289,7 @@ function copyToPeripheral(){
   s.lights=next; renderInsp(); queueSceneEdit();
 }
 function addStep(){
-  const s=scene(selected); if(!s) return;
+  const s=editing(); if(!s) return;
   const name=activeTab(s), steps=tabSteps(s,name).slice();
   steps.push({...steps[steps.length-1], seconds: steps[steps.length-1].seconds ?? 8});
   if(steps.length===2 && steps[0].seconds===undefined) steps[0].seconds=8;
@@ -1254,7 +1298,7 @@ function addStep(){
 }
 function removeStep(i, event){
   event.stopPropagation();
-  const s=scene(selected); if(!s) return;
+  const s=editing(); if(!s) return;
   const name=activeTab(s); let steps=tabSteps(s,name).slice();
   if(steps.length<2) return;
   steps.splice(i,1);
@@ -1263,7 +1307,7 @@ function removeStep(i, event){
 }
 
 function renderInsp(){
-  const s=scene(selected); if(!s){document.getElementById('insp').innerHTML="";return;}
+  const s=editing(); if(!s){document.getElementById('insp').innerHTML="";return;}
   const name=activeTab(s), steps=tabSteps(s,name);
   if(lightStep>=steps.length) lightStep=0;
   const r=steps[lightStep]||{mode:"off"};
@@ -1311,7 +1355,13 @@ function renderInsp(){
 
   document.getElementById('insp').innerHTML=`
     <div class="nm">${s.name}</div>
-    <div class="sub">SCENE ${String(s.id).padStart(2,'0')} <span class="saved" id="savedTag">SAVED</span></div>
+    <div class="sub">SCENE ${String(s.id).padStart(2,'0')} <span class="saved" id="savedTag">SAVED</span>
+      <span id="dirtyBar" class="dirty${isDirty()?'':' hidden'}">
+        <button class="savebtn" onclick="saveEdits()">SAVE</button>
+        <button class="discardbtn" onclick="discardEdits()">DISCARD</button>
+      </span></div>
+    <div id="switchWarn" class="switchwarn${pendingSelect===null?' hidden':''}">
+      Unsaved changes. Save or discard before leaving this scene.</div>
     <div class="field"><label>NAME</label>
       <input type="text" id="f_name" value="${s.name.replace(/"/g,'&quot;')}"></div>
     <div class="field"><label>MAIN LOOP</label>
@@ -1364,7 +1414,7 @@ function renderInsp(){
   ["p_mode","p_secs","p_bright","p_speed","p_hue","p_sat"].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     el.addEventListener('input',()=>{
-      const s=scene(selected); if(!s) return;
+      const s=editing(); if(!s) return;
       const b=ownBurst(s);                       // first touch makes it this scene's
       b.mode=document.getElementById('p_mode').value;
       const num=i=>parseFloat(document.getElementById(i)?.value);
@@ -1400,8 +1450,11 @@ function wireAudition(){
   document.querySelectorAll('[data-audition]').forEach(button=>{
     const stop = () => { button.classList.remove('holding'); send('audition_end'); };
     const send = (action) => {
-      if(online && ws && ws.readyState===1)
-        ws.send(JSON.stringify({type:"action", action, scene:selected}));
+      if(!(online && ws && ws.readyState===1)) return;
+      // Preview the working copy, not what is on disk — auditioning exists to answer
+      // "what did I just change", and saved values answer the wrong question.
+      const override = action==='audition_end' ? undefined : editing();
+      ws.send(JSON.stringify({type:"action", action, scene:selected, override}));
     };
     button.addEventListener('pointerdown', e=>{
       e.preventDefault();
@@ -1456,33 +1509,39 @@ function readLight(){
   if(paletteDraft) light.colors=paletteDraft;
   return light;
 }
-// Debounced: sliders fire per pixel and every edit writes scenes.json to the SD card.
+// Debounced only to keep a slider drag from rebuilding the draft per pixel. Nothing
+// here reaches the Pi — that is SAVE's job.
 let editTimer=null;
-function queueSceneEdit(){ clearTimeout(editTimer); editTimer=setTimeout(sendSceneEdit,300); }
-function sendSceneEdit(){
-  const s=scene(selected); if(!s) return;
+function queueSceneEdit(){ clearTimeout(editTimer); editTimer=setTimeout(commitToDraft,150); }
+function commitToDraft(){
+  const s=editing(); if(!s) return;
   const el=id=>document.getElementById(id);
+  s.name = el('f_name')?.value ?? s.name;
   // Falls back to the scene's own cue, not "": the DMX field is hidden while the
   // output is disabled, and an absent field must not wipe what is stored.
-  const edited={...s, name:el('f_name')?.value ?? s.name,
-                dmx:{...(s.dmx||{}), cue:el('f_cue')?.value ?? (s.dmx?.cue ?? "")}};
-  // Write back only the step being edited, on the peripheral being edited. The
-  // whole scene is spread above, so touching `lights` wholesale would flatten every
-  // other peripheral and step the moment someone edited a name.
+  s.dmx = {...(s.dmx||{}), cue: el('f_cue')?.value ?? (s.dmx?.cue ?? "")};
+  // Write back only the step being edited, on the peripheral being edited — touching
+  // `lights` wholesale would flatten every other peripheral and step.
   if(el('f_mode')){
     const name=activeTab(s), steps=tabSteps(s,name).slice();
     steps[Math.min(lightStep, steps.length-1)] = readLight();
-    edited.lights={...lightConfigs(s), [name]: steps.length>1 ? steps : steps[0]};
+    s.lights={...lightConfigs(s), [name]: steps.length>1 ? steps : steps[0]};
   }
   if(!s.resolume?.clear && el('f_layer') && el('f_clip')){
-    edited.resolume={...(s.resolume||{}), layer:parseInt(el('f_layer').value,10)||1,
-                                          clip:parseInt(el('f_clip').value,10)||1};
+    s.resolume={...(s.resolume||{}), layer:parseInt(el('f_layer').value,10)||1,
+                                     clip:parseInt(el('f_clip').value,10)||1};
   }
-  if(online && ws && ws.readyState===1){ ws.send(JSON.stringify({type:"edit_scene",scene:edited})); }
-  else { state.scenes=state.scenes.map(x=>x.id===edited.id?edited:x); renderList(); }
-  const tag=document.getElementById('savedTag');
-  if(tag){ tag.classList.add('on'); setTimeout(()=>tag.classList.remove('on'),900); }
+  renderDirty();
 }
+// Only the badge, never the whole inspector: a re-render mid-drag would rebuild the
+// input under the finger.
+function renderDirty(){
+  const bar=document.getElementById('dirtyBar');
+  if(bar) bar.classList.toggle('hidden', !isDirty());
+  const warn=document.getElementById('switchWarn');
+  if(warn) warn.classList.toggle('hidden', pendingSelect===null);
+}
+
 function renderNetwork(){
   const box=document.getElementById('netBox'); if(!box) return;
   const n=state.network;
@@ -1825,7 +1884,7 @@ window.act=act; window.setView=setView; window.testFire=testFire;
 window.dropOn=dropOn; window.toggleMain=toggleMain;
 window.setLightTab=setLightTab; window.setLightStep=setLightStep;
 window.addPeripheral=addPeripheral; window.removePeripheral=removePeripheral;
-window.copyToPeripheral=copyToPeripheral; window.setLightPane=setLightPane; window.togglePopOverride=togglePopOverride; window.togglePopColor=togglePopColor; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.setOutputEnabled=setOutputEnabled; window.setTriggerAction=setTriggerAction; window.openPedal=openPedal; window.renderPedal=renderPedal; window.renderCues=renderCues; window.askUpdate=askUpdate;
+window.copyToPeripheral=copyToPeripheral; window.setLightPane=setLightPane; window.togglePopOverride=togglePopOverride; window.togglePopColor=togglePopColor; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.saveEdits=saveEdits; window.discardEdits=discardEdits; window.selectScene=selectScene; window.openSettings=openSettings; window.applyOutput=applyOutput; window.setOutputEnabled=setOutputEnabled; window.setTriggerAction=setTriggerAction; window.openPedal=openPedal; window.renderPedal=renderPedal; window.renderCues=renderCues; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>

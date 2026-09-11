@@ -69,7 +69,7 @@ class Brain:
         self.last_event = 'armed · waiting for trigger'
 
     # MARK: - Actions (called from MIDI or the UI)
-    def handle(self, action, scene=None):
+    def handle(self, action, scene=None, override=None):
         # The UI flashes the matching transport button, so it needs to know an action
         # fired even when the resulting state is identical — a counter, not a value,
         # or two GOs in a row look like one.
@@ -111,9 +111,9 @@ class Brain:
         elif action == 'cycle_color':
             self._cycle_color()
         elif action == 'audition_scene':
-            self._audition(scene, lights_only=False)
+            self._audition(scene, lights_only=False, override=override)
         elif action == 'audition_lights':
-            self._audition(scene, lights_only=True)
+            self._audition(scene, lights_only=True, override=override)
         elif action == 'audition_end':
             self._end_audition()
         elif action == 'light_burst':
@@ -394,7 +394,7 @@ class Brain:
         self.push_state()
         self._schedule_light_step()
 
-    def _audition(self, scene_id, lights_only):
+    def _audition(self, scene_id, lights_only, override=None):
         """
         Show a scene while a button is held, without committing it.
 
@@ -411,7 +411,10 @@ class Brain:
             self.last_event = 'audition blocked · blackout is on'
             self.push_state()
             return
-        scene = self.scene_library.scenes.get(scene_id)
+        # `override` is an unsaved draft from the editor. Auditioning has to show what
+        # you just changed, not what is on disk, or the preview answers the wrong
+        # question. It is previewed only — nothing here writes it anywhere.
+        scene = override or self.scene_library.scenes.get(scene_id)
         if scene is None:
             logger.warning('audition of missing scene %s', scene_id)
             return

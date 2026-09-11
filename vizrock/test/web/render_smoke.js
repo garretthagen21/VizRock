@@ -32,7 +32,8 @@ const fs = require('fs');
 const html = fs.readFileSync(process.argv[2], 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 eval(script + `\n;globalThis.__ui = {state, renderCues, renderList, renderShow, render, renderInsp, renderCues, pick(id){ selected = id; },
-  paintLight, LIGHT_MODES, RECT_MODES, kf, setLightPane, renderPedal, renderTriggers, renderOuts};`);
+  paintLight, LIGHT_MODES, RECT_MODES, kf, setLightPane, renderPedal, renderTriggers, renderOuts,
+  editing, isDirty, saveEdits, discardEdits, selectScene, get selected(){return selected}};`);
 const ui = globalThis.__ui;
 const state = ui.state;
 
@@ -155,5 +156,35 @@ for (const [name] of collisions) {
   console.log(`  FAIL .${name} is structurally defined twice outside @media — collision?`);
 }
 if (!collisions.length) console.log('  ok   no colliding class definitions');
+
+// Scene edits live in a working copy and reach the Pi only on SAVE. Losing someone's
+// edits is silent, so the lifecycle is pinned rather than eyeballed.
+function check(label, ok) {
+  if (ok) { console.log('  ok   ' + label); return; }
+  failed++; console.log('  FAIL ' + label);
+}
+ui.pick(1);
+const saved = JSON.stringify(state.scenes.find(s => s.id === 1));
+ui.editing().name = 'DRAFTED';
+check('a draft edit marks the scene dirty', ui.isDirty());
+check('a draft edit does not touch saved state',
+      JSON.stringify(state.scenes.find(s => s.id === 1)) === saved);
+
+ui.discardEdits();
+check('discard clears the dirty flag', !ui.isDirty());
+check('discard restores the saved name',
+      state.scenes.find(s => s.id === 1).name === JSON.parse(saved).name);
+
+ui.editing().name = 'DRAFTED';
+ui.saveEdits();
+check('save applies the draft', state.scenes.find(s => s.id === 1).name === 'DRAFTED');
+check('save clears the dirty flag', !ui.isDirty());
+
+// Leaving a scene with unsaved work must not silently drop it.
+ui.editing().name = 'PENDING';
+ui.selectScene(2);
+check('switching scenes while dirty is blocked', ui.selected === 1);
+ui.discardEdits();
+check('discarding then releases the pending switch', ui.selected === 2);
 
 process.exit(failed ? 1 : 0);

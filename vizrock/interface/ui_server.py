@@ -96,7 +96,7 @@ class UiServer:
 
     def _handle_message(self, data):
         if data.get('type') == 'action':
-            self.brain.handle(data['action'], data.get('scene'))
+            self.brain.handle(data['action'], data.get('scene'), data.get('override'))
         elif data.get('type') == 'edit_scene':
             self.brain.scene_library.upsert(data['scene'])
             self.brain.push_state()
