@@ -48,13 +48,26 @@ class UiServer:
         await web.TCPSite(runner, '0.0.0.0', port).start()
         logger.info('UI on http://0.0.0.0:%s  (open :%s from your phone)', port, port)
 
+    def _ui_build(self):
+        """
+        A stamp that changes when the served UI does.
+
+        The kiosk browser loads once at boot and never reloads, so a deployed UI
+        change sat unseen for as long as the panel stayed up — twenty hours, in the
+        case that prompted this. Clients compare the stamp and reload themselves.
+        """
+        try:
+            return int((vizrock_paths.Directories.WEB_DIR / 'index.html').stat().st_mtime)
+        except OSError:
+            return 0
+
     def broadcast(self, snapshot):
         """
         send_str is a coroutine, so calling it from this synchronous caller only
         creates one — it has to be scheduled on the loop or nothing is ever sent.
         push_state is sync by design, so scheduling is the only option.
         """
-        payload = json.dumps(snapshot)
+        payload = json.dumps({**snapshot, 'ui_build': self._ui_build()})
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:

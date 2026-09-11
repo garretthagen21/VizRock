@@ -699,6 +699,7 @@ const DEMO = {
   ]
 };
 let state = structuredClone(DEMO);
+let uiBuild = null;   // stamp of the served UI, so a long-lived kiosk notices a deploy
 let selected = 1, ws = null, online = false;
 
 const H = h => Math.round(h/255*360);
@@ -715,7 +716,16 @@ function connect(){
   ws.onopen = ()=>{ online=true; document.getElementById('conn').classList.add('online');
     // not "live" — LIVE means the playing scene everywhere else in this UI
     document.getElementById('mode').textContent="connected"; };
-  ws.onmessage = e => { const d=JSON.parse(e.data); if(d.type==="state"){ state=d; blip(); render(); } };
+  ws.onmessage = e => { const d=JSON.parse(e.data);
+    if(d.type!=="state") return;
+    // The kiosk loads once at boot and never reloads on its own, so a deployed change
+    // would sit unseen until someone power-cycled the panel. Reload when the served
+    // file changes; the first snapshot only records the stamp.
+    if(d.ui_build){
+      if(uiBuild===null) uiBuild=d.ui_build;
+      else if(uiBuild!==d.ui_build){ location.reload(); return; }
+    }
+    state=d; blip(); render(); };
   ws.onclose = ()=>{ online=false; document.getElementById('conn').classList.remove('online');
     document.getElementById('mode').textContent="no brain"; setTimeout(connect, 2000); };
   ws.onerror = ()=>{ try{ws.close();}catch(_){} };
