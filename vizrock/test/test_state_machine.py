@@ -15,6 +15,7 @@ from vizrock.brain import Brain
 
 
 def run():
+    _scene_effects()
     brain = Brain()
     # every scene steps now; mains are a flag, not a position outside the order
     assert brain.scene_library.mains == [1], brain.scene_library.mains
@@ -711,3 +712,44 @@ def _blackout_is_a_master_mute():
     assert brain.blackout is False
     assert brain.live == 3, 'release should reveal what was loaded'
     assert sent and sent[-1] == 'Interlude', f'release should dispatch it, got {sent}'
+
+
+def _scene_effects():
+    """
+    A scene can lay an effect over a clip, which is how scenes that share a video
+    still look different. The reset fires first so the previous scene's effect never
+    survives into the next.
+    """
+    from vizrock.brain import Brain
+    brain = Brain()
+    sent = []
+
+    class EffectSpy:
+        name = 'visuals'
+        def apply(self, scene): pass
+        def send_messages(self, messages, repeat=1):
+            sent.extend(m['address'] for m in messages)
+        def status(self): return 'ok'
+        def address_label(self): return ''
+        def close(self): pass
+
+    brain.outputs = [EffectSpy()]
+    brain.scene_library.scenes[2]['osc'] = [{'address': '/echo/on', 'value': 1.0}]
+    brain.blackout = False
+
+    sent.clear()
+    brain.handle('goto', 2)
+    assert '/echo/on' in sent, ('a scene must fire its own effects', sent)
+
+    # a scene without effects fires none of its own, but the reset still runs
+    sent.clear()
+    brain.scene_library.scenes[3].pop('osc', None)
+    brain.handle('goto', 3)
+    assert '/echo/on' not in sent, ('an effect must not survive the next cue', sent)
+
+    # blackout suppresses them: a stuck parameter on an invisible composition is
+    # exactly the kind of thing that surprises someone two songs later
+    sent.clear()
+    brain.blackout = True
+    brain.handle('goto', 2)
+    assert '/echo/on' not in sent, ('blackout must suppress scene effects', sent)

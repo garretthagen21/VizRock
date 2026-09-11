@@ -457,7 +457,15 @@ class Brain:
         name — brain.py must not special-case a particular output.
         """
         spec = self._burst_spec() if scene_override else vizrock_settings.burst
-        messages = spec.get(key)
+        self._send_osc(spec.get(key), repeat=repeat)
+
+    def _send_osc(self, messages, repeat=1):
+        """
+        Send a list of OSC messages to whichever output can carry them.
+
+        Duck-typed on `send_messages` rather than looking for the visuals output by
+        name — brain.py must not special-case a particular output.
+        """
         if not messages:
             return
         for output in self.outputs:
@@ -591,6 +599,13 @@ class Brain:
         # _render drops whichever half is muted. GO must not silently undo a blackout
         # someone put on deliberately.
         self._render()
+        # The scene's own effects, after the reset above cleared the previous scene's
+        # and after the clip is connected. This is what makes a scene change visible
+        # when the clip does not change: several scenes share one video and differ by
+        # the effect laid over it. Skipped under blackout — an effect on a composition
+        # nobody can see is just a stuck parameter waiting to surprise someone.
+        if not self.blackout:
+            self._send_osc(scene.get('osc'))
         # auto-arm the next scene so a linear set is just GO, GO, GO
         if rearm and scene_id in self.scene_library.order:
             self.armed = self.scene_library.step_from(scene_id, +1)
