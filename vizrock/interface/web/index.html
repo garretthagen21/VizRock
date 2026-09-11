@@ -731,7 +731,7 @@ function paintLight(el, r){
     strobe:   ['rstrobe',   0.62 - speed * 0.05, 'linear infinite'],
     sparkle:  ['lsparkle',  1.50 - speed * 0.10, 'linear infinite'],
     firework: ['lfirework', 1.24 - speed * 0.10, 'linear infinite'],
-    confetti: ['lconfetti', 1.24 - speed * 0.10, 'linear infinite'],
+    confetti: ['lconfetti', 1.60 - speed * 0.12, 'linear infinite'],
     fire:     ['lfire',     1.40 - speed * 0.09, 'ease-in-out infinite'],
     rainbow:  ['lrainbow',  4.00 - speed * 0.30, 'linear infinite'],
     // mirrors the receiver's FILL_MS table, so the preview is a fair guide to what a
@@ -771,10 +771,13 @@ kf.textContent=`@keyframes rpulse{0%,100%{opacity:calc(var(--peak,1)*.28)}50%{op
   // rate rather than decaying, and the preview has to show that or it reads as sparkle
   +`@keyframes lfirework{0%,8%{opacity:var(--peak,1)}9%,42%{opacity:.06}`
   +`43%,50%{opacity:var(--peak,1)}51%,100%{opacity:.06}}`
-  // same cadence, but each flash lands on a different hue
-  +`@keyframes lconfetti{0%,8%{opacity:1;stroke:#ff4040}9%,42%{opacity:.06}`
-  +`43%,50%{opacity:1;stroke:#40e0ff}51%,74%{opacity:.06}`
-  +`75%,82%{opacity:1;stroke:#ffd040}83%,100%{opacity:.06}}`
+  // lightning bugs, not a burst: pixels pop and decay independently, so the preview
+  // shimmers continuously through colours rather than cutting hard to black the way
+  // lfirework does. Sharing firework's hard gate made these read as the same mode.
+  +`@keyframes lconfetti{0%{opacity:1;stroke:#ff4040}18%{opacity:.45;stroke:#40e0ff}`
+  +`33%{opacity:.95;stroke:#ffd040}50%{opacity:.4;stroke:#60ff60}`
+  +`67%{opacity:1;stroke:#c060ff}84%{opacity:.5;stroke:#ff40c0}`
+  +`100%{opacity:1;stroke:#ff4040}}`
   +`@keyframes lfire{0%,100%{opacity:var(--peak,1)}15%{opacity:calc(var(--peak,1)*.72)}`
   +`30%{opacity:calc(var(--peak,1)*.92)}45%{opacity:calc(var(--peak,1)*.6)}`
   +`60%{opacity:calc(var(--peak,1)*.88)}80%{opacity:calc(var(--peak,1)*.7)}}`
