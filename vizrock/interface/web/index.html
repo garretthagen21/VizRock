@@ -968,8 +968,8 @@ const LIGHT_TIERS = [
 const LIGHT_MODES = LIGHT_TIERS.flatMap(([, modes]) => modes);
 // Fill time by speed for `progress`, mirroring FILL_MS in LightReceiver. Round
 // numbers so a fill can be aimed at a song section by name: 10min, 5min, 2min,
-// 1min, 30s, 15s, 10s, 6s, 4s, 2s, 1s.
-const PROGRESS_SECONDS = [600, 300, 120, 60, 30, 15, 10, 6, 4, 2, 1];
+// 90s, 60s, 45s, 30s, 15s, 8s, 4s, 1s.
+const PROGRESS_SECONDS = [600, 300, 120, 90, 60, 45, 30, 15, 8, 4, 1];
 const RECT_MODES = new Set(["chase","scan","rainbow","confetti","progress"]);
 // Lights are keyed by peripheral and each entry may be a list of steps. The
 // inspector edits the common shape — one `default` entry, one step — and refuses to
