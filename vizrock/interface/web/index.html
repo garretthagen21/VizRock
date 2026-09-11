@@ -721,9 +721,10 @@ function paintLight(el, r){
     confetti: ['lconfetti', 1.24 - speed * 0.10, 'linear infinite'],
     fire:     ['lfire',     1.40 - speed * 0.09, 'ease-in-out infinite'],
     rainbow:  ['lrainbow',  4.00 - speed * 0.30, 'linear infinite'],
-    // matches the firmware's (12 - speed) frames-at-60 fill, so the preview is a
-    // fair guide to what a speed setting will actually look like on the cab
-    progress: ['lprogress', (12 - speed) * 0.60, 'linear infinite'],
+    // mirrors the receiver's FILL_MS table, so the preview is a fair guide to what a
+    // speed setting does on the cab. Keep the two in step — they are the same curve
+    // written twice, and 600s really is meant to look like it is barely moving.
+    progress: ['lprogress', PROGRESS_SECONDS[Math.round(speed)], 'linear infinite'],
   };
   const spec = LIGHT_ANIM[r.mode];
   const anim = spec ? `${spec[0]} ${spec[1].toFixed(2)}s ${spec[2]}` : "none";
@@ -921,6 +922,9 @@ const LIGHT_MODES = ["off","solid","pulse","chase","strobe",
 // opacity. A mode in the wrong set leaves its animation running on the element the
 // next mode is not driving, which is the stale-animation bug the clear below exists
 // to prevent — so add to this set when adding a stroke-driven mode.
+// Fill time by speed for `progress`, mirroring FILL_MS in LightReceiver: speed 10
+// is about a second, 0 is ten minutes (longer than any song), 2 minutes is speed 2.
+const PROGRESS_SECONDS = [600, 330, 173, 91, 50, 27, 14.5, 7.9, 4.3, 2.3, 1.2];
 const RECT_MODES = new Set(["chase","scan","rainbow","confetti","progress"]);
 // Lights are keyed by peripheral and each entry may be a list of steps. The
 // inspector edits the common shape — one `default` entry, one step — and refuses to
