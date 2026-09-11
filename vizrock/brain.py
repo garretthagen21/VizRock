@@ -168,6 +168,8 @@ class Brain:
             'blackout': self.blackout,
             'lights_off': self.lights_off,
             'color_index': self.color_index,
+            'palette': vizrock_settings.palette,
+            'live_light': self._live_light(),
             'auditioning': self._auditioning,
             'light_groups': vizrock_settings.light_groups,
             'burst_active': self._burst_until > time.monotonic(),
@@ -578,6 +580,22 @@ class Brain:
                     if key in burst:
                         light[key] = burst[key]
         return light
+
+    def _live_light(self):
+        """
+        The default group's light as the strip actually has it — colour override,
+        burst and light step all applied.
+
+        The UI previews this rather than the authored value. Deriving it there would
+        mean re-implementing the precedence rules in JS, and the UI had no palette to
+        resolve a colour index against, so a colour cycled from the pedal changed the
+        lights and never appeared on screen.
+        """
+        lights = (self._effective_scene() or {}).get('lights')
+        if not isinstance(lights, dict) or not lights:
+            return None
+        group = vizrock_settings.light_groups.get('default')
+        return lights.get(group if group in lights else min(lights))
 
     def _all_off(self):
         return {group: {'mode': 'off'} for group in vizrock_settings.light_groups.values()}

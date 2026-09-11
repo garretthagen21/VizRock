@@ -117,7 +117,7 @@
     letter-spacing:.08em; color:var(--muted); margin-top:6px; white-space:nowrap}
   .clipref.clear{color:var(--armamber)}
   .stack.live{--numsize:clamp(78px,12vw,150px)}
-  .stack.deck{--numsize:clamp(58px,9vw,104px)}
+  .stack.deck{--numsize:clamp(66px,10vw,120px)}
   .deck .num{color:var(--armamber)}
   .name{font-size:clamp(20px,2.6vw,34px); font-weight:600; margin-top:10px}
   .deck .name{color:#f0e2c4}
@@ -490,10 +490,10 @@
     .stack.deck{border-left:1px solid var(--line); border-top:0}
     .eyebrow{font-size:10px; letter-spacing:.2em}
     .stack.live{--numsize:clamp(86px,17vw,160px)}
-    .stack.deck{--numsize:clamp(44px,8.5vw,78px)}
+    .stack.deck{--numsize:clamp(52px,9.5vw,92px)}
     .num{line-height:.84}
     .live .name{font-size:clamp(24px,4.2vw,38px); margin-top:10px; line-height:1.12}
-    .deck .name{font-size:clamp(17px,2.7vw,24px); margin-top:6px; line-height:1.15}
+    .deck .name{font-size:clamp(19px,3vw,27px); margin-top:6px; line-height:1.15}
     .goready{margin-top:4px; font-size:10px}
     .lightcap .m{font-size:11px} .lightcap .v{font-size:9.5px}
 
@@ -534,7 +534,9 @@
      set. Keyed off the primary pointer, so a laptop or a trackpad still gets one. */
   @media (pointer:coarse),(pointer:none){ *{cursor:none!important} }
   @media (prefers-reduced-motion:reduce){
-    *:not(.minilight):not(.lightmini):not(.lpx){animation:none!important;transition:none!important}
+    /* .remote is feedback, not decoration: it is the only confirmation that a
+       footswitch press reached the brain, and the kiosk forces reduced motion. */
+    *:not(.minilight):not(.lightmini):not(.lpx):not(.remote){animation:none!important;transition:none!important}
   }
 </style>
 </head>
@@ -927,11 +929,17 @@ function renderShow(){
   document.getElementById('lNum').textContent=String(state.live??0).padStart(2,'0');
   document.getElementById('lName').textContent=L.name;
   paintClip(document.getElementById('lClip'), L);
-  paintLight(document.getElementById('lLight'),defaultLight(L)); document.getElementById('lCap').innerHTML=capOf(defaultLight(L));
+  // what the strip actually has, resolved by the brain — colour cycling included
+  const liveLight = state.live_light || defaultLight(L);
+  paintLight(document.getElementById('lLight'),liveLight);
+  document.getElementById('lCap').innerHTML=capOf(liveLight);
   document.getElementById('aNum').textContent=String(state.armed??0).padStart(2,'0');
   document.getElementById('aName').textContent=A.name;
   paintClip(document.getElementById('aClip'), A);
-  paintLight(document.getElementById('aLight'),defaultLight(A)); document.getElementById('aCap').innerHTML=capOf(defaultLight(A));
+  // the armed scene inherits whatever colour is cycled, so preview it that way
+  const armedLight = cycled(defaultLight(A));
+  paintLight(document.getElementById('aLight'),armedLight);
+  document.getElementById('aCap').innerHTML=capOf(armedLight);
 }
 // The clip a scene plays, shown under its number. `clear` is a real state, not a
 // missing value, so it says so rather than showing a blank.
@@ -962,6 +970,13 @@ function sceneChips(s){
                 + `◎ ${esc(pop.mode)} ${pop.seconds ?? 1}s</span>` : '')
     // only when there IS sound — a chip reading "muted" on every scene is noise
     + (s.audio ? `<span class="chip">♪ SOUND</span>` : '');
+}
+// A colour cycled from the pedal replaces the authored hue until restart_scene.
+function cycled(light){
+  const palette = state.palette || [];
+  const index = state.color_index;
+  return (index === null || index === undefined || !palette.length)
+    ? light : {...light, hue: palette[index] ?? light.hue};
 }
 function lightColor(r){
   if(!r || r.mode==="off") return "#3a4657";
