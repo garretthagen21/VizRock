@@ -138,7 +138,7 @@ def _ring_wire_format():
 
         # the palette field: absent, random, an explicit list, and capped at five
         for colors, expected in [(None, '-'), ('random', 'random'), ([96, 0], '96,0'),
-                                 ([1, 2, 3, 4, 5, 6], '1,2,3,4,5'),
+                                 ([1, 2, 3, 4, 5, 6, 7, 8, 9], '1,2,3,4,5,6,7,8'),
                                  ([], '-'), ('nonsense', '-'), ([300], '44')]:
             light = {'mode': 'confetti', 'hue': 96, 'bright': 200, 'speed': 5}
             if colors is not None:

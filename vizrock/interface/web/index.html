@@ -1163,11 +1163,11 @@ function renderPalette(){
   const label=document.getElementById('l_pal');
   const list=Array.isArray(paletteDraft)?paletteDraft:[];
   if(label) label.textContent = paletteDraft==='random' ? 'random'
-                              : list.length ? `${list.length} of 5` : 'scene hue';
+                              : list.length ? `${list.length} of 8` : 'scene hue';
   row.innerHTML = list.map((h,i)=>
       `<div class="palsw" data-i="${i}" title="tap to remove"
             style="background:hsl(${H(h)} 90% 55%)"></div>`).join("")
-    + `<button class="palbtn" data-pal="add"${list.length>=5?" disabled":""}>+ ADD</button>`
+    + `<button class="palbtn" data-pal="add"${list.length>=8?" disabled":""}>+ ADD</button>`
     + `<button class="palbtn${paletteDraft==='random'?' on':''}" data-pal="random">RANDOM</button>`
     + `<button class="palbtn" data-pal="clear">SCENE HUE</button>`;
 }
@@ -1181,7 +1181,7 @@ function palAction(target){
     else if(what==='random') paletteDraft = paletteDraft==='random' ? null : 'random';
     else if(what==='add'){
       const hue=parseInt(document.getElementById('f_hue')?.value,10)||0;
-      paletteDraft = (Array.isArray(paletteDraft)?paletteDraft:[]).concat(hue).slice(0,5);
+      paletteDraft = (Array.isArray(paletteDraft)?paletteDraft:[]).concat(hue).slice(0,8);
     }
   } else return false;
   renderPalette(); queueSceneEdit(); return true;

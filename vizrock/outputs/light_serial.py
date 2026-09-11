@@ -127,7 +127,7 @@ class LightSerial(Output):
 
 def _palette(light):
     """
-    The palette field of a LIGHT line: '-', 'random', or up to five hues.
+    The palette field of a LIGHT line: '-', 'random', or up to eight hues.
 
     Scatter modes take their colour from here rather than from `hue`. Anything
     unparseable degrades to '-' (the scene's own hue) rather than raising — this
@@ -138,7 +138,7 @@ def _palette(light):
         return 'random'
     if not isinstance(colors, (list, tuple)) or not colors:
         return '-'
-    hues = [int(c) & 0xFF for c in colors[:5] if isinstance(c, (int, float))]
+    hues = [int(c) & 0xFF for c in colors[:8] if isinstance(c, (int, float))]
     return ','.join(str(h) for h in hues) if hues else '-'
 
 
