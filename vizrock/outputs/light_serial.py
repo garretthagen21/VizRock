@@ -59,9 +59,9 @@ class LightSerial(Output):
         if not isinstance(lights, dict) or not lights:
             lights = {0: {'mode': 'off'}}
         self.latest_payload = ''.join(
-            'LIGHT {} {} {} {} {}\n'.format(
+            'LIGHT {} {} {} {} {} {}\n'.format(
                 group, light.get('mode', 'off'), light.get('hue', 0),
-                light.get('bright', 0), light.get('speed', 0))
+                light.get('bright', 0), light.get('speed', 0), _palette(light))
             for group, light in sorted(lights.items()))
 
     def status(self):
@@ -122,3 +122,20 @@ class LightSerial(Output):
                     pass
                 self.serial_port = None
             time.sleep(REBROADCAST_INTERVAL_SECONDS)
+
+
+def _palette(light):
+    """
+    The palette field of a LIGHT line: '-', 'random', or up to five hues.
+
+    Scatter modes take their colour from here rather than from `hue`. Anything
+    unparseable degrades to '-' (the scene's own hue) rather than raising — this
+    runs in the dispatch path, and a malformed colour list must not stop the show.
+    """
+    colors = light.get('colors')
+    if colors == 'random':
+        return 'random'
+    if not isinstance(colors, (list, tuple)) or not colors:
+        return '-'
+    hues = [int(c) & 0xFF for c in colors[:5] if isinstance(c, (int, float))]
+    return ','.join(str(h) for h in hues) if hues else '-'
