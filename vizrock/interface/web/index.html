@@ -600,8 +600,7 @@
             <button class="learnbtn" id="tapBtn" onclick="toggleTapFires()">TOGGLE</button>
           </div></div>
           <div class="sectlab mt">TRIGGERS · M-VAVE CHOCOLATE</div>
-          <div class="learn"><span>SW1 <b>MAIN</b> · SW2 <b>PREV</b> · SW3 <b>NEXT</b> · SW4 <b>GO</b></span>
-            <button class="learnbtn" onclick="learn(this)">MIDI LEARN</button></div>
+          <div id="trigBox"></div>
           <div class="sectlab mt">CONNECT</div><div id="netBox"></div>
           <div class="sectlab mt">SOFTWARE</div><div id="updBox"></div>
         </div>
@@ -620,6 +619,10 @@ const DEMO = {
   output_config:{resolume:{type:"osc",hosts:["Garretts-M2-MacBook-Pro.local"],port:38200},
                  dmx:{type:"artnet",host:"192.168.4.60"}, lights:{type:"serial"}, oled:{type:"oled"}},
   tap_fires:false,
+  triggers:[{midi:{kind:"pc",program:0},do:"next_main"},{midi:{kind:"pc",program:1},do:"arm_prev"},
+            {midi:{kind:"pc",program:2},do:"arm_next"},{midi:{kind:"pc",program:3},do:"go"}],
+  known_actions:["go","goto","arm","arm_prev","arm_next","next_main","restart_scene","blackout",
+                 "toggle_lights","clear_effects","light_burst","cycle_color"],
   blackout:false, lights_off:false, color_index:null, mains:[1], action_seq:0, last_action:null,
   light_groups:{default:0, cabA:1, cabB:2},
   network:{hostname:"vizrock-box", addresses:["10.42.1.1","10.42.0.1"]},
@@ -1328,7 +1331,12 @@ function renderOuts(){
     let fields="";
     if("hosts" in cfg) fields+=`<input type="text" id="c_${k}_hosts" value="${(cfg.hosts||[]).join(', ')}" placeholder="name.local, 10.0.0.5">`;
     else if("host" in cfg) fields+=`<input type="text" id="c_${k}_host" value="${cfg.host||""}" placeholder="host or ip">`;
-    if("port" in cfg) fields+=`<input type="number" class="port" id="c_${k}_port" value="${cfg.port}" min="1" max="65535">`;
+    // `port` means two different things: a UDP port for the network outputs, and a
+    // serial device path for the light transmitter. They collided on the key name, so
+    // the lights row rendered a number box that could not even hold the value "auto".
+    if("port" in cfg) fields += cfg.type==="serial"
+      ? `<input type="text" id="c_${k}_port" value="${cfg.port??""}" placeholder="auto, or /dev/light_tx">`
+      : `<input type="number" class="port" id="c_${k}_port" value="${cfg.port}" min="1" max="65535">`;
     el.innerHTML=`<span class="led"></span><span class="nm">${k.toUpperCase()}</span><span class="addr">${addr}</span>`
       + (fields?`<div class="outcfg">${fields}<button class="applybtn" onclick="applyOutput('${k}',this)">APPLY</button></div>`:"");
     wrap.appendChild(el);
@@ -1342,7 +1350,12 @@ function applyOutput(name,btn){
   const host=val(`c_${name}_host`);
   if(host!==undefined) spec.host=host.trim();
   const port=val(`c_${name}_port`);
-  if(port!==undefined) spec.port=parseInt(port,10);
+  // a serial path stays a string; parseInt would turn "auto" into NaN, which the
+  // brain then rejects and rolls back — an apply that silently did nothing
+  if(port!==undefined){
+    const cfg=state.output_config?.[name]||{};
+    spec.port = cfg.type==="serial" ? port.trim() : parseInt(port,10);
+  }
   if(!(online && ws && ws.readyState===1)){ flashApply(btn,"OFFLINE"); return; }
   ws.send(JSON.stringify({type:"edit_config",name,spec}));
   flashApply(btn,"APPLIED");
@@ -1355,8 +1368,24 @@ function flashApply(btn,text){
   setTimeout(()=>{btn.textContent=was; btn.disabled=false;},1200);
 }
 function testFire(id){ setView('show'); act("goto", id); }
-function learn(b){ b.textContent="LISTENING…"; b.style.color="var(--warn)"; b.style.borderColor="var(--warn)";
-  setTimeout(()=>{ b.textContent="CAPTURED"; b.style.color="var(--live)"; b.style.borderColor="var(--live)"; },1400); }
+// Shows what the pedal is actually mapped to, from the brain's own config. The
+// button this replaced was theatre: it printed LISTENING then CAPTURED on a timer and
+// never sent anything, so an unmapped switch looked successfully mapped.
+function renderTriggers(){
+  const box=document.getElementById('trigBox'); if(!box) return;
+  const rows=state.triggers||[];
+  if(!rows.length){ box.innerHTML=`<div class="learn"><span>no triggers mapped</span></div>`; return;
+  }
+  box.innerHTML=rows.map(r=>{
+    const m=r.midi||{};
+    const what=m.kind==="pc" ? `PC ${m.program}`
+             : m.kind==="cc" ? `CC ${m.control}${m.value!==undefined?"="+m.value:""}`
+             : m.kind==="note" ? `NOTE ${m.note}` : JSON.stringify(m);
+    const known=(state.known_actions||[]).length===0 || (state.known_actions||[]).includes(r.do);
+    return `<div class="learn"><span>${what} → <b${known?"":' style="color:var(--warn)"'}>${r.do}</b>`
+         + `${known?"":" · unknown action, does nothing"}</span></div>`;
+  }).join("");
+}
 function blip(){ const b=document.getElementById('blip'); if(!b)return; b.classList.add('hit'); setTimeout(()=>b.classList.remove('hit'),120); }
 function setView(v){
   ['show','cues','edit'].forEach(name=>{
@@ -1367,7 +1396,7 @@ function setView(v){
   document.getElementById('sharedTransport').classList.toggle('hidden', v==='edit');
   if(v==='show') renderShow();
   else if(v==='cues') renderCues();
-  else { setEditDetail(editShowingDetail); setDetailMode(detailMode); renderList(); renderInsp(); renderOuts(); renderTapMode(); renderNetwork(); renderUpdate(); }
+  else { setEditDetail(editShowingDetail); setDetailMode(detailMode); renderList(); renderInsp(); renderOuts(); renderTapMode(); renderTriggers(); renderNetwork(); renderUpdate(); }
 }
 // ---- on-screen keyboard (on-box panel only) ----
 // Fallback for a panel with no keyboard of its own. Only the display attached to
@@ -1476,7 +1505,7 @@ function flashRemoteAction(){
 setInterval(()=>document.getElementById('clock').textContent=now(),1000);
 document.getElementById('clock').textContent=now();
 render(); connect();
-window.act=act; window.setView=setView; window.testFire=testFire; window.learn=learn;
+window.act=act; window.setView=setView; window.testFire=testFire;
 window.dropOn=dropOn; window.toggleMain=toggleMain;
 window.setLightTab=setLightTab; window.setLightStep=setLightStep;
 window.addPeripheral=addPeripheral; window.removePeripheral=removePeripheral;

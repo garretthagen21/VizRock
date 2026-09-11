@@ -21,6 +21,15 @@ from vizrock.managers.updater import Updater
 
 logger = logging.getLogger(__name__)
 
+# Every action `handle` understands. Exposed to the UI so a trigger mapped to an
+# action that no longer exists shows up as dead rather than as silently doing nothing
+# — which is how `home` survived in the pedal config after the action was removed.
+KNOWN_ACTIONS = (
+    'go', 'goto', 'arm', 'arm_prev', 'arm_next', 'next_main', 'restart_scene',
+    'blackout', 'toggle_lights', 'clear_effects', 'light_burst', 'cycle_color',
+    'audition_scene', 'audition_lights', 'audition_end',
+)
+
 # OSC has no delivery confirmation and no heartbeat the way the lights do, so a
 # reset is sent more than once rather than trusted to land.
 EFFECT_RESET_REPEAT = 3
@@ -118,7 +127,7 @@ class Brain:
         elif action == 'blackout':
             self._toggle_blackout()
         else:
-            logger.warning('unknown action: %s', action)
+            logger.warning('unknown action: %s (known: %s)', action, ', '.join(KNOWN_ACTIONS))
 
     def boot(self):
         """
@@ -153,6 +162,8 @@ class Brain:
             'addresses': {output.name: output.address_label() for output in self.outputs},
             'output_config': vizrock_settings.outputs,
             'tap_fires': vizrock_settings.tap_fires,
+            'triggers': vizrock_settings.triggers,
+            'known_actions': list(KNOWN_ACTIONS),
             'blackout': self.blackout,
             'lights_off': self.lights_off,
             'color_index': self.color_index,
