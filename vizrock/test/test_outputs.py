@@ -36,6 +36,7 @@ def run():
     _osc_floats_and_effect_messages()
     _null_port_means_autodetect()
     _ring_wire_format()
+    _clip_is_not_retriggered()
 
 
 def _osc_floats_and_effect_messages():
@@ -229,3 +230,44 @@ def _oled_variants():
         panel.on_state({'live': 1, 'armed': 2, 'outputs': {}, 'scenes': []})
     assert OledDisplay(address='0x3D').address_label() == 'i2c 0x3d ssd1306'
     assert OledDisplay(driver='sh1106').address_label() == 'i2c 0x3c sh1106'
+
+
+def _clip_is_not_retriggered():
+    """
+    A clip already playing must not be re-connected: /connect restarts it from the top.
+
+    This matters far beyond scene changes. The brain re-dispatches every output on
+    every light-step advance, every burst and every color cycle, so without the guard
+    a scene whose lights step every 12 seconds restarts its video every 12 seconds.
+    """
+    osc = ResolumeOsc.__new__(ResolumeOsc)
+    osc.connected = None
+    sent = []
+    osc._send = lambda path, value: sent.append(path)
+
+    scene = {'resolume': {'layer': 1, 'clip': 8}}
+    osc.apply(scene)
+    assert sent == ['/composition/layers/1/clips/8/connect'], sent
+
+    # the re-dispatches that a light sequence, a burst and a color cycle all cause
+    osc.apply(scene)
+    osc.apply(scene)
+    assert len(sent) == 1, ('a redispatch must not re-fire the clip', sent)
+
+    # a different scene on the same clip: the video keeps running, only lights change
+    osc.apply({'resolume': {'layer': 1, 'clip': 8}, 'lights': {0: {'mode': 'strobe'}}})
+    assert len(sent) == 1, ('sharing a clip must be free', sent)
+
+    # restart_scene is the one thing that deliberately re-fires it
+    osc.apply({**scene, 'restart': True})
+    assert len(sent) == 2, ('restart must re-fire the clip', sent)
+
+    # a different clip always connects
+    osc.apply({'resolume': {'layer': 1, 'clip': 9}})
+    assert sent[-1] == '/composition/layers/1/clips/9/connect', sent
+
+    # after a clear, the same clip must connect again rather than being skipped
+    osc.apply({'resolume': {'clear': True}})
+    osc.apply({'resolume': {'layer': 1, 'clip': 9}})
+    assert sent[-1] == '/composition/layers/1/clips/9/connect', sent
+    assert sent.count('/composition/disconnectall') == 1, sent

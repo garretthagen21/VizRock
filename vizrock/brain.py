@@ -50,6 +50,7 @@ class Brain:
         self.lights_off = False
         self.color_index = None          # None = the scene's own hue
         self._burst_until = 0.0          # light burst expiry, monotonic
+        self._restart_visuals = False    # re-fire the clip on the next dispatch
         self._burst_timer = None
         self._light_step = 0             # position in a scene's looping light sequence
         self._light_timer = None
@@ -96,6 +97,8 @@ class Brain:
                 # button does not actually get you back to a known state.
                 self.color_index = None
                 self._cancel_burst()
+                # the only thing that re-fires a clip that is already playing
+                self._restart_visuals = True
                 self._commit(self.live, rearm=False)
         elif action == 'toggle_lights':
             self._toggle_lights()
@@ -543,7 +546,10 @@ class Brain:
         """
         effective = self._effective_scene()
         if effective is not None:
+            if self._restart_visuals:
+                effective['restart'] = True
             self._dispatch(effective)
+        self._restart_visuals = False
 
     def _dispatch(self, scene):
         """Fan a scene out to every output, each isolated so one failure cannot spread."""

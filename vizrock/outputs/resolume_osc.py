@@ -55,20 +55,38 @@ class ResolumeOsc(Output):
             raise ValueError(f'every host must be a non-empty string, got {hosts!r}')
         self.hosts = [host.strip() for host in hosts]
         self.port = _valid_port(port)
-        self.resolved = {}                 # host -> [(ip, port), ...]
+        self.resolved = {}
+        self.connected = None    # (layer, clip) currently playing                 # host -> [(ip, port), ...]
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.is_running = True
         self.thread = threading.Thread(target=self._resolve_loop, daemon=True)
         self.thread.start()
 
     def apply(self, scene):
+        """
+        Connect the scene's clip, but only when it is not the one already playing.
+
+        `/connect` on a running clip restarts it from the top, and the brain
+        re-dispatches on far more than scene changes — every light-step advance,
+        every burst, every color cycle. Without this guard a scene whose lights
+        step every 12 seconds would restart its video every 12 seconds.
+
+        It also makes sharing a clip free: several scenes can point at one video and
+        differ only in their lights, and moving between them leaves the video running.
+        `restart_scene` is the one thing that re-fires it deliberately.
+        """
         resolume = scene.get('resolume')
         if not resolume:
             return
         if resolume.get('clear'):
             self._send('/composition/disconnectall', 1)
-        else:
-            self._send(f"/composition/layers/{resolume['layer']}/clips/{resolume['clip']}/connect", 1)
+            self.connected = None
+            return
+        target = (resolume['layer'], resolume['clip'])
+        if target == self.connected and not scene.get('restart'):
+            return
+        self.connected = target
+        self._send(f"/composition/layers/{target[0]}/clips/{target[1]}/connect", 1)
 
     def status(self):
         # nothing resolved means we cannot even address a target — say so
