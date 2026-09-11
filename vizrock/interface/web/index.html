@@ -698,24 +698,37 @@ function paintLight(el, r){
   const rect=lightSvg(el);
   rect.setAttribute('stroke', col);
   // chase lights a short arc of the perimeter; everything else lights all of it
-  rect.setAttribute('stroke-dasharray', r.mode==="chase" ? `14 ${LAP-14}` : '2 3');
+  rect.setAttribute('stroke-dasharray', r.mode==="chase" ? `14 ${LAP-14}`
+                                      : r.mode==="scan"  ? `20 ${LAP-20}` : '2 3');
   const glow=1+bright*4;
   rect.style.filter=`drop-shadow(0 0 ${glow.toFixed(1)}px ${col})`;
   el.style.boxShadow="none";
   el.style.opacity=peak;
   el.style.setProperty('--peak', peak);
   const speed=Math.min(10, Math.max(0, r.speed||0));
-  const dur=(2.4-speed*0.2).toFixed(2);
-  // a square wave, not a fade — a strobe that eases is just a slow pulse
-  const anim = r.mode==="pulse"  ? `rpulse ${dur}s ease-in-out infinite`
-             : r.mode==="chase"  ? `lchase ${dur}s linear infinite`
-             : r.mode==="strobe" ? `rstrobe ${(0.62-speed*0.05).toFixed(2)}s linear infinite`
-             : "none";
+  const dur = 2.4 - speed * 0.2;
+  // mode -> [keyframe, seconds, the rest of the shorthand]. A table rather than a
+  // ternary chain because adding a mode should be one row, and because a nine-deep
+  // chain is exactly where a branch quietly ends up on the wrong keyframe.
+  // A mode absent here is static, which is correct for off and solid.
+  const LIGHT_ANIM = {
+    pulse:    ['rpulse',    dur,                'ease-in-out infinite'],
+    chase:    ['lchase',    dur,                'linear infinite'],
+    scan:     ['lscan',     dur,                'ease-in-out infinite alternate'],
+    strobe:   ['rstrobe',   0.62 - speed * 0.05, 'linear infinite'],
+    sparkle:  ['lsparkle',  1.50 - speed * 0.10, 'linear infinite'],
+    firework: ['lfirework', 1.24 - speed * 0.10, 'linear infinite'],
+    confetti: ['lconfetti', 1.24 - speed * 0.10, 'linear infinite'],
+    fire:     ['lfire',     1.40 - speed * 0.09, 'ease-in-out infinite'],
+    rainbow:  ['lrainbow',  4.00 - speed * 0.30, 'linear infinite'],
+  };
+  const spec = LIGHT_ANIM[r.mode];
+  const anim = spec ? `${spec[0]} ${spec[1].toFixed(2)}s ${spec[2]}` : "none";
   // Chase animates the dash offset on the outline itself; pulse and strobe fade the
   // whole preview. Whichever is not driving gets cleared, or a mode change leaves the
   // old animation running on the other element.
-  const target = r.mode==="chase" ? rect : el;
-  const idle   = r.mode==="chase" ? el : rect;
+  const target = RECT_MODES.has(r.mode) ? rect : el;
+  const idle   = RECT_MODES.has(r.mode) ? el : rect;
   idle.style.animation="none";
   idle.dataset.anim="none";
   // Only restart when the timing actually changed — dragging the hue slider repaints
@@ -730,7 +743,26 @@ function paintLight(el, r){
 const kf=document.createElement('style');
 kf.textContent=`@keyframes rpulse{0%,100%{opacity:calc(var(--peak,1)*.28)}50%{opacity:var(--peak,1)}}`
   +`@keyframes rstrobe{0%,49.9%{opacity:var(--peak,1)}50%,100%{opacity:.05}}`
-  +`@keyframes lchase{to{stroke-dashoffset:-${LAP}}}`;
+  +`@keyframes lchase{to{stroke-dashoffset:-${LAP}}}`
+  // sweeps half the perimeter and back rather than lapping, which is what makes it
+  // read as a scan and not a slower chase — the `alternate` above supplies the return
+  +`@keyframes lscan{to{stroke-dashoffset:-${Math.round(LAP/2)}}}`
+  +`@keyframes lsparkle{0%,100%{opacity:var(--peak,1)}20%{opacity:calc(var(--peak,1)*.35)}`
+  +`35%{opacity:var(--peak,1)}55%{opacity:calc(var(--peak,1)*.45)}`
+  +`70%{opacity:var(--peak,1)}85%{opacity:calc(var(--peak,1)*.3)}}`
+  // hard edges and two flashes a cycle — firework snaps on and off at the strobe
+  // rate rather than decaying, and the preview has to show that or it reads as sparkle
+  +`@keyframes lfirework{0%,8%{opacity:var(--peak,1)}9%,42%{opacity:.06}`
+  +`43%,50%{opacity:var(--peak,1)}51%,100%{opacity:.06}}`
+  // same cadence, but each flash lands on a different hue
+  +`@keyframes lconfetti{0%,8%{opacity:1;stroke:#ff4040}9%,42%{opacity:.06}`
+  +`43%,50%{opacity:1;stroke:#40e0ff}51%,74%{opacity:.06}`
+  +`75%,82%{opacity:1;stroke:#ffd040}83%,100%{opacity:.06}}`
+  +`@keyframes lfire{0%,100%{opacity:var(--peak,1)}15%{opacity:calc(var(--peak,1)*.72)}`
+  +`30%{opacity:calc(var(--peak,1)*.92)}45%{opacity:calc(var(--peak,1)*.6)}`
+  +`60%{opacity:calc(var(--peak,1)*.88)}80%{opacity:calc(var(--peak,1)*.7)}}`
+  +`@keyframes lrainbow{0%,100%{stroke:#ff4040}17%{stroke:#ffd040}33%{stroke:#40ff60}`
+  +`50%{stroke:#40e0ff}67%{stroke:#6040ff}83%{stroke:#ff40c0}}`;
 document.head.appendChild(kf);
 // two lines, because the readout lives inside a portrait rectangle now
 const capOf = r => r.mode==="off"
@@ -877,7 +909,13 @@ function dropOn(targetId){
   if(online && ws && ws.readyState===1) ws.send(JSON.stringify({type:"reorder", order}));
   dragId=null;
 }
-const LIGHT_MODES = ["off","solid","pulse","chase","strobe"];
+const LIGHT_MODES = ["off","solid","pulse","chase","strobe",
+                     "sparkle","firework","confetti","scan","fire","rainbow"];
+// Modes animated on the SVG outline (stroke/dash) rather than the container's
+// opacity. A mode in the wrong set leaves its animation running on the element the
+// next mode is not driving, which is the stale-animation bug the clear below exists
+// to prevent — so add to this set when adding a stroke-driven mode.
+const RECT_MODES = new Set(["chase","scan","rainbow","confetti"]);
 // Lights are keyed by peripheral and each entry may be a list of steps. The
 // inspector edits the common shape — one `default` entry, one step — and refuses to
 // touch anything richer rather than silently flattening it on the next name edit.
