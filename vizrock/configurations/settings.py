@@ -27,8 +27,6 @@ class VizRockSettings:
         self.raw = json.loads(vizrock_paths.ensure_seeded(vizrock_paths.Files.SHOW_CONFIG_FILE).read_text())
         ui = self.raw.get('ui', {})
         self.ui_port = ui.get('port', 8080)
-        # tapping a cue arms it by default; firing straight away is opt-in
-        self.tap_fires = bool(ui.get('tap_fires', False))
         # What "make the lights pop" does. A scene may override any of these; hue is
         # deliberately not overridable, so a burst never changes the color on stage.
         self.burst = {'mode': 'strobe', 'seconds': 5, 'speed': 9}
@@ -47,11 +45,6 @@ class VizRockSettings:
         # a pre-2026-09 box has outputs.rings; the output is called lights now
         if 'rings' in self.outputs and 'lights' not in self.outputs:
             self.outputs['lights'] = self.outputs.pop('rings')
-
-    def set_tap_fires(self, value):
-        self.tap_fires = bool(value)
-        self.raw.setdefault('ui', {})['tap_fires'] = self.tap_fires
-        self.save()
 
     def update_output(self, name, spec):
         """Merge into one output. The caller must rebuild it for this to take effect."""

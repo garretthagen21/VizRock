@@ -32,7 +32,7 @@ const fs = require('fs');
 const html = fs.readFileSync(process.argv[2], 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 eval(script + `\n;globalThis.__ui = {state, renderCues, renderList, renderShow, render, renderInsp, renderCues, pick(id){ selected = id; },
-  paintLight, LIGHT_MODES, RECT_MODES, kf, setLightPane};`);
+  paintLight, LIGHT_MODES, RECT_MODES, kf, setLightPane, renderPedal, renderTriggers, renderOuts};`);
 const ui = globalThis.__ui;
 const state = ui.state;
 
@@ -70,6 +70,22 @@ for (const pane of ['main', 'pop']) {
   }
 }
 ui.setLightPane('main');
+// The settings panes: the pedal grid, the leftover-trigger list, and the output rows.
+state.triggers = [
+  {midi:{kind:'pc',program:0},do:'light_burst'}, {midi:{kind:'pc',program:1},do:'arm_prev'},
+  {midi:{kind:'pc',program:2},do:'arm_next'},    {midi:{kind:'pc',program:3},do:'go'},
+  {midi:{kind:'pc',program:4},do:'cycle_color'}, {midi:{kind:'pc',program:5},do:'blackout'},
+  {midi:{kind:'pc',program:6},do:'next_main'},   {midi:{kind:'pc',program:7},do:'restart_scene'},
+  {midi:{kind:'cc',cc:20,value:127},do:'clear_effects'},   // outside the switch grid
+  {midi:{kind:'pc',program:9},do:'home'},                  // an action that no longer exists
+];
+state.known_actions = ['go','goto','arm_prev','arm_next','next_main','restart_scene',
+                       'blackout','clear_effects','light_burst','cycle_color'];
+for (const [name, fn] of [['renderPedal', ui.renderPedal], ['renderTriggers', ui.renderTriggers],
+                          ['renderOuts', ui.renderOuts]]) {
+  try { fn(); console.log('  ok   ' + name); }
+  catch (e) { failed++; console.log('  FAIL ' + name + ' -> ' + e.message); }
+}
 
 // Every mode in the dropdown must paint, name a keyframe that exists, and run that
 // animation on the element the keyframe can actually affect. The check derives the

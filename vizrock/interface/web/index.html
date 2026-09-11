@@ -342,6 +342,24 @@
   .out .led{width:8px;height:8px;border-radius:50%;background:var(--idle)}
   .out.ok .led{background:var(--live);box-shadow:0 0 8px var(--live)}
   .out.ready .led{background:var(--active);box-shadow:0 0 8px var(--active)}
+  .pedalgrid, #pedalBox{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px}
+  .sw{border:1px solid var(--line); border-radius:9px; background:var(--panel); padding:12px}
+  .swname{font-family:var(--mono); font-size:15px; font-weight:700; letter-spacing:.14em;
+    color:var(--ink); margin-bottom:10px}
+  .swrow{display:flex; align-items:center; gap:9px; margin-bottom:7px}
+  .swwhen{font-family:var(--mono); font-size:10px; letter-spacing:.14em; color:var(--muted);
+    min-width:42px}
+  .swrow select{flex:1; min-width:0; font-family:var(--mono); font-size:12px; color:var(--ink);
+    background:var(--void); border:1px solid var(--line); border-radius:6px; padding:9px}
+  .swnone{font-family:var(--mono); font-size:11px; color:var(--muted2)}
+  .trig{display:flex; align-items:center; gap:10px; padding:9px 12px; margin-bottom:7px;
+    border:1px solid var(--line); border-radius:8px; background:var(--panel);
+    font-family:var(--mono); font-size:12px}
+  .trig.bad{border-color:var(--warn)}
+  .trigwhat{font-weight:700; letter-spacing:.08em; color:var(--ink); min-width:92px}
+  .trigmsg{color:var(--muted2); font-size:10px; min-width:46px}
+  .trig select{flex:1; min-width:0; font-family:var(--mono); font-size:12px; color:var(--ink);
+    background:var(--void); border:1px solid var(--line); border-radius:6px; padding:8px 9px}
   .out{flex-wrap:wrap}
   .out .addr{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   /* A muted output keeps its connection and holds its safe-off, so it is dimmed
@@ -643,6 +661,12 @@
         </div>
 
         <!-- everything below applies to the whole show, not one scene -->
+        <div id="detailPedal" class="hidden">
+          <button class="backbtn" style="display:block" onclick="openSettings()">\u2039 SETTINGS</button>
+          <div class="sectlab">M-VAVE CHOCOLATE \u00b7 WHAT EACH PRESS FIRES</div>
+          <div id="pedalBox"></div>
+          <div class="sectlab mt">OTHER MESSAGES</div><div id="trigBox"></div>
+        </div>
         <div id="detailSettings" class="hidden">
           <div class="sectlab">GLOBAL · APPLIES TO EVERY SCENE</div>
           <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
@@ -651,16 +675,9 @@
             <span>Force every Resolume effect off. Does not move the show.</span>
             <button class="learnbtn" onclick="act('clear_effects')">CLEAR EFFECTS</button>
           </div></div>
-          <div class="sectlab mt">CUES</div>
-          <div class="upd"><div class="learn" style="margin:0;border-style:solid">
-            <div class="switchrow" style="width:100%">
-              <span class="hint">Tapping a cue fires it immediately, rather than arming it.</span>
-              <button class="switch" id="tapBtn" role="switch" aria-checked="false"
-                      aria-label="Tapping a cue fires it" onclick="toggleTapFires()"></button>
-            </div>
-          </div></div>
-          <div class="sectlab mt">TRIGGERS · M-VAVE CHOCOLATE</div>
-          <div id="trigBox"></div>
+          <div class="sectlab mt">FOOTSWITCH</div>
+          <button class="settingsbtn" style="margin:0" onclick="openPedal()">
+            \u2687 PEDAL LAYOUT \u00b7 SHORT AND LONG PRESS</button>
           <div class="sectlab mt">CONNECT</div><div id="netBox"></div>
           <div class="sectlab mt">SOFTWARE</div><div id="updBox"></div>
         </div>
@@ -678,7 +695,6 @@ const DEMO = {
   addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", lights:"/dev/light_tx (searching)"},
   output_config:{resolume:{type:"osc",hosts:["Garretts-M2-MacBook-Pro.local"],port:38200},
                  lights:{type:"serial",port:"auto"}},
-  tap_fires:false,
   triggers:[{midi:{kind:"pc",program:0},do:"next_main"},{midi:{kind:"pc",program:1},do:"arm_prev"},
             {midi:{kind:"pc",program:2},do:"arm_next"},{midi:{kind:"pc",program:3},do:"go"}],
   known_actions:["go","goto","arm","arm_prev","arm_next","next_main","restart_scene","blackout",
@@ -911,7 +927,6 @@ function render(){
   if(!document.getElementById('viewCues').classList.contains('hidden')) renderCues();
   if(!document.getElementById('viewEdit').classList.contains('hidden')){
     renderList();
-    renderTapMode();
     renderNetwork();
     renderUpdate();
     // a server echo must not yank the input out from under the operator
@@ -1013,11 +1028,13 @@ function setDetailMode(mode){
   detailMode = mode;
   document.getElementById('detailScene')?.classList.toggle('hidden', mode !== 'scene');
   document.getElementById('detailSettings')?.classList.toggle('hidden', mode !== 'settings');
+  document.getElementById('detailPedal')?.classList.toggle('hidden', mode !== 'pedal');
   document.querySelector('.settingsbtn')?.classList.toggle('on', mode === 'settings');
   const back = document.getElementById('editBack');
   if(back) back.textContent = '‹ SCENES';
 }
 function openSettings(){ setDetailMode('settings'); setEditDetail(true); }
+function openPedal(){ setDetailMode('pedal'); setEditDetail(true); renderPedal(); }
 function renderList(){
   const wrap=document.getElementById('sceneList'); wrap.innerHTML="";
   // Reordering is desktop-only: dragging with a finger fights scrolling, and a
@@ -1466,14 +1483,6 @@ function sendSceneEdit(){
   const tag=document.getElementById('savedTag');
   if(tag){ tag.classList.add('on'); setTimeout(()=>tag.classList.remove('on'),900); }
 }
-function renderTapMode(){
-  const btn=document.getElementById('tapBtn'); if(!btn) return;
-  btn.setAttribute('aria-checked', state.tap_fires ? 'true' : 'false');
-}
-function toggleTapFires(){
-  if(online && ws && ws.readyState===1)
-    ws.send(JSON.stringify({type:"set_tap_fires", value:!state.tap_fires}));
-}
 function renderNetwork(){
   const box=document.getElementById('netBox'); if(!box) return;
   const n=state.network;
@@ -1520,7 +1529,7 @@ function renderCues(){
   const grid=document.getElementById('cueGrid'); if(!grid) return;
   const hint=document.getElementById('cueHint');
   if(hint){
-    const mode = state.tap_fires ? "tap fires immediately" : "tap arms · GO fires";
+    const mode = "tap fires immediately";
     hint.classList.toggle('blacked', !!state.blackout);
     hint.textContent = state.blackout
       ? "⬛ BLACKED OUT · nothing is reaching the screen · " + mode
@@ -1538,7 +1547,9 @@ function renderCues(){
     el.className="cue"+(isLive?" live":"")+(isArmed?" armed":"");
     // arming is the safe default; firing straight from a tap is opt-in, because a
     // mis-tap that only changes what is queued costs nothing
-    el.onclick=()=>act(state.tap_fires ? 'goto' : 'arm', s.id);
+    // A tap fires. Arming from the grid was a second way to do what the pedal already
+    // does better with its foot on GO, and it meant a tap sometimes did nothing visible.
+    el.onclick=()=>act('goto', s.id);
     if(s.main) el.classList.add('home');
     const light = defaultLight(s);
     const flag = isLive?'<span class="cueflag l">LIVE</span>'
@@ -1614,24 +1625,83 @@ function flashApply(btn,text){
   setTimeout(()=>{btn.textContent=was; btn.disabled=false;},1200);
 }
 function testFire(id){ setView('show'); act("goto", id); }
-// Shows what the pedal is actually mapped to, from the brain's own config. The
-// button this replaced was theatre: it printed LISTENING then CAPTURED on a timer and
-// never sent anything, so an unmapped switch looked successfully mapped.
+// What each pedal message does, and a way to change it. The action a message fires is
+// ours; what the pedal *sends* is the pedal's, set in its own editor — so this edits the
+// first and only reports the second.
+const ACTION_LABELS = {
+  go:'GO \u00b7 fire what is armed', goto:'Jump to a scene',
+  arm_prev:'Previous scene', arm_next:'Next scene',
+  next_main:'Next main loop', restart_scene:'Restart this scene',
+  blackout:'Blackout', clear_effects:'Clear effects',
+  light_burst:'POP \u00b7 make the lights pop', cycle_color:'Cycle the colour',
+  audition_scene:'Hold to preview a scene', audition_lights:'Hold to preview lights',
+  audition_end:'Release a preview',
+};
+const actionLabel = a => ACTION_LABELS[a] || a;
+// Our convention is short on PC 0-3 and long on PC 4-7. Name it that way when it fits
+// and stay quiet when it does not, rather than asserting a layout the pedal may not have.
+function switchLabel(midi){
+  if(midi.kind!=='pc' || midi.program===undefined) return '';
+  const p=midi.program;
+  if(p>=0 && p<=3) return `SW${p+1} \u00b7 SHORT`;
+  if(p>=4 && p<=7) return `SW${p-3} \u00b7 LONG`;
+  return '';
+}
 function renderTriggers(){
   const box=document.getElementById('trigBox'); if(!box) return;
-  const rows=state.triggers||[];
-  if(!rows.length){ box.innerHTML=`<div class="learn"><span>no triggers mapped</span></div>`; return;
-  }
+  // only what the switch grid above could not place
+  const rows=(state.triggers||[]).map((r,i)=>({...r, i}))
+    .filter(r => !((r.midi||{}).kind==='pc' && r.midi.program>=0 && r.midi.program<=7));
+  if(!rows.length){ box.innerHTML=`<div class="learn"><span>none \u2014 every message is a switch above</span></div>`; return; }
+  const known=state.known_actions||[];
   box.innerHTML=rows.map(r=>{
     const m=r.midi||{};
     const what=m.kind==="pc" ? `PC ${m.program}`
              : m.kind==="cc" ? `CC ${m.cc}${m.value!==undefined?"="+m.value:""}`
              : m.kind==="note" ? `NOTE ${m.note}` : JSON.stringify(m);
-    const known=(state.known_actions||[]).length===0 || (state.known_actions||[]).includes(r.do);
-    return `<div class="learn"><span>${what} → <b${known?"":' style="color:var(--warn)"'}>${r.do}</b>`
-         + `${known?"":" · unknown action, does nothing"}</span></div>`;
+    const missing = known.length && !known.includes(r.do);
+    return `<div class="trig${missing?' bad':''}">
+      <span class="trigwhat">${what}</span>
+      <span class="trigmsg">${esc(m.kind||'')}</span>
+      ${actionSelect(r.i, r.do)}
+    </div>`;
   }).join("");
 }
+// The pedal as it sits on the floor: four switches, each with a short and a long press.
+// Our convention is short on PC 0-3 and long on PC 4-7, so a trigger is located by the
+// message it listens for. Anything outside that convention is listed separately rather
+// than being forced into a grid it does not belong in.
+function triggerIndexFor(program){
+  return (state.triggers||[]).findIndex(r => (r.midi||{}).kind==='pc'
+                                          && (r.midi||{}).program===program);
+}
+function actionSelect(index, current){
+  const known=state.known_actions||[];
+  const missing = known.length && !known.includes(current);
+  const opts=(known.length?known:[current]).map(a=>
+    `<option value="${a}"${a===current?" selected":""}>${esc(actionLabel(a))}</option>`).join("")
+    + (missing?`<option value="${esc(current)}" selected>${esc(current)} \u2014 unknown</option>`:"");
+  return `<select onchange="setTriggerAction(${index}, this.value)">${opts}</select>`;
+}
+function renderPedal(){
+  const box=document.getElementById('pedalBox'); if(!box) return;
+  box.innerHTML=[0,1,2,3].map(n=>{
+    const rows=[['SHORT', triggerIndexFor(n)], ['LONG', triggerIndexFor(n+4)]].map(([when,i])=>{
+      const row=(state.triggers||[])[i];
+      return `<div class="swrow"><span class="swwhen">${when}</span>`
+        + (row ? actionSelect(i, row.do)
+               : `<span class="swnone">not mapped \u00b7 PC ${when==='SHORT'?n:n+4}</span>`)
+        + `</div>`;
+    }).join("");
+    return `<div class="sw"><div class="swname">SW${n+1}</div>${rows}</div>`;
+  }).join("");
+  renderTriggers();
+}
+function setTriggerAction(index, action){
+  if(!(online && ws && ws.readyState===1)) return;
+  ws.send(JSON.stringify({type:"set_trigger_action", index, action}));
+}
+
 function blip(){ const b=document.getElementById('blip'); if(!b)return; b.classList.add('hit'); setTimeout(()=>b.classList.remove('hit'),120); }
 function setView(v){
   ['show','cues','edit'].forEach(name=>{
@@ -1642,7 +1712,7 @@ function setView(v){
   document.getElementById('sharedTransport').classList.toggle('hidden', v==='edit');
   if(v==='show') renderShow();
   else if(v==='cues') renderCues();
-  else { setEditDetail(editShowingDetail); setDetailMode(detailMode); renderList(); renderInsp(); renderOuts(); renderTapMode(); renderTriggers(); renderNetwork(); renderUpdate(); }
+  else { setEditDetail(editShowingDetail); setDetailMode(detailMode); renderList(); renderInsp(); renderOuts(); renderTriggers(); renderNetwork(); renderUpdate(); }
 }
 // ---- on-screen keyboard (on-box panel only) ----
 // Fallback for a panel with no keyboard of its own. Only the display attached to
@@ -1755,7 +1825,7 @@ window.act=act; window.setView=setView; window.testFire=testFire;
 window.dropOn=dropOn; window.toggleMain=toggleMain;
 window.setLightTab=setLightTab; window.setLightStep=setLightStep;
 window.addPeripheral=addPeripheral; window.removePeripheral=removePeripheral;
-window.copyToPeripheral=copyToPeripheral; window.setLightPane=setLightPane; window.togglePopOverride=togglePopOverride; window.togglePopColor=togglePopColor; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.setOutputEnabled=setOutputEnabled; window.renderCues=renderCues; window.toggleTapFires=toggleTapFires; window.askUpdate=askUpdate;
+window.copyToPeripheral=copyToPeripheral; window.setLightPane=setLightPane; window.togglePopOverride=togglePopOverride; window.togglePopColor=togglePopColor; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.openSettings=openSettings; window.applyOutput=applyOutput; window.setOutputEnabled=setOutputEnabled; window.setTriggerAction=setTriggerAction; window.openPedal=openPedal; window.renderPedal=renderPedal; window.renderCues=renderCues; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>

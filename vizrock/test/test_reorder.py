@@ -57,7 +57,7 @@ def _follows_live_and_armed():
     brain = Brain()
     brain.handle('goto', 3)
     assert brain.live == 3
-    brain.handle('arm', 2)
+    brain.armed = 2                   # a cue tap fires now, so ARMED is set by stepping
 
     brain.reorder([3, 2])            # flat: 3 -> 1, 2 -> 2, and the omitted 1 -> 3
 

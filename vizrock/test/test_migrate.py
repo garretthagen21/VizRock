@@ -26,7 +26,7 @@ def _adds_without_clobbering():
     """
     live = {'ui': {'port': 8080},
             'outputs': {'resolume': {'hosts': ['mine.local'], 'port': 38200}}}
-    example = {'ui': {'port': 8080, 'tap_fires': False},
+    example = {'ui': {'port': 8080, 'example_flag': False},
                'outputs': {'resolume': {'hosts': ['placeholder.local'], 'port': 7000,
                                         'enabled': True}},
                'midi_inputs': ['SINCO']}
@@ -35,10 +35,10 @@ def _adds_without_clobbering():
 
     assert live['outputs']['resolume']['hosts'] == ['mine.local'], 'clobbered a tuned host'
     assert live['outputs']['resolume']['port'] == 38200, 'clobbered a tuned port'
-    assert live['ui']['tap_fires'] is False, 'new nested key not added'
+    assert live['ui']['example_flag'] is False, 'new nested key not added'
     assert live['outputs']['resolume']['enabled'] is True, 'new nested key not added'
     assert live['midi_inputs'] == ['SINCO'], 'new top-level key not added'
-    assert sorted(added) == ['midi_inputs', 'outputs.resolume.enabled', 'ui.tap_fires'], added
+    assert sorted(added) == ['midi_inputs', 'outputs.resolume.enabled', 'ui.example_flag'], added
 
 
 def _leaves_a_current_config_alone():

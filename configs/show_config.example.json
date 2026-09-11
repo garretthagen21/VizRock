@@ -1,7 +1,6 @@
 {
   "ui": {
-    "port": 8080,
-    "tap_fires": false
+    "port": 8080
   },
   "midi_inputs": [
     "SINCO"

@@ -88,7 +88,6 @@ def run():
     assert midi.match_trigger(message(type='note_on', note=60, velocity=100)) is None, \
         'notes are not mapped on this pedal'
 
-    _arm_is_display_only()
     _blackout_is_a_toggle()
     _lights_are_a_separate_switch()
     _boots_dark_with_the_opener_loaded()
@@ -105,45 +104,6 @@ def run():
 
     snapshot = brain.snapshot()
     assert 'addresses' in snapshot and 'output_config' in snapshot
-
-
-def _arm_is_display_only():
-    """
-    Tapping a cue arms it — it must never dispatch. A mis-tap that only changes
-    what is queued costs nothing; one that fires a visual costs the song.
-    """
-    brain = Brain()
-    fired = []
-
-    class Spy:
-        name = 'spy'
-
-        def apply(self, scene):
-            fired.append(scene['id'])
-
-        def on_state(self, snapshot):
-            pass
-
-        def status(self):
-            return 'ok'
-
-        def address_label(self):
-            return ''
-
-    brain.outputs = [Spy()]
-
-    brain.handle('arm', 3)
-    assert brain.armed == 3, brain.armed
-    assert brain.live is None, 'arming must not change LIVE'
-    assert not fired, 'arming must not reach the outputs'
-
-    brain.handle('go')
-    assert brain.live == 3 and fired == [3], (brain.live, fired)
-
-    # whatever the auto-arm landed on, a missing scene must not move it
-    armed_before = brain.armed
-    brain.handle('arm', 99)
-    assert brain.armed == armed_before, 'arming a missing scene must be a no-op'
 
 
 def _blackout_is_a_toggle():
@@ -749,7 +709,7 @@ def _blackout_is_a_master_mute():
     # scene reaching the stage.
     assert set(sent) <= {'Blackout'}, f'a scene leaked while blacked out: {sent}'
 
-    brain.handle('arm', 3)
+    brain.armed = 3              # a cue tap fires now; ARMED is set by stepping
     brain.handle('go')
     assert brain.blackout is True and brain.live == 3
     assert set(sent) <= {'Blackout'}, f'a scene leaked while blacked out: {sent}'

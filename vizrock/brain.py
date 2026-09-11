@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # action that no longer exists shows up as dead rather than as silently doing nothing
 # — which is how `home` survived in the pedal config after the action was removed.
 KNOWN_ACTIONS = (
-    'go', 'goto', 'arm', 'arm_prev', 'arm_next', 'next_main', 'restart_scene',
+    'go', 'goto', 'arm_prev', 'arm_next', 'next_main', 'restart_scene',
     'blackout', 'clear_effects', 'light_burst', 'cycle_color',
     'audition_scene', 'audition_lights', 'audition_end',
 )
@@ -79,8 +79,6 @@ class Brain:
             self._arm_step(+1)
         elif action == 'arm_prev':
             self._arm_step(-1)
-        elif action == 'arm':
-            self._arm(scene)
         elif action == 'go':
             self._commit(self.armed)
         elif action == 'goto':
@@ -157,7 +155,6 @@ class Brain:
             'outputs': {output.name: output.status() for output in self.outputs},
             'addresses': {output.name: output.address_label() for output in self.outputs},
             'output_config': vizrock_settings.outputs,
-            'tap_fires': vizrock_settings.tap_fires,
             'triggers': vizrock_settings.triggers,
             'burst': vizrock_settings.burst,
             'known_actions': list(KNOWN_ACTIONS),
@@ -613,6 +610,26 @@ class Brain:
                 effective['restart'] = True
             self._dispatch(effective)
         self._restart_visuals = False
+
+    def set_trigger_action(self, index, action):
+        """
+        Point one already-mapped MIDI message at a different action.
+
+        Only the action changes: what the pedal *sends* is the pedal's business, and
+        rewriting that from here would silently diverge from the hardware.
+        """
+        triggers = vizrock_settings.triggers
+        if not 0 <= index < len(triggers):
+            logger.warning('no trigger at index %s', index)
+            return
+        if action not in KNOWN_ACTIONS:
+            logger.warning('refusing to map a trigger to unknown action %s', action)
+            return
+        triggers[index]['do'] = action
+        vizrock_settings.save()
+        self.last_event = f'trigger {index + 1} → {action}'
+        logger.info('trigger %s now fires %s', index + 1, action)
+        self.push_state()
 
     def _output_enabled(self, name):
         return bool(vizrock_settings.outputs.get(name, {}).get('enabled', True))
