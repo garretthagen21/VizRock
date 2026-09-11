@@ -276,10 +276,31 @@ def _light_overrides_have_one_precedence():
     brain.handle('goto', 2)
     sent.clear()
 
-    # burst swaps the mode and keeps the hue
+    # burst swaps the mode and, with no colour of its own, leaves the scene's alone
     brain.handle('light_burst')
     assert sent[-1]['mode'] == 'strobe', sent[-1]
-    assert sent[-1]['hue'] == 200, 'a burst must never change the color'
+    assert sent[-1]['hue'] == 200, 'a burst with no colour must not change the color'
+
+    # ...but a burst that names a colour interjects it, because a pop is a whole
+    # light command and not only a change of movement
+    brain.scene_library.scenes[2]['burst'] = {'mode': 'solid', 'hue': 0, 'seconds': 1}
+    brain.handle('light_burst')
+    assert sent[-1]['hue'] == 0, ('a burst that names a hue must win', sent[-1])
+
+    # a scene palette would otherwise outrank the burst hue downstream, since the
+    # receiver takes its colour from the palette and ignores hue when one is set
+    brain.scene_library.scenes[2]['lights'] = {
+        'default': {'mode': 'confetti', 'hue': 200, 'bright': 90, 'speed': 2,
+                    'colors': [96, 160]}}
+    brain.handle('goto', 2)
+    brain.handle('light_burst')
+    assert 'colors' not in sent[-1], ('a burst colour must clear the scene palette', sent[-1])
+    assert sent[-1]['hue'] == 0, sent[-1]
+    del brain.scene_library.scenes[2]['burst']
+    brain.scene_library.scenes[2]['lights'] = {
+        'default': {'mode': 'solid', 'hue': 200, 'bright': 90, 'speed': 2}}
+    brain.handle('goto', 2)
+    brain.handle('light_burst')
 
     # an explicit mute outranks the running burst
     brain.handle('toggle_lights')

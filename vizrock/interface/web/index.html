@@ -953,15 +953,14 @@ function dropOn(targetId){
   if(online && ws && ws.readyState===1) ws.send(JSON.stringify({type:"reorder", order}));
   dragId=null;
 }
-// Modes grouped by how long you can hold them. The distinction is duty cycle and
-// how hard the transitions are: a BED moves smoothly and never fully cuts, so it can
-// run for minutes; a HIT cuts the whole strip on and off and fatigues the eye in
-// seconds. Authoring a 15s strobe step is the mistake this grouping exists to stop.
+// Section headers, the way an iOS list groups rows — a hint about a mode's character,
+// not a rule about where it may be used. Any mode works as a bed, a hit or a pop, at
+// any colour for any duration; the grouping just puts like next to like while you scan.
 const LIGHT_TIERS = [
   ['', ['off']],
-  ['BED \u00b7 hold for minutes',      ['solid','pulse','chase','scan','progress','fire','rainbow']],
-  ['TEXTURE \u00b7 holds, reads busy', ['sparkle','confetti']],
-  ['HIT \u00b7 seconds, not minutes',  ['strobe','firework']],
+  ['BED',     ['solid','pulse','chase','scan','progress','fire','rainbow']],
+  ['TEXTURE', ['sparkle','confetti']],
+  ['HIT',     ['strobe','firework']],
 ];
 const LIGHT_MODES = LIGHT_TIERS.flatMap(([, modes]) => modes);
 // Fill time by speed for `progress`, mirroring FILL_MS in LightReceiver. Round
@@ -1106,7 +1105,7 @@ function renderInsp(){
         <input type="range" id="f_speed" min="0" max="10" value="${r.speed??0}">
         ${steps.length>1?`<div class="rowlab"><span>hold</span><span id="l_secs">${r.seconds??8}s</span></div>
         <input type="range" id="f_secs" min="1" max="60" value="${r.seconds??8}">`:''}
-        ${r.mode==='confetti'?`<div class="rowlab"><span>colors</span><span id="l_pal"></span></div>
+        ${r.mode!=='off'?`<div class="rowlab"><span>colors</span><span id="l_pal"></span></div>
         <div class="palrow" id="palRow"></div>`:''}
       </div>
       <button class="auditionbtn" id="audLights" data-audition="audition_lights">HOLD TO AUDITION LIGHTS</button>

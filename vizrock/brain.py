@@ -500,13 +500,22 @@ class Brain:
         if self.color_index is not None and vizrock_settings.palette:
             light['hue'] = vizrock_settings.palette[self.color_index]
         if self._burst_until > time.monotonic():
-            # the burst changes how the lights move, never what color they are, so
-            # hue is pointedly not taken from the spec
+            # A burst is a whole light command interjected for a moment, so it can
+            # carry colour as well as movement. It only does so when the spec says
+            # to — with no colour of its own it leaves the scene's alone, which is
+            # what makes the common case a change of movement rather than of look.
             burst = self._burst_spec()
             light['mode'] = burst.get('mode', 'strobe')
             for key in ('speed', 'bright'):
                 if key in burst:
                     light[key] = burst[key]
+            if 'hue' in burst or 'colors' in burst:
+                # replace the colour outright. Leaving a scene palette in place would
+                # silently outrank a burst hue, since a palette overrides hue downstream.
+                light.pop('colors', None)
+                for key in ('hue', 'colors'):
+                    if key in burst:
+                        light[key] = burst[key]
         return light
 
     def _all_off(self):
