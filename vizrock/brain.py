@@ -104,7 +104,6 @@ class Brain:
                 # sequence from step 1, the scene's own hue, no burst running. A
                 # color picked by hand mid-set must not survive a restart, or the
                 # button does not actually get you back to a known state.
-                self.color_index = None
                 self._cancel_burst()
                 # the only thing that re-fires a clip that is already playing
                 self._restart_visuals = True
@@ -673,6 +672,10 @@ class Brain:
             logger.warning('commit to missing scene %s', scene_id)
             return
         self.live = scene_id
+        # A colour cycled by hand is a momentary fiddle, not a setting: it dies at the
+        # next cue so every scene comes up the colour it was authored. Without this a
+        # colour picked during one song quietly repainted the rest of the set.
+        self.color_index = None
         # Every cue starts from a clean composition. OSC is fire-and-forget, so an
         # effect left on because its reset was dropped would be a stuck visual for
         # the rest of the song — cheaper to re-assert than to hope.

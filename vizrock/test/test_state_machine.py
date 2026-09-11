@@ -239,6 +239,17 @@ def _lights_are_a_separate_switch():
 
     assert lights_sent[-1]['lights'][0]['mode'] != 'off', 'lights come back'
 
+    # A cycled colour is momentary: any cue clears it, so a colour picked during one
+    # song cannot quietly repaint the rest of the set.
+    brain.handle('goto', 2)
+    brain.handle('cycle_color')
+    assert brain.color_index is not None, 'cycling must take effect'
+    brain.handle('goto', 3)
+    assert brain.color_index is None, 'a cue must clear a hand-picked colour'
+    brain.handle('cycle_color')
+    brain.handle('restart_scene')
+    assert brain.color_index is None, 'restart must clear it too'
+
     # blackout is still the momentary panic control, and outranks everything
     brain.handle('blackout')
     assert visuals_sent[-1].get('resolume', {}).get('clear') is True, visuals_sent[-1]
