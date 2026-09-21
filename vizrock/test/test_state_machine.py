@@ -100,6 +100,7 @@ def run():
     _every_peripheral_reaches_all_its_steps()
     _commit_reset_ignores_the_incoming_scene_override()
     _reset_covers_scene_effects_without_a_configured_list()
+    _a_once_step_fires_exactly_once()
     _restart_refires_without_rearming()
     _next_main_is_a_dead_button_with_no_mains()
 
@@ -680,6 +681,47 @@ def _reset_covers_scene_effects_without_a_configured_list():
         vizrock_settings.burst = burst
 
 
+def _a_once_step_fires_exactly_once():
+    """
+    A `once` step must not come round again.
+
+    Pink Pony's drop opens on a strobe stab and then runs a sequence for the rest of
+    the song. The step counter is monotonic and wrapped with a modulo, so without
+    `once` the stab reappears every cycle — on stage, a strobe firing at a random bar
+    for the rest of the song.
+
+    The scene is built here rather than read from the config: scenes.json is rewritten
+    by the UI at runtime, so a test that depends on an authored scene passes or fails
+    on what someone last saved.
+    """
+    from vizrock.configurations.settings import vizrock_settings
+
+    brain = Brain()
+    group = vizrock_settings.light_groups.get('default', 0)
+    brain.scene_library.scenes[3]['lights'] = {'default': [
+        {'mode': 'strobe',  'hue': 224, 'bright': 255, 'speed': 9, 'seconds': 3, 'once': True},
+        {'mode': 'chase',   'hue': 224, 'bright': 180, 'speed': 6, 'seconds': 10},
+        {'mode': 'sparkle', 'hue': 224, 'bright': 160, 'speed': 7, 'seconds': 10},
+    ]}
+    brain.handle('goto', 3)
+
+    def live_mode():
+        return brain._effective_scene()['lights'][group]['mode']
+
+    seen = [live_mode()]
+    for _ in range(60):
+        brain._advance_light_step()
+        seen.append(live_mode())
+    assert seen[0] == 'strobe', seen[:4]
+    assert seen.count('strobe') == 1, \
+        f'the stab fired {seen.count("strobe")} times: {seen[:12]}'
+    assert set(seen[1:]) == {'chase', 'sparkle'}, sorted(set(seen[1:]))
+
+    # a cue is the one thing that legitimately re-arms it
+    brain.handle('goto', 3)
+    assert live_mode() == 'strobe', 'a fresh cue must fire the stab again'
+
+
 def _restart_refires_without_rearming():
     brain = Brain()
     brain.handle('goto', 2)
@@ -781,31 +823,39 @@ def _scene_effects():
         name = 'visuals'
         def apply(self, scene): pass
         def send_messages(self, messages, repeat=1):
-            sent.extend(m['address'] for m in messages)
+            sent.extend((m['address'], m.get('value')) for m in messages)
         def status(self): return 'ok'
         def address_label(self): return ''
         def close(self): pass
 
+    def addresses():
+        return [address for address, _ in sent]
+
     brain.outputs = [EffectSpy()]
-    brain.scene_library.scenes[2]['osc'] = [{'address': '/echo/on', 'value': 1.0}]
+    # 0 switches this fake effect on, matching Resolume's `bypassed` — which is the
+    # only thing VizRock ever flips, and what the derived reset assumes.
+    brain.scene_library.scenes[2]['osc'] = [{'address': '/echo/on', 'value': 0}]
     brain.blackout = False
 
     sent.clear()
     brain.handle('goto', 2)
-    assert '/echo/on' in sent, ('a scene must fire its own effects', sent)
+    assert ('/echo/on', 0) in sent, ('a scene must fire its own effects', sent)
 
-    # a scene without effects fires none of its own, but the reset still runs
+    # The next cue must actively switch it off. It is not enough for the incoming scene
+    # to stay silent about it — nothing tells the brain what the last one left running,
+    # so the reset names every address any scene can turn on.
     sent.clear()
     brain.scene_library.scenes[3].pop('osc', None)
     brain.handle('goto', 3)
-    assert '/echo/on' not in sent, ('an effect must not survive the next cue', sent)
+    assert ('/echo/on', 1) in sent, ('an effect must be switched off by the next cue', sent)
+    assert ('/echo/on', 0) not in sent, ('...and must not be switched back on', sent)
 
     # blackout suppresses them: a stuck parameter on an invisible composition is
     # exactly the kind of thing that surprises someone two songs later
     sent.clear()
     brain.blackout = True
     brain.handle('goto', 2)
-    assert '/echo/on' not in sent, ('blackout must suppress scene effects', sent)
+    assert ('/echo/on', 0) not in sent, ('blackout must suppress scene effects', sent)
     brain.blackout = False
 
     # with osc_seconds the effect is a burst that clears itself; without it the effect
@@ -829,7 +879,8 @@ def _scene_effects():
     live, armed = brain.live, brain.armed
     sent.clear()
     brain.handle('clear_effects')
-    assert sent and all('bypassed' in a for a in sent), ('must send the reset', sent)
+    assert sent and all('bypassed' in a or a == '/echo/on' for a in addresses()), \
+        ('must send the reset', sent)
     assert (brain.live, brain.armed) == (live, armed), 'clearing effects must not move the show'
 
     # blackout is the panic control, so it has to take effects down too — otherwise it

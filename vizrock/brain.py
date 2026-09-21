@@ -488,7 +488,7 @@ class Brain:
         flips; anything needing a different off value has to be explicit.
         """
         reset = {}
-        for scene in self.scene_library.scenes:
+        for scene in self.scene_library.scenes.values():
             for message in scene.get('osc') or ():
                 if message.get('address'):
                     reset[message['address']] = 1
