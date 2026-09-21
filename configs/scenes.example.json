@@ -340,7 +340,7 @@
     },
     {
       "id": 17,
-      "name": "Soft Rock Loop",
+      "name": "Creep Loop",
       "resolume": {
         "layer": 1,
         "clip": 17
@@ -361,10 +361,30 @@
     },
     {
       "id": 18,
-      "name": "Drop C Loop",
+      "name": "Sweet Child Skit",
       "resolume": {
         "layer": 1,
         "clip": 18
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 32,
+          "bright": 70,
+          "speed": 2
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 19,
+      "name": "Sweet Child - Since U Been Gone Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 19
       },
       "dmx": {
         "cue": "off"
@@ -381,11 +401,11 @@
       "main": true
     },
     {
-      "id": 19,
+      "id": 20,
       "name": "Dyings Alright Intro",
       "resolume": {
         "layer": 1,
-        "clip": 19
+        "clip": 20
       },
       "dmx": {
         "cue": "off"
@@ -402,11 +422,11 @@
       "audio": false
     },
     {
-      "id": 20,
+      "id": 21,
       "name": "Dyings Alright Drop",
       "resolume": {
         "layer": 1,
-        "clip": 20
+        "clip": 21
       },
       "dmx": {
         "cue": "off"
@@ -423,11 +443,11 @@
       "audio": false
     },
     {
-      "id": 21,
+      "id": 22,
       "name": "Dyings Alright Outro",
       "resolume": {
         "layer": 1,
-        "clip": 21
+        "clip": 22
       },
       "dmx": {
         "cue": "off"
@@ -444,11 +464,11 @@
       "audio": false
     },
     {
-      "id": 22,
+      "id": 23,
       "name": "Letter Lost Intro",
       "resolume": {
         "layer": 1,
-        "clip": 22
+        "clip": 23
       },
       "dmx": {
         "cue": "off"
@@ -464,11 +484,11 @@
       "audio": false
     },
     {
-      "id": 23,
+      "id": 24,
       "name": "Letter Lost Drop",
       "resolume": {
         "layer": 1,
-        "clip": 23
+        "clip": 24
       },
       "dmx": {
         "cue": "off"
@@ -484,11 +504,11 @@
       "audio": false
     },
     {
-      "id": 24,
+      "id": 25,
       "name": "Letter Lost Outro",
       "resolume": {
         "layer": 1,
-        "clip": 24
+        "clip": 25
       },
       "dmx": {
         "cue": "off"
@@ -504,11 +524,11 @@
       "audio": false
     },
     {
-      "id": 25,
+      "id": 26,
       "name": "Letter Lost Blast",
       "resolume": {
         "layer": 1,
-        "clip": 25
+        "clip": 26
       },
       "dmx": {
         "cue": "off"
@@ -524,11 +544,11 @@
       "audio": false
     },
     {
-      "id": 26,
+      "id": 27,
       "name": "Cursor",
       "resolume": {
         "layer": 1,
-        "clip": 26
+        "clip": 27
       },
       "dmx": {
         "cue": "off"
@@ -541,11 +561,11 @@
       "audio": false
     },
     {
-      "id": 27,
-      "name": "Fat Lip Encore Loop",
+      "id": 28,
+      "name": "Fat Lip - Small Things Loop",
       "resolume": {
         "layer": 1,
-        "clip": 27
+        "clip": 28
       },
       "dmx": {
         "cue": "off"
