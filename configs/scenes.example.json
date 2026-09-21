@@ -166,10 +166,10 @@
       },
       "lights": {
         "default": {
-          "mode": "solid",
-          "hue": 200,
-          "bright": 110,
-          "speed": 0
+          "mode": "tempo",
+          "hue": 0,
+          "bright": 200,
+          "speed": 165
         }
       },
       "audio": false
@@ -187,9 +187,9 @@
       "lights": {
         "default": {
           "mode": "strobe",
-          "hue": 200,
           "bright": 220,
-          "speed": 8
+          "speed": 8,
+          "colors": "0,0,0,96"
         }
       },
       "audio": false
@@ -207,9 +207,9 @@
       "lights": {
         "default": {
           "mode": "pulse",
-          "hue": 200,
           "bright": 110,
-          "speed": 2
+          "speed": 2,
+          "colors": "0,0,0,0,96"
         }
       },
       "audio": false
