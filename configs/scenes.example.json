@@ -15,10 +15,7 @@
       },
       "lights": {
         "default": {
-          "mode": "pulse",
-          "hue": 160,
-          "bright": 100,
-          "speed": 2
+          "mode": "off"
         }
       },
       "audio": false
@@ -35,10 +32,7 @@
       },
       "lights": {
         "default": {
-          "mode": "solid",
-          "hue": 0,
-          "bright": 110,
-          "speed": 0
+          "mode": "off"
         }
       },
       "audio": false
@@ -55,10 +49,7 @@
       },
       "lights": {
         "default": {
-          "mode": "strobe",
-          "hue": 0,
-          "bright": 220,
-          "speed": 8
+          "mode": "off"
         }
       },
       "audio": false
@@ -74,22 +65,9 @@
         "cue": "off"
       },
       "lights": {
-        "default": [
-          {
-            "mode": "pulse",
-            "hue": 40,
-            "bright": 90,
-            "speed": 2,
-            "seconds": 12
-          },
-          {
-            "mode": "chase",
-            "hue": 64,
-            "bright": 110,
-            "speed": 3,
-            "seconds": 8
-          }
-        ]
+        "default": {
+          "mode": "off"
+        }
       },
       "audio": false,
       "main": true
@@ -225,22 +203,12 @@
         "cue": "off"
       },
       "lights": {
-        "default": [
-          {
-            "mode": "pulse",
-            "hue": 30,
-            "bright": 90,
-            "speed": 2,
-            "seconds": 12
-          },
-          {
-            "mode": "chase",
-            "hue": 54,
-            "bright": 110,
-            "speed": 3,
-            "seconds": 8
-          }
-        ]
+        "default": {
+          "mode": "chase",
+          "hue": 32,
+          "bright": 70,
+          "speed": 2
+        }
       },
       "audio": false,
       "main": true
@@ -316,22 +284,12 @@
         "cue": "off"
       },
       "lights": {
-        "default": [
-          {
-            "mode": "pulse",
-            "hue": 140,
-            "bright": 90,
-            "speed": 2,
-            "seconds": 12
-          },
-          {
-            "mode": "chase",
-            "hue": 164,
-            "bright": 110,
-            "speed": 3,
-            "seconds": 8
-          }
-        ]
+        "default": {
+          "mode": "chase",
+          "hue": 32,
+          "bright": 70,
+          "speed": 2
+        }
       },
       "audio": false,
       "main": true
@@ -347,92 +305,22 @@
         "cue": "off"
       },
       "lights": {
-        "default": [
-          {
-            "mode": "pulse",
-            "hue": 8,
-            "bright": 90,
-            "speed": 2,
-            "seconds": 12
-          },
-          {
-            "mode": "chase",
-            "hue": 32,
-            "bright": 110,
-            "speed": 3,
-            "seconds": 8
-          }
-        ]
+        "default": {
+          "mode": "chase",
+          "hue": 32,
+          "bright": 70,
+          "speed": 2
+        }
       },
       "audio": false,
       "main": true
     },
     {
       "id": 17,
-      "name": "Letter Lost Intro",
-      "resolume": {
-        "layer": 1,
-        "clip": 17
-      },
-      "dmx": {
-        "cue": "off"
-      },
-      "lights": {
-        "default": {
-          "mode": "solid",
-          "hue": 32,
-          "bright": 110,
-          "speed": 0
-        }
-      },
-      "audio": false
-    },
-    {
-      "id": 18,
-      "name": "Letter Lost Drop",
-      "resolume": {
-        "layer": 1,
-        "clip": 18
-      },
-      "dmx": {
-        "cue": "off"
-      },
-      "lights": {
-        "default": {
-          "mode": "strobe",
-          "bright": 220,
-          "speed": 8,
-          "colors": "32,128"
-        }
-      },
-      "audio": false
-    },
-    {
-      "id": 19,
-      "name": "Letter Lost Outro",
-      "resolume": {
-        "layer": 1,
-        "clip": 19
-      },
-      "dmx": {
-        "cue": "off"
-      },
-      "lights": {
-        "default": {
-          "mode": "pulse",
-          "hue": 128,
-          "bright": 110,
-          "speed": 2
-        }
-      },
-      "audio": false
-    },
-    {
-      "id": 20,
       "name": "Dyings Alright Intro",
       "resolume": {
         "layer": 1,
-        "clip": 20
+        "clip": 17
       },
       "dmx": {
         "cue": "off"
@@ -449,11 +337,11 @@
       "audio": false
     },
     {
-      "id": 21,
+      "id": 18,
       "name": "Dyings Alright Drop",
       "resolume": {
         "layer": 1,
-        "clip": 21
+        "clip": 18
       },
       "dmx": {
         "cue": "off"
@@ -470,11 +358,11 @@
       "audio": false
     },
     {
-      "id": 22,
+      "id": 19,
       "name": "Dyings Alright Outro",
       "resolume": {
         "layer": 1,
-        "clip": 22
+        "clip": 19
       },
       "dmx": {
         "cue": "off"
@@ -491,8 +379,68 @@
       "audio": false
     },
     {
+      "id": 20,
+      "name": "Letter Lost Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 20
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "solid",
+          "hue": 32,
+          "bright": 110,
+          "speed": 0
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 21,
+      "name": "Letter Lost Drop",
+      "resolume": {
+        "layer": 1,
+        "clip": 21
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "strobe",
+          "bright": 220,
+          "speed": 8,
+          "colors": "32,128"
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 22,
+      "name": "Letter Lost Outro",
+      "resolume": {
+        "layer": 1,
+        "clip": 22
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "pulse",
+          "hue": 128,
+          "bright": 110,
+          "speed": 2
+        }
+      },
+      "audio": false
+    },
+    {
       "id": 23,
-      "name": "Fat Lip Encore Loop",
+      "name": "Letter Lost Blast",
       "resolume": {
         "layer": 1,
         "clip": 23
@@ -501,22 +449,49 @@
         "cue": "off"
       },
       "lights": {
-        "default": [
-          {
-            "mode": "pulse",
-            "hue": 40,
-            "bright": 90,
-            "speed": 2,
-            "seconds": 12
-          },
-          {
-            "mode": "chase",
-            "hue": 64,
-            "bright": 110,
-            "speed": 3,
-            "seconds": 8
-          }
-        ]
+        "default": {
+          "mode": "firework",
+          "bright": 255,
+          "speed": 9,
+          "sat": 0
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 24,
+      "name": "Cursor",
+      "resolume": {
+        "layer": 1,
+        "clip": 24
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "off"
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 25,
+      "name": "Fat Lip Encore Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 25
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 32,
+          "bright": 70,
+          "speed": 2
+        }
       },
       "audio": false,
       "main": true
