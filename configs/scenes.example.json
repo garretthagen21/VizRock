@@ -258,7 +258,7 @@
       "lights": {
         "default": {
           "mode": "solid",
-          "hue": 224,
+          "hue": 192,
           "bright": 110,
           "speed": 0
         }
@@ -278,9 +278,9 @@
       "lights": {
         "default": {
           "mode": "strobe",
-          "hue": 224,
           "bright": 220,
-          "speed": 8
+          "speed": 8,
+          "colors": "192,160"
         }
       },
       "audio": false
@@ -298,7 +298,7 @@
       "lights": {
         "default": {
           "mode": "pulse",
-          "hue": 224,
+          "hue": 160,
           "bright": 110,
           "speed": 2
         }
@@ -380,7 +380,7 @@
       "lights": {
         "default": {
           "mode": "solid",
-          "hue": 176,
+          "hue": 32,
           "bright": 110,
           "speed": 0
         }
@@ -400,9 +400,9 @@
       "lights": {
         "default": {
           "mode": "strobe",
-          "hue": 176,
           "bright": 220,
-          "speed": 8
+          "speed": 8,
+          "colors": "32,128"
         }
       },
       "audio": false
@@ -420,7 +420,7 @@
       "lights": {
         "default": {
           "mode": "pulse",
-          "hue": 176,
+          "hue": 128,
           "bright": 110,
           "speed": 2
         }
@@ -440,9 +440,10 @@
       "lights": {
         "default": {
           "mode": "solid",
-          "hue": 64,
+          "hue": 0,
           "bright": 110,
-          "speed": 0
+          "speed": 0,
+          "sat": 0
         }
       },
       "audio": false
@@ -462,7 +463,8 @@
           "mode": "strobe",
           "hue": 64,
           "bright": 220,
-          "speed": 8
+          "speed": 8,
+          "sat": 255
         }
       },
       "audio": false
@@ -482,7 +484,8 @@
           "mode": "pulse",
           "hue": 64,
           "bright": 110,
-          "speed": 2
+          "speed": 2,
+          "sat": 255
         }
       },
       "audio": false
