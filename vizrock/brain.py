@@ -246,7 +246,7 @@ class Brain:
             # every output off has to mean effects too — otherwise a blackout hides
             # the clip and leaves the effect running on nothing
             self._cancel_scene_effect()
-            self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT, scene_override=False)
+            self._send_reset()
         self.last_event = 'blackout · press again to restore' if self.blackout else 'blackout off'
         logger.info(self.last_event)
         self._render()
@@ -454,19 +454,38 @@ class Brain:
             self._burst_timer = None
         self._burst_until = 0.0
 
-    def _send_effects(self, key, repeat=1, scene_override=True):
+    def _effect_reset(self):
         """
-        Fire the burst's OSC at whichever output can carry it.
+        Every effect address the show can switch on, set back to bypassed.
 
-        `scene_override=False` reads the global spec only. The commit-time reset needs
-        that: by then LIVE is already the *incoming* scene, so a per-scene `osc_end`
-        would send the new scene's reset for an effect the old one turned on.
+        Derived from the scenes rather than maintained by hand. A scene declares only
+        what it turns *on*, and nothing tells the brain what the previous one left
+        running, so the reset has to name every address in the show — and a hand-kept
+        list silently stops covering the show the moment someone adds an effect to a
+        scene and forgets. An empty one means effects never clear at all.
 
-        Duck-typed on `send_messages` rather than looking for the visuals output by
-        name — brain.py must not special-case a particular output.
+        `burst.osc_end` in show_config.json is merged over the top, so it can still
+        name an address no scene mentions or override the off value for one that does.
+        The derived value is always 1 because `bypassed` is the only thing VizRock
+        flips; anything needing a different off value has to be explicit.
         """
-        spec = self._burst_spec() if scene_override else vizrock_settings.burst
-        self._send_osc(spec.get(key), repeat=repeat)
+        reset = {}
+        for scene in self.scene_library.scenes:
+            for message in scene.get('osc') or ():
+                if message.get('address'):
+                    reset[message['address']] = 1
+        for message in vizrock_settings.burst.get('osc_end') or ():
+            if message.get('address'):
+                reset[message['address']] = message.get('value', 1)
+        return [{'address': a, 'value': v} for a, v in reset.items()]
+
+    def _send_reset(self):
+        """Take every effect in the show down. Safe to over-send; OSC has no ack."""
+        self._send_osc(self._effect_reset(), repeat=EFFECT_RESET_REPEAT)
+
+    def _send_effects(self, key, repeat=1):
+        """Fire the burst's OSC at whichever output can carry it."""
+        self._send_osc(self._burst_spec().get(key), repeat=repeat)
 
     def _send_osc(self, messages, repeat=1):
         """
@@ -496,7 +515,7 @@ class Brain:
         this is the one that does nothing else, so it is safe to hit mid-song.
         """
         self._cancel_scene_effect()
-        self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT, scene_override=False)
+        self._send_reset()
         self.last_event = 'effects cleared'
         logger.info(self.last_event)
         self.push_state()
@@ -514,7 +533,7 @@ class Brain:
         what to turn on, and only the global list knows how to turn everything off.
         """
         self._scene_effect_timer = None
-        self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT, scene_override=False)
+        self._send_reset()
 
     def _end_burst(self):
         self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT)
@@ -699,7 +718,7 @@ class Brain:
         # Every cue starts from a clean composition. OSC is fire-and-forget, so an
         # effect left on because its reset was dropped would be a stuck visual for
         # the rest of the song — cheaper to re-assert than to hope.
-        self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT, scene_override=False)
+        self._send_reset()
         self._restart_light_loop()
         scene = self.scene_library.scenes[scene_id]
         # say what was actually targeted — "which clip did it fire?" is the first

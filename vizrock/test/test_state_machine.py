@@ -99,6 +99,7 @@ def run():
     _boot_mutes_outputs_even_with_no_scenes()
     _every_peripheral_reaches_all_its_steps()
     _commit_reset_ignores_the_incoming_scene_override()
+    _reset_covers_scene_effects_without_a_configured_list()
     _restart_refires_without_rearming()
     _next_main_is_a_dead_button_with_no_mains()
 
@@ -629,6 +630,52 @@ def _commit_reset_ignores_the_incoming_scene_override():
         assert '/global/reset' in fired, fired
         assert '/scene3/only' not in fired, \
             f'the incoming scene must not supply the reset: {fired}'
+    finally:
+        vizrock_settings.burst = burst
+
+
+def _reset_covers_scene_effects_without_a_configured_list():
+    """
+    A scene's effect has to clear even when `burst.osc_end` is empty.
+
+    The reset is the only thing that turns effects off — a scene says what to switch
+    on and nothing says what the last one left running. When that list was kept by
+    hand an empty one meant effects never cleared at all, and the first scene to turn
+    one on owned it for the rest of the night.
+    """
+    from vizrock.configurations.settings import vizrock_settings
+
+    fired = []
+
+    class Spy:
+        name = 'resolume'
+
+        def apply(self, scene):
+            pass
+
+        def send_messages(self, messages, repeat=1):
+            fired.extend(m.get('address') for m in messages)
+
+        def on_state(self, _):
+            pass
+
+        def status(self):
+            return 'ok'
+
+        def address_label(self):
+            return ''
+
+    burst = dict(vizrock_settings.burst)
+    vizrock_settings.burst = {k: v for k, v in burst.items() if k != 'osc_end'}
+    try:
+        brain = Brain()
+        brain.outputs = [Spy()]
+        brain.scene_library.scenes[2]['osc'] = [
+            {'address': '/composition/video/effects/glitch/bypassed', 'value': 0}]
+        fired.clear()
+        brain.handle('goto', 3)
+        assert '/composition/video/effects/glitch/bypassed' in fired, \
+            f'an effect any scene can switch on must be in the reset: {fired}'
     finally:
         vizrock_settings.burst = burst
 
