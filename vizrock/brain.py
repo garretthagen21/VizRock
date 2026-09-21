@@ -357,6 +357,24 @@ class Brain:
         """`default` if present, otherwise whichever entry was written first."""
         return 'default' if 'default' in configs else next(iter(configs))
 
+    @staticmethod
+    def _step_index(steps, count):
+        """
+        Map the monotonic step counter to a position, dropping `once` steps after the
+        first pass.
+
+        A plain modulo cannot express "a stab, then a loop" — it replays the stab every
+        cycle. This lets a scene open on a strobe at the drop and settle into a sequence
+        that never fires it again.
+        """
+        total = len(steps)
+        if count < total:
+            return count                      # the first pass visits everything
+        loop = [i for i, step in enumerate(steps) if not step.get('once')]
+        if not loop:
+            return total - 1                  # every step was a one-shot: hold the last
+        return loop[(count - total) % len(loop)]
+
     def _light_steps(self, scene):
         """The default peripheral's steps — what drives the loop timing."""
         configs = self._light_configs(scene)
@@ -375,7 +393,7 @@ class Brain:
         steps = self._light_steps(scene)
         if len(steps) < 2:
             return                        # nothing to cycle through
-        step = steps[self._light_step % len(steps)]
+        step = steps[self._step_index(steps, self._light_step)]
         seconds = float(step.get('seconds', vizrock_settings.light_step_seconds) or 0)
         if seconds <= 0:
             return                        # 0 means hold here rather than advance
@@ -564,7 +582,7 @@ class Brain:
         Precedence is blackout > lights off > burst > color override > the scene.
         The burst never sets hue, so a color chosen by hand survives one.
         """
-        light = dict(steps[self._light_step % len(steps)])
+        light = dict(steps[self._step_index(steps, self._light_step)])
         light.pop('seconds', None)        # timing is ours, not the wire's
         if self.color_index is not None and vizrock_settings.palette:
             light['hue'] = vizrock_settings.palette[self.color_index]

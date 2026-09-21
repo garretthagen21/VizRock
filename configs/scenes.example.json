@@ -275,7 +275,7 @@
     },
     {
       "id": 15,
-      "name": "Soft Rock Loop",
+      "name": "Pink Pony Intro",
       "resolume": {
         "layer": 1,
         "clip": 15
@@ -285,21 +285,65 @@
       },
       "lights": {
         "default": {
-          "mode": "chase",
-          "hue": 32,
-          "bright": 70,
-          "speed": 2
+          "mode": "solid",
+          "hue": 224,
+          "bright": 130,
+          "speed": 0
         }
       },
-      "audio": false,
-      "main": true
+      "audio": false
     },
     {
       "id": 16,
-      "name": "Drop C Loop",
+      "name": "Pink Pony Drop",
       "resolume": {
         "layer": 1,
         "clip": 16
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "strobe",
+            "hue": 224,
+            "bright": 255,
+            "speed": 9,
+            "seconds": 3,
+            "once": true
+          },
+          {
+            "mode": "chase",
+            "hue": 224,
+            "bright": 180,
+            "speed": 6,
+            "seconds": 10
+          },
+          {
+            "mode": "sparkle",
+            "hue": 224,
+            "bright": 160,
+            "speed": 7,
+            "seconds": 10
+          },
+          {
+            "mode": "pulse",
+            "hue": 224,
+            "bright": 150,
+            "speed": 5,
+            "seconds": 10
+          }
+        ]
+      },
+      "audio": false
+    },
+    {
+      "id": 17,
+      "name": "Soft Rock Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 17
       },
       "dmx": {
         "cue": "off"
@@ -316,11 +360,32 @@
       "main": true
     },
     {
-      "id": 17,
+      "id": 18,
+      "name": "Drop C Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 18
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 32,
+          "bright": 70,
+          "speed": 2
+        }
+      },
+      "audio": false,
+      "main": true
+    },
+    {
+      "id": 19,
       "name": "Dyings Alright Intro",
       "resolume": {
         "layer": 1,
-        "clip": 17
+        "clip": 19
       },
       "dmx": {
         "cue": "off"
@@ -337,11 +402,11 @@
       "audio": false
     },
     {
-      "id": 18,
+      "id": 20,
       "name": "Dyings Alright Drop",
       "resolume": {
         "layer": 1,
-        "clip": 18
+        "clip": 20
       },
       "dmx": {
         "cue": "off"
@@ -358,11 +423,11 @@
       "audio": false
     },
     {
-      "id": 19,
+      "id": 21,
       "name": "Dyings Alright Outro",
       "resolume": {
         "layer": 1,
-        "clip": 19
+        "clip": 21
       },
       "dmx": {
         "cue": "off"
@@ -379,11 +444,11 @@
       "audio": false
     },
     {
-      "id": 20,
+      "id": 22,
       "name": "Letter Lost Intro",
       "resolume": {
         "layer": 1,
-        "clip": 20
+        "clip": 22
       },
       "dmx": {
         "cue": "off"
@@ -399,11 +464,11 @@
       "audio": false
     },
     {
-      "id": 21,
+      "id": 23,
       "name": "Letter Lost Drop",
       "resolume": {
         "layer": 1,
-        "clip": 21
+        "clip": 23
       },
       "dmx": {
         "cue": "off"
@@ -419,11 +484,11 @@
       "audio": false
     },
     {
-      "id": 22,
+      "id": 24,
       "name": "Letter Lost Outro",
       "resolume": {
         "layer": 1,
-        "clip": 22
+        "clip": 24
       },
       "dmx": {
         "cue": "off"
@@ -439,11 +504,11 @@
       "audio": false
     },
     {
-      "id": 23,
+      "id": 25,
       "name": "Letter Lost Blast",
       "resolume": {
         "layer": 1,
-        "clip": 23
+        "clip": 25
       },
       "dmx": {
         "cue": "off"
@@ -459,11 +524,11 @@
       "audio": false
     },
     {
-      "id": 24,
+      "id": 26,
       "name": "Cursor",
       "resolume": {
         "layer": 1,
-        "clip": 24
+        "clip": 26
       },
       "dmx": {
         "cue": "off"
@@ -476,11 +541,11 @@
       "audio": false
     },
     {
-      "id": 25,
+      "id": 27,
       "name": "Fat Lip Encore Loop",
       "resolume": {
         "layer": 1,
-        "clip": 25
+        "clip": 27
       },
       "dmx": {
         "cue": "off"
