@@ -139,7 +139,12 @@ class LightSerial(Output):
 
 def _palette(light):
     """
-    The palette field of a LIGHT line: '-', 'random', or up to eight hues.
+    The palette field of a LIGHT line: '-', 'random', or up to eight entries.
+
+    An entry is a hue, or 'w' for white — which is the only way to get white pixels
+    among coloured ones, since `sat` applies to a whole step. A scene writes white as
+    the string 'w'/'white' or as None, and it occupies a slot like any hue, so a
+    repeated entry still weights it: [0, 0, 'w'] is one white in three.
 
     Scatter modes take their colour from here rather than from `hue`. Anything
     unparseable degrades to '-' (the scene's own hue) rather than raising — this
@@ -150,8 +155,13 @@ def _palette(light):
         return 'random'
     if not isinstance(colors, (list, tuple)) or not colors:
         return '-'
-    hues = [int(c) & 0xFF for c in colors[:8] if isinstance(c, (int, float))]
-    return ','.join(str(h) for h in hues) if hues else '-'
+    out = []
+    for c in colors[:8]:
+        if c is None or (isinstance(c, str) and c.strip().lower() in ('w', 'white')):
+            out.append('w')
+        elif isinstance(c, (int, float)) and not isinstance(c, bool):
+            out.append(str(int(c) & 0xFF))
+    return ','.join(out) if out else '-'
 
 
 def _saturation(light):
