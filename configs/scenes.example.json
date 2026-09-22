@@ -90,7 +90,7 @@
     },
     {
       "id": 5,
-      "name": "Machine Intro",
+      "name": "Machine Intro Skit",
       "resolume": {
         "layer": 1,
         "clip": 5
@@ -100,9 +100,9 @@
       },
       "lights": {
         "default": {
-          "mode": "solid",
+          "mode": "sparkle",
           "hue": 96,
-          "bright": 110,
+          "bright": 25,
           "speed": 0
         }
       },
@@ -110,7 +110,8 @@
       "burst": {
         "mode": "pulse",
         "seconds": 1,
-        "bright": 128
+        "bright": 200,
+        "speed": 10
       }
     },
     {
@@ -124,20 +125,24 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "strobe",
-          "hue": 96,
-          "bright": 220,
-          "speed": 8
-        }
+        "default": [
+          {
+            "mode": "pulse",
+            "hue": 96,
+            "bright": 255,
+            "speed": 6,
+            "seconds": 2
+          },
+          {
+            "mode": "progress",
+            "hue": 96,
+            "bright": 220,
+            "speed": 2,
+            "seconds": 0
+          }
+        ]
       },
-      "audio": false,
-      "burst": {
-        "mode": "strobe",
-        "seconds": 1,
-        "speed": 9,
-        "bright": 255
-      }
+      "audio": false
     },
     {
       "id": 7,
@@ -150,24 +155,70 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "pulse",
-          "hue": 96,
-          "bright": 110,
-          "speed": 2
-        }
+        "default": [
+          {
+            "mode": "pulse",
+            "colors": [
+              96,
+              96,
+              96,
+              96,
+              96,
+              96,
+              96,
+              0
+            ],
+            "hue": 96,
+            "bright": 100,
+            "speed": 3,
+            "seconds": 14
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              96,
+              96,
+              96,
+              96,
+              0
+            ],
+            "hue": 96,
+            "bright": 150,
+            "speed": 5,
+            "seconds": 12
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              96,
+              96,
+              96,
+              0
+            ],
+            "hue": 96,
+            "bright": 200,
+            "speed": 6,
+            "seconds": 10
+          },
+          {
+            "mode": "strobe",
+            "colors": [
+              96,
+              96,
+              0
+            ],
+            "hue": 96,
+            "bright": 250,
+            "speed": 5,
+            "seconds": 8
+          }
+        ]
       },
-      "audio": false,
-      "burst": {
-        "mode": "strobe",
-        "seconds": 0.5,
-        "speed": 9,
-        "bright": 255
-      }
+      "audio": false
     },
     {
       "id": 8,
-      "name": "Man Intro",
+      "name": "Machine Transition",
       "resolume": {
         "layer": 1,
         "clip": 8
@@ -177,23 +228,18 @@
       },
       "lights": {
         "default": {
-          "mode": "tempo",
-          "hue": 0,
-          "bright": 200,
-          "speed": 165
+          "mode": "off"
         }
       },
       "audio": false,
       "burst": {
-        "mode": "strobe",
-        "seconds": 0.5,
-        "speed": 9,
-        "bright": 255
+        "mode": "off",
+        "seconds": 1
       }
     },
     {
       "id": 9,
-      "name": "Man Drop",
+      "name": "Man Intro",
       "resolume": {
         "layer": 1,
         "clip": 9
@@ -203,22 +249,24 @@
       },
       "lights": {
         "default": {
-          "mode": "strobe",
+          "mode": "tempo",
+          "hue": 0,
           "bright": 220,
-          "speed": 8,
-          "colors": "0,0,0,96"
+          "speed": 165
         }
       },
       "audio": false,
       "burst": {
-        "mode": "solid",
-        "seconds": 1,
-        "bright": 255
+        "mode": "strobe",
+        "seconds": 0.5,
+        "bright": 255,
+        "sat": 0,
+        "speed": 9
       }
     },
     {
       "id": 10,
-      "name": "Man Breakdown",
+      "name": "Man Drop",
       "resolume": {
         "layer": 1,
         "clip": 10
@@ -228,22 +276,23 @@
       },
       "lights": {
         "default": {
-          "mode": "pulse",
-          "bright": 110,
-          "speed": 2,
-          "colors": "0,0,0,0,96"
+          "mode": "firework",
+          "hue": 0,
+          "sat": 0,
+          "bright": 255,
+          "speed": 2
         }
       },
       "audio": false,
       "burst": {
         "mode": "solid",
         "seconds": 1,
-        "bright": 255
+        "speed": 0
       }
     },
     {
       "id": 11,
-      "name": "Savior-Hysteria Loop",
+      "name": "Man Pre-Verse",
       "resolume": {
         "layer": 1,
         "clip": 11
@@ -253,21 +302,242 @@
       },
       "lights": {
         "default": {
-          "mode": "chase",
-          "hue": 32,
-          "bright": 70,
-          "speed": 2
+          "mode": "confetti",
+          "hue": 179,
+          "bright": 212,
+          "speed": 7,
+          "colors": [
+            96,
+            0
+          ]
         }
       },
       "audio": false,
-      "main": true
+      "burst": {
+        "mode": "firework",
+        "seconds": 1,
+        "bright": 255,
+        "speed": 9
+      },
+      "main": false
     },
     {
       "id": 12,
-      "name": "St Redacted Intro",
+      "name": "Man Main",
       "resolume": {
         "layer": 1,
         "clip": 12
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "chase",
+            "colors": [
+              0,
+              0,
+              0,
+              96
+            ],
+            "hue": 0,
+            "bright": 150,
+            "speed": 5,
+            "seconds": 16
+          },
+          {
+            "mode": "pulse",
+            "colors": [
+              0,
+              0,
+              96
+            ],
+            "hue": 0,
+            "bright": 170,
+            "speed": 4,
+            "seconds": 12
+          },
+          {
+            "mode": "scan",
+            "colors": [
+              0,
+              0,
+              0,
+              96
+            ],
+            "hue": 0,
+            "bright": 180,
+            "speed": 5,
+            "seconds": 14
+          },
+          {
+            "mode": "noise",
+            "colors": [
+              0,
+              0,
+              0,
+              96
+            ],
+            "hue": 0,
+            "bright": 120,
+            "speed": 4,
+            "seconds": 14
+          },
+          {
+            "mode": "glitch",
+            "colors": [
+              0,
+              0,
+              96
+            ],
+            "hue": 0,
+            "bright": 160,
+            "speed": 5,
+            "seconds": 10
+          },
+          {
+            "mode": "progress",
+            "colors": [
+              0,
+              96
+            ],
+            "hue": 0,
+            "bright": 130,
+            "speed": 7,
+            "seconds": 14
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              0,
+              0,
+              96
+            ],
+            "hue": 0,
+            "bright": 200,
+            "speed": 7,
+            "seconds": 12
+          }
+        ]
+      },
+      "audio": false,
+      "burst": {
+        "mode": "strobe",
+        "seconds": 1,
+        "bright": 255,
+        "speed": 9
+      }
+    },
+    {
+      "id": 13,
+      "name": "Man Soft",
+      "resolume": {
+        "layer": 1,
+        "clip": 13
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "progress",
+            "colors": [
+              0,
+              0,
+              96
+            ],
+            "hue": 0,
+            "sat": 200,
+            "bright": 120,
+            "speed": 5,
+            "seconds": 45
+          },
+          {
+            "mode": "heartbeat",
+            "colors": [
+              0,
+              0,
+              96
+            ],
+            "hue": 0,
+            "sat": 200,
+            "bright": 130,
+            "speed": 4,
+            "seconds": 0
+          }
+        ]
+      },
+      "burst": {
+        "mode": "off",
+        "seconds": 1
+      },
+      "audio": false
+    },
+    {
+      "id": 14,
+      "name": "Man Breakdown",
+      "resolume": {
+        "layer": 1,
+        "clip": 14
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "confetti",
+          "colors": [
+            0,
+            0,
+            96
+          ],
+          "hue": 0,
+          "bright": 255,
+          "speed": 10
+        }
+      },
+      "audio": false,
+      "burst": {
+        "mode": "solid",
+        "seconds": 1,
+        "speed": 0
+      }
+    },
+    {
+      "id": 15,
+      "name": "Savior-Hysteria Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 15
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 30,
+          "sat": 180,
+          "bright": 70,
+          "speed": 3
+        }
+      },
+      "audio": false,
+      "main": true,
+      "burst": {
+        "mode": "strobe",
+        "seconds": 1,
+        "speed": 9
+      }
+    },
+    {
+      "id": 16,
+      "name": "St Redacted Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 16
       },
       "dmx": {
         "cue": "off"
@@ -285,15 +555,16 @@
         "mode": "glitch",
         "seconds": 1,
         "hue": 96,
-        "bright": 200
+        "bright": 200,
+        "speed": 6
       }
     },
     {
-      "id": 13,
+      "id": 17,
       "name": "St Redacted Drop",
       "resolume": {
         "layer": 1,
-        "clip": 13
+        "clip": 17
       },
       "dmx": {
         "cue": "off"
@@ -301,9 +572,12 @@
       "lights": {
         "default": {
           "mode": "strobe",
+          "colors": [
+            192,
+            160
+          ],
           "bright": 220,
-          "speed": 8,
-          "colors": "192,160"
+          "speed": 8
         }
       },
       "audio": false,
@@ -311,15 +585,16 @@
         "mode": "glitch",
         "seconds": 1,
         "hue": 96,
-        "bright": 200
+        "bright": 200,
+        "speed": 6
       }
     },
     {
-      "id": 14,
+      "id": 18,
       "name": "St Redacted Outro",
       "resolume": {
         "layer": 1,
-        "clip": 14
+        "clip": 18
       },
       "dmx": {
         "cue": "off"
@@ -337,15 +612,16 @@
         "mode": "glitch",
         "seconds": 1,
         "hue": 96,
-        "bright": 200
+        "bright": 200,
+        "speed": 6
       }
     },
     {
-      "id": 15,
+      "id": 19,
       "name": "Pink Pony Intro",
       "resolume": {
         "layer": 1,
-        "clip": 15
+        "clip": 19
       },
       "dmx": {
         "cue": "off"
@@ -362,15 +638,16 @@
       "burst": {
         "mode": "firework",
         "seconds": 1,
-        "bright": 255
+        "bright": 255,
+        "speed": 9
       }
     },
     {
-      "id": 16,
+      "id": 20,
       "name": "Pink Pony Drop",
       "resolume": {
         "layer": 1,
-        "clip": 16
+        "clip": 20
       },
       "dmx": {
         "cue": "off"
@@ -412,101 +689,13 @@
       "burst": {
         "mode": "firework",
         "seconds": 1,
-        "bright": 255
-      }
-    },
-    {
-      "id": 17,
-      "name": "Creep Loop",
-      "resolume": {
-        "layer": 1,
-        "clip": 17
-      },
-      "dmx": {
-        "cue": "off"
-      },
-      "lights": {
-        "default": {
-          "mode": "chase",
-          "hue": 32,
-          "bright": 70,
-          "speed": 2
-        }
-      },
-      "audio": false,
-      "main": true
-    },
-    {
-      "id": 18,
-      "name": "Sweet Child Skit",
-      "resolume": {
-        "layer": 1,
-        "clip": 18
-      },
-      "dmx": {
-        "cue": "off"
-      },
-      "lights": {
-        "default": {
-          "mode": "chase",
-          "hue": 32,
-          "bright": 70,
-          "speed": 2
-        }
-      },
-      "audio": false
-    },
-    {
-      "id": 19,
-      "name": "Sweet Child - Since U Been Gone Loop",
-      "resolume": {
-        "layer": 1,
-        "clip": 19
-      },
-      "dmx": {
-        "cue": "off"
-      },
-      "lights": {
-        "default": {
-          "mode": "chase",
-          "hue": 32,
-          "bright": 70,
-          "speed": 2
-        }
-      },
-      "audio": false,
-      "main": true
-    },
-    {
-      "id": 20,
-      "name": "Dyings Alright Intro",
-      "resolume": {
-        "layer": 1,
-        "clip": 20
-      },
-      "dmx": {
-        "cue": "off"
-      },
-      "lights": {
-        "default": {
-          "mode": "solid",
-          "hue": 0,
-          "bright": 110,
-          "speed": 0,
-          "sat": 0
-        }
-      },
-      "audio": false,
-      "burst": {
-        "mode": "solid",
-        "seconds": 1,
-        "sat": 0,
-        "bright": 255
+        "bright": 255,
+        "speed": 9
       }
     },
     {
       "id": 21,
-      "name": "Dyings Alright Drop",
+      "name": "Creep Loop",
       "resolume": {
         "layer": 1,
         "clip": 21
@@ -516,24 +705,24 @@
       },
       "lights": {
         "default": {
-          "mode": "strobe",
-          "hue": 64,
-          "bright": 220,
-          "speed": 8,
-          "sat": 255
+          "mode": "chase",
+          "hue": 30,
+          "sat": 180,
+          "bright": 70,
+          "speed": 3
         }
       },
       "audio": false,
       "burst": {
-        "mode": "solid",
+        "mode": "strobe",
         "seconds": 1,
-        "sat": 0,
-        "bright": 255
-      }
+        "speed": 9
+      },
+      "main": true
     },
     {
       "id": 22,
-      "name": "Dyings Alright Outro",
+      "name": "Sweet Child Skit",
       "resolume": {
         "layer": 1,
         "clip": 22
@@ -543,11 +732,64 @@
       },
       "lights": {
         "default": {
-          "mode": "pulse",
-          "hue": 64,
-          "bright": 110,
-          "speed": 2,
-          "sat": 255
+          "mode": "chase",
+          "hue": 30,
+          "sat": 180,
+          "bright": 70,
+          "speed": 3
+        }
+      },
+      "audio": false,
+      "burst": {
+        "mode": "strobe",
+        "seconds": 1,
+        "speed": 9
+      }
+    },
+    {
+      "id": 23,
+      "name": "Sweet Child - Since U Gone Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 23
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 30,
+          "sat": 180,
+          "bright": 70,
+          "speed": 3
+        }
+      },
+      "audio": false,
+      "burst": {
+        "mode": "strobe",
+        "seconds": 1,
+        "speed": 9
+      },
+      "main": true
+    },
+    {
+      "id": 24,
+      "name": "Dyings Alright Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 24
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "progress",
+          "hue": 0,
+          "sat": 0,
+          "bright": 120,
+          "speed": 3
         }
       },
       "audio": false,
@@ -559,58 +801,8 @@
       }
     },
     {
-      "id": 23,
-      "name": "Letter Lost Intro",
-      "resolume": {
-        "layer": 1,
-        "clip": 23
-      },
-      "dmx": {
-        "cue": "off"
-      },
-      "lights": {
-        "default": {
-          "mode": "solid",
-          "hue": 32,
-          "bright": 110,
-          "speed": 0
-        }
-      },
-      "audio": false,
-      "burst": {
-        "mode": "firework",
-        "seconds": 1,
-        "bright": 255
-      }
-    },
-    {
-      "id": 24,
-      "name": "Letter Lost Drop",
-      "resolume": {
-        "layer": 1,
-        "clip": 24
-      },
-      "dmx": {
-        "cue": "off"
-      },
-      "lights": {
-        "default": {
-          "mode": "strobe",
-          "bright": 220,
-          "speed": 8,
-          "colors": "32,128"
-        }
-      },
-      "audio": false,
-      "burst": {
-        "mode": "firework",
-        "seconds": 1,
-        "bright": 255
-      }
-    },
-    {
       "id": 25,
-      "name": "Letter Lost Outro",
+      "name": "Dyings Alright Drop",
       "resolume": {
         "layer": 1,
         "clip": 25
@@ -620,22 +812,23 @@
       },
       "lights": {
         "default": {
-          "mode": "pulse",
-          "hue": 128,
-          "bright": 110,
-          "speed": 2
+          "mode": "strobe",
+          "hue": 64,
+          "bright": 220,
+          "speed": 8
         }
       },
       "audio": false,
       "burst": {
-        "mode": "firework",
+        "mode": "solid",
         "seconds": 1,
+        "sat": 0,
         "bright": 255
       }
     },
     {
       "id": 26,
-      "name": "Letter Lost Blast",
+      "name": "Dyings Alright Outro",
       "resolume": {
         "layer": 1,
         "clip": 26
@@ -645,20 +838,207 @@
       },
       "lights": {
         "default": {
-          "mode": "firework",
-          "bright": 255,
-          "speed": 9,
-          "sat": 0
+          "mode": "solid",
+          "colors": [
+            64,
+            64,
+            64,
+            96
+          ],
+          "bright": 140
         }
+      },
+      "audio": false,
+      "burst": {
+        "mode": "solid",
+        "seconds": 1,
+        "sat": 0,
+        "bright": 255
+      }
+    },
+    {
+      "id": 27,
+      "name": "Letter Lost Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 27
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "theater",
+            "colors": [
+              32,
+              24
+            ],
+            "hue": 32,
+            "sat": 255,
+            "bright": 140,
+            "speed": 3,
+            "seconds": 16
+          },
+          {
+            "mode": "wave",
+            "colors": [
+              32
+            ],
+            "hue": 32,
+            "sat": 230,
+            "bright": 120,
+            "speed": 2,
+            "seconds": 14
+          }
+        ]
+      },
+      "audio": false,
+      "main": false
+    },
+    {
+      "id": 28,
+      "name": "Letter Lost Drop",
+      "resolume": {
+        "layer": 1,
+        "clip": 28
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "solid",
+            "hue": 0,
+            "sat": 0,
+            "bright": 255,
+            "speed": 0,
+            "seconds": 1
+          },
+          {
+            "mode": "strobe",
+            "hue": 0,
+            "sat": 0,
+            "bright": 245,
+            "speed": 8,
+            "seconds": 4
+          },
+          {
+            "mode": "firework",
+            "hue": 0,
+            "sat": 0,
+            "bright": 210,
+            "speed": 5,
+            "seconds": 0
+          }
+        ]
+      },
+      "audio": false,
+      "burst": {
+        "mode": "solid",
+        "seconds": 0.5,
+        "bright": 255,
+        "sat": 0,
+        "speed": 0
+      }
+    },
+    {
+      "id": 29,
+      "name": "Letter Lost Outro",
+      "resolume": {
+        "layer": 1,
+        "clip": 29
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "noise",
+            "hue": 0,
+            "sat": 0,
+            "bright": 90,
+            "speed": 2,
+            "seconds": 20
+          },
+          {
+            "mode": "sparkle",
+            "hue": 0,
+            "sat": 30,
+            "bright": 70,
+            "speed": 1,
+            "seconds": 10
+          },
+          {
+            "mode": "pulse",
+            "hue": 32,
+            "sat": 255,
+            "bright": 125,
+            "speed": 2,
+            "seconds": 3
+          },
+          {
+            "mode": "noise",
+            "hue": 0,
+            "sat": 0,
+            "bright": 80,
+            "speed": 2,
+            "seconds": 18
+          },
+          {
+            "mode": "pulse",
+            "hue": 0,
+            "sat": 255,
+            "bright": 140,
+            "speed": 3,
+            "seconds": 3
+          },
+          {
+            "mode": "noise",
+            "hue": 0,
+            "sat": 0,
+            "bright": 70,
+            "speed": 1,
+            "seconds": 22
+          }
+        ]
       },
       "audio": false
     },
     {
-      "id": 27,
-      "name": "Cursor",
+      "id": 30,
+      "name": "Letter Lost Blast",
       "resolume": {
         "layer": 1,
-        "clip": 27
+        "clip": 30
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "firework",
+          "sat": 0,
+          "bright": 255,
+          "speed": 9
+        }
+      },
+      "audio": false,
+      "burst": {
+        "mode": "solid",
+        "seconds": 1,
+        "sat": 0,
+        "bright": 255
+      }
+    },
+    {
+      "id": 31,
+      "name": "Cursor Intro Skit",
+      "resolume": {
+        "layer": 1,
+        "clip": 31
       },
       "dmx": {
         "cue": "off"
@@ -675,11 +1055,11 @@
       }
     },
     {
-      "id": 28,
+      "id": 32,
       "name": "Fat Lip - Small Things Loop",
       "resolume": {
         "layer": 1,
-        "clip": 28
+        "clip": 32
       },
       "dmx": {
         "cue": "off"
@@ -687,13 +1067,175 @@
       "lights": {
         "default": {
           "mode": "chase",
-          "hue": 32,
+          "hue": 30,
+          "sat": 180,
           "bright": 70,
-          "speed": 2
+          "speed": 3
         }
       },
       "audio": false,
-      "main": true
+      "main": true,
+      "burst": {
+        "mode": "strobe",
+        "seconds": 1,
+        "speed": 9
+      }
+    },
+    {
+      "id": 33,
+      "name": "TEST white max",
+      "resolume": {
+        "layer": 1,
+        "clip": 33
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "solid",
+          "hue": 0,
+          "bright": 255,
+          "speed": 0
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 34,
+      "name": "TEST strobe max",
+      "resolume": {
+        "layer": 1,
+        "clip": 34
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "strobe",
+          "hue": 0,
+          "bright": 255,
+          "speed": 10
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 35,
+      "name": "TEST chase fast",
+      "resolume": {
+        "layer": 1,
+        "clip": 35
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 96,
+          "bright": 200,
+          "speed": 10
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 36,
+      "name": "TEST chase slow",
+      "resolume": {
+        "layer": 1,
+        "clip": 36
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 160,
+          "bright": 200,
+          "speed": 0
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 37,
+      "name": "TEST pulse low",
+      "resolume": {
+        "layer": 1,
+        "clip": 37
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "pulse",
+          "hue": 200,
+          "bright": 40,
+          "speed": 2
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 38,
+      "name": "TEST pulse full",
+      "resolume": {
+        "layer": 1,
+        "clip": 38
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "pulse",
+          "hue": 200,
+          "bright": 255,
+          "speed": 2
+        }
+      },
+      "audio": false
+    },
+    {
+      "id": 39,
+      "name": "TEST sequence",
+      "resolume": {
+        "layer": 1,
+        "clip": 39
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "solid",
+            "hue": 0,
+            "bright": 180,
+            "seconds": 2
+          },
+          {
+            "mode": "chase",
+            "hue": 96,
+            "bright": 200,
+            "speed": 6,
+            "seconds": 2
+          },
+          {
+            "mode": "strobe",
+            "hue": 160,
+            "bright": 220,
+            "speed": 8,
+            "seconds": 2
+          }
+        ]
+      },
+      "audio": false
     }
   ]
 }
