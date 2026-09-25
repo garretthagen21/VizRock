@@ -677,6 +677,7 @@
         </div>
         <div id="detailSettings" class="hidden">
           <div class="sectlab">GLOBAL · APPLIES TO EVERY SCENE</div>
+          <div class="sectlab mt">BRIGHTNESS TRIM</div><div id="trimBox"></div>
           <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
           <div class="sectlab mt">VISUALS</div>
           <div class="upd"><div class="learn" style="margin:0;border-style:solid">
@@ -1652,6 +1653,25 @@ function renderCues(){
     grid.appendChild(el);
   });
 }
+// One knob for "this room is brighter than the rehearsal space". Added to every
+// scene's brightness rather than scaling it, so the step between a dim scene and a
+// bright one stays the same size. Scenes that are `off` are never lifted — the dark
+// stretches are dark on purpose.
+function renderTrim(){
+  const box=document.getElementById('trimBox'); if(!box) return;
+  const v=state.light_trim||0;
+  box.innerHTML=`<div class="upd"><div class="learn" style="margin:0;border-style:solid;display:block">
+    <div class="rowlab"><span>added to every scene</span><span id="l_trim">${v>0?'+':''}${v}</span></div>
+    <input type="range" id="f_trim" min="-128" max="128" value="${v}">
+    <div class="sectlab" style="margin-top:6px">Clamped to 0..255 per scene. Dark scenes stay dark.</div>
+  </div></div>`;
+  const el=document.getElementById('f_trim'), lab=document.getElementById('l_trim');
+  el.addEventListener('input',()=>{ lab.textContent=(el.value>0?'+':'')+el.value; });
+  // commit on release, not on every pixel of drag — each one is a save and a re-render
+  const commit=()=>ws.send(JSON.stringify({type:"set_light_trim", value:Number(el.value)}));
+  el.addEventListener('change', commit);
+}
+
 function renderOuts(){
   const wrap=document.getElementById('outList'); if(!wrap) return;
   // only a half-typed field is worth protecting — a focused button must not freeze the list
@@ -1792,7 +1812,7 @@ function setView(v){
   document.getElementById('sharedTransport').classList.toggle('hidden', v==='edit');
   if(v==='show') renderShow();
   else if(v==='cues') renderCues();
-  else { setEditDetail(editShowingDetail); setDetailMode(detailMode); renderList(); renderInsp(); renderOuts(); renderTriggers(); renderNetwork(); renderUpdate(); }
+  else { setEditDetail(editShowingDetail); setDetailMode(detailMode); renderList(); renderInsp(); renderOuts(); renderTrim(); renderTriggers(); renderNetwork(); renderUpdate(); }
 }
 // ---- on-screen keyboard (on-box panel only) ----
 // Fallback for a panel with no keyboard of its own. Only the display attached to

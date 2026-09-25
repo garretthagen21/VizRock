@@ -164,6 +164,7 @@ class Brain:
             'live_light': self._live_light(),
             'auditioning': self._auditioning,
             'light_groups': vizrock_settings.light_groups,
+            'light_trim': vizrock_settings.light_trim,
             'burst_active': self._burst_until > time.monotonic(),
             'mains': self.scene_library.mains,
             'update': self.updater.snapshot() if self.updater else None,
@@ -603,6 +604,12 @@ class Brain:
                 for key in ('hue', 'colors'):
                     if key in burst:
                         light[key] = burst[key]
+        # The venue trim goes on last so it catches a burst's brightness too — a pop
+        # is part of the show and should ride the same knob. `off` is left alone: the
+        # dark scenes are dark by design and a positive trim must not light them.
+        trim = vizrock_settings.light_trim
+        if trim and light.get('mode') != 'off':
+            light['bright'] = max(0, min(255, int(light.get('bright', 0)) + trim))
         return light
 
     def _live_light(self):
@@ -673,6 +680,16 @@ class Brain:
 
     def _output_enabled(self, name):
         return bool(vizrock_settings.outputs.get(name, {}).get('enabled', True))
+
+    def set_light_trim(self, value):
+        """Shift every scene's brightness by one number, for the room you are in."""
+        vizrock_settings.light_trim = max(-255, min(255, int(value)))
+        vizrock_settings.raw['light_trim'] = vizrock_settings.light_trim
+        vizrock_settings.save()
+        self.last_event = 'light trim %+d' % vizrock_settings.light_trim
+        logger.info(self.last_event)
+        self._render()
+        self.push_state()
 
     def set_output_enabled(self, name, enabled):
         """

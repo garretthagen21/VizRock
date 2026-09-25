@@ -37,6 +37,11 @@ class VizRockSettings:
         self.light_groups.update(self.raw.get('light_groups', {}))
         # how long a light step holds when it does not say; 0 in a step means hold
         self.light_step_seconds = float(self.raw.get('light_step_seconds', 8))
+        # A venue trim added to every scene's brightness, -255..255, clamped at the
+        # ends. One knob for "the room is brighter than the rehearsal space" rather
+        # than editing every scene. A scene that is `off` is never trimmed up — the
+        # dark scenes are dark on purpose and a positive trim must not light them.
+        self.light_trim = int(self.raw.get('light_trim', 0))
         # hues that cycle_color steps through; the scene's own hue is also a stop
         self.palette = self.raw.get('palette', [0, 32, 64, 96, 160, 200])
         self.midi_inputs = self.raw.get('midi_inputs', [])

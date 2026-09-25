@@ -101,6 +101,7 @@ def run():
     _commit_reset_ignores_the_incoming_scene_override()
     _reset_covers_scene_effects_without_a_configured_list()
     _a_once_step_fires_exactly_once()
+    _light_trim_lifts_scenes_but_never_lights_a_dark_one()
     _restart_refires_without_rearming()
     _next_main_is_a_dead_button_with_no_mains()
 
@@ -720,6 +721,40 @@ def _a_once_step_fires_exactly_once():
     # a cue is the one thing that legitimately re-arms it
     brain.handle('goto', 3)
     assert live_mode() == 'strobe', 'a fresh cue must fire the stab again'
+
+
+def _light_trim_lifts_scenes_but_never_lights_a_dark_one():
+    """
+    One knob for the room, clamped, and it must not undo the dark scenes.
+
+    Scenes 1-4 and the cursor are `off` on purpose — the cabs read as closed until
+    the machine wakes. A positive trim that lit them would spend the one moment the
+    whole opening is built around.
+    """
+    from vizrock.configurations.settings import vizrock_settings
+
+    brain = Brain()
+    group = vizrock_settings.light_groups.get('default', 0)
+    brain.scene_library.scenes[2]['lights'] = {'default': {'mode': 'solid', 'bright': 100}}
+    brain.scene_library.scenes[3]['lights'] = {'default': {'mode': 'off'}}
+    before = vizrock_settings.light_trim
+    try:
+        brain.handle('goto', 2)
+        vizrock_settings.light_trim = 40
+        assert brain._effective_scene()['lights'][group]['bright'] == 140
+
+        vizrock_settings.light_trim = 255           # must clamp, not overflow
+        assert brain._effective_scene()['lights'][group]['bright'] == 255
+        vizrock_settings.light_trim = -255
+        assert brain._effective_scene()['lights'][group]['bright'] == 0
+
+        vizrock_settings.light_trim = 80
+        brain.handle('goto', 3)
+        lit = brain._effective_scene()['lights'][group]
+        assert lit.get('bright', 0) == 0 and lit['mode'] == 'off', \
+            f'a trim must not light an off scene: {lit}'
+    finally:
+        vizrock_settings.light_trim = before
 
 
 def _restart_refires_without_rearming():

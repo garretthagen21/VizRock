@@ -108,6 +108,8 @@ class UiServer:
             self.brain.set_trigger_action(int(data['index']), data['action'])
         elif data.get('type') == 'set_output_enabled':
             self.brain.set_output_enabled(data['name'], bool(data.get('enabled')))
+        elif data.get('type') == 'set_light_trim':
+            self.brain.set_light_trim(data.get('value', 0))
         elif data.get('type') == 'update' and self.brain.updater:
             started, message = self.brain.updater.apply(data.get('to'))
             logger.info('update requested: %s', message)
