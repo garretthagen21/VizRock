@@ -724,7 +724,7 @@
     },
     {
       "id": 21,
-      "name": "Creep Loop",
+      "name": "MakeDamnSure Loop",
       "resolume": {
         "layer": 1,
         "clip": 21
@@ -777,7 +777,7 @@
     },
     {
       "id": 23,
-      "name": "Sweet Child - Since U Gone Loop",
+      "name": "Sweet Child - How You Remind Me Loop",
       "resolume": {
         "layer": 1,
         "clip": 23
@@ -804,10 +804,91 @@
     },
     {
       "id": 24,
-      "name": "Dyings Alright Intro",
+      "name": "Creep Loop",
       "resolume": {
         "layer": 1,
         "clip": 24
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 30,
+          "sat": 180,
+          "bright": 70,
+          "speed": 3
+        }
+      },
+      "audio": false,
+      "burst": {
+        "mode": "strobe",
+        "seconds": 1,
+        "speed": 9
+      },
+      "main": true
+    },
+    {
+      "id": 25,
+      "name": "Break Stuff - Since U Gone Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 25
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 30,
+          "sat": 180,
+          "bright": 70,
+          "speed": 3
+        }
+      },
+      "audio": false,
+      "burst": {
+        "mode": "strobe",
+        "seconds": 1,
+        "speed": 9
+      },
+      "main": true
+    },
+    {
+      "id": 26,
+      "name": "Say It Ain't So Loop",
+      "resolume": {
+        "layer": 1,
+        "clip": 26
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "chase",
+          "hue": 30,
+          "sat": 180,
+          "bright": 70,
+          "speed": 3
+        }
+      },
+      "audio": false,
+      "burst": {
+        "mode": "strobe",
+        "seconds": 1,
+        "speed": 9
+      },
+      "main": true
+    },
+    {
+      "id": 27,
+      "name": "Dyings Alright Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 27
       },
       "dmx": {
         "cue": "off"
@@ -830,11 +911,11 @@
       }
     },
     {
-      "id": 25,
+      "id": 28,
       "name": "Dyings Alright Drop",
       "resolume": {
         "layer": 1,
-        "clip": 25
+        "clip": 28
       },
       "dmx": {
         "cue": "off"
@@ -856,11 +937,11 @@
       }
     },
     {
-      "id": 26,
+      "id": 29,
       "name": "Dyings Alright Outro",
       "resolume": {
         "layer": 1,
-        "clip": 26
+        "clip": 29
       },
       "dmx": {
         "cue": "off"
@@ -886,11 +967,11 @@
       }
     },
     {
-      "id": 27,
+      "id": 30,
       "name": "Letter Lost Intro",
       "resolume": {
         "layer": 1,
-        "clip": 27
+        "clip": 30
       },
       "dmx": {
         "cue": "off"
@@ -933,11 +1014,11 @@
       }
     },
     {
-      "id": 28,
+      "id": 31,
       "name": "Letter Lost Drop",
       "resolume": {
         "layer": 1,
-        "clip": 28
+        "clip": 31
       },
       "dmx": {
         "cue": "off"
@@ -980,11 +1061,11 @@
       }
     },
     {
-      "id": 29,
+      "id": 32,
       "name": "Letter Lost Outro",
       "resolume": {
         "layer": 1,
-        "clip": 29
+        "clip": 32
       },
       "dmx": {
         "cue": "off"
@@ -1050,11 +1131,11 @@
       }
     },
     {
-      "id": 30,
+      "id": 33,
       "name": "Letter Lost Blast",
       "resolume": {
         "layer": 1,
-        "clip": 30
+        "clip": 33
       },
       "dmx": {
         "cue": "off"
@@ -1076,11 +1157,11 @@
       }
     },
     {
-      "id": 31,
+      "id": 34,
       "name": "Cursor Intro Skit",
       "resolume": {
         "layer": 1,
-        "clip": 31
+        "clip": 34
       },
       "dmx": {
         "cue": "off"
@@ -1097,11 +1178,11 @@
       }
     },
     {
-      "id": 32,
+      "id": 35,
       "name": "Fat Lip - Small Things Loop",
       "resolume": {
         "layer": 1,
-        "clip": 32
+        "clip": 35
       },
       "dmx": {
         "cue": "off"
@@ -1124,11 +1205,11 @@
       }
     },
     {
-      "id": 33,
+      "id": 36,
       "name": "TEST white max",
       "resolume": {
         "layer": 1,
-        "clip": 33
+        "clip": 36
       },
       "dmx": {
         "cue": "off"
@@ -1144,11 +1225,11 @@
       "audio": false
     },
     {
-      "id": 34,
+      "id": 37,
       "name": "TEST strobe max",
       "resolume": {
         "layer": 1,
-        "clip": 34
+        "clip": 37
       },
       "dmx": {
         "cue": "off"
@@ -1164,11 +1245,11 @@
       "audio": false
     },
     {
-      "id": 35,
+      "id": 38,
       "name": "TEST chase fast",
       "resolume": {
         "layer": 1,
-        "clip": 35
+        "clip": 38
       },
       "dmx": {
         "cue": "off"
@@ -1184,11 +1265,11 @@
       "audio": false
     },
     {
-      "id": 36,
+      "id": 39,
       "name": "TEST chase slow",
       "resolume": {
         "layer": 1,
-        "clip": 36
+        "clip": 39
       },
       "dmx": {
         "cue": "off"
@@ -1204,11 +1285,11 @@
       "audio": false
     },
     {
-      "id": 37,
+      "id": 40,
       "name": "TEST pulse low",
       "resolume": {
         "layer": 1,
-        "clip": 37
+        "clip": 40
       },
       "dmx": {
         "cue": "off"
@@ -1224,11 +1305,11 @@
       "audio": false
     },
     {
-      "id": 38,
+      "id": 41,
       "name": "TEST pulse full",
       "resolume": {
         "layer": 1,
-        "clip": 38
+        "clip": 41
       },
       "dmx": {
         "cue": "off"
@@ -1244,11 +1325,11 @@
       "audio": false
     },
     {
-      "id": 39,
+      "id": 42,
       "name": "TEST sequence",
       "resolume": {
         "layer": 1,
-        "clip": 39
+        "clip": 42
       },
       "dmx": {
         "cue": "off"
