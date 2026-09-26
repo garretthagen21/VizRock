@@ -100,18 +100,19 @@
       },
       "lights": {
         "default": {
-          "mode": "sparkle",
-          "hue": 128,
-          "bright": 25,
-          "speed": 0
+          "mode": "tempo",
+          "hue": 136,
+          "bright": 90,
+          "speed": 60
         }
       },
       "audio": false,
       "burst": {
-        "mode": "pulse",
+        "mode": "glitch",
         "seconds": 1,
-        "bright": 200,
-        "speed": 10
+        "hue": 136,
+        "bright": 220,
+        "speed": 9
       }
     },
     {
@@ -128,14 +129,14 @@
         "default": [
           {
             "mode": "pulse",
-            "hue": 128,
+            "hue": 136,
             "bright": 255,
             "speed": 6,
             "seconds": 2
           },
           {
             "mode": "progress",
-            "hue": 128,
+            "hue": 136,
             "bright": 220,
             "speed": 2,
             "seconds": 0
@@ -144,9 +145,9 @@
       },
       "audio": false,
       "burst": {
-        "mode": "pulse",
+        "mode": "glitch",
         "seconds": 1,
-        "hue": 128,
+        "hue": 136,
         "bright": 255,
         "speed": 9
       }
@@ -164,54 +165,34 @@
       "lights": {
         "default": [
           {
-            "mode": "chase",
+            "mode": "glitch",
             "colors": [
-              128,
-              128,
-              128,
-              128,
-              128,
-              128,
-              128,
+              136,
+              136,
+              136,
               0
             ],
-            "bright": 140,
-            "speed": 8,
-            "seconds": 12,
-            "once": true
-          },
-          {
-            "mode": "chase",
-            "colors": [
-              128,
-              128,
-              128,
-              128,
-              0
-            ],
-            "bright": 190,
-            "speed": 10,
+            "bright": 200,
+            "speed": 6,
             "seconds": 10,
             "once": true
           },
           {
             "mode": "glitch",
             "colors": [
-              128,
-              128,
-              128,
+              136,
+              136,
               0
             ],
-            "bright": 220,
-            "speed": 7,
+            "bright": 235,
+            "speed": 8,
             "seconds": 8,
             "once": true
           },
           {
             "mode": "strobe",
             "colors": [
-              128,
-              128,
+              136,
               0
             ],
             "bright": 255,
@@ -223,11 +204,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "chase",
+        "mode": "glitch",
         "seconds": 1,
-        "hue": 128,
+        "hue": 136,
         "bright": 255,
-        "speed": 10
+        "speed": 9
       }
     },
     {
@@ -291,10 +272,14 @@
       "lights": {
         "default": {
           "mode": "firework",
-          "hue": 0,
-          "sat": 0,
+          "colors": [
+            "w",
+            "w",
+            0,
+            136
+          ],
           "bright": 255,
-          "speed": 2
+          "speed": 8
         }
       },
       "audio": false,
@@ -320,7 +305,7 @@
           "bright": 212,
           "speed": 7,
           "colors": [
-            128,
+            136,
             0,
             "w"
           ]
@@ -353,7 +338,7 @@
               0,
               0,
               0,
-              128
+              136
             ],
             "hue": 0,
             "bright": 150,
@@ -365,7 +350,7 @@
             "colors": [
               0,
               0,
-              128
+              136
             ],
             "hue": 0,
             "bright": 170,
@@ -378,7 +363,7 @@
               0,
               0,
               0,
-              128
+              136
             ],
             "hue": 0,
             "bright": 180,
@@ -391,7 +376,7 @@
               0,
               0,
               0,
-              128
+              136
             ],
             "hue": 0,
             "bright": 120,
@@ -403,7 +388,7 @@
             "colors": [
               0,
               0,
-              128
+              136
             ],
             "hue": 0,
             "bright": 160,
@@ -414,7 +399,7 @@
             "mode": "progress",
             "colors": [
               0,
-              128
+              136
             ],
             "hue": 0,
             "bright": 130,
@@ -426,7 +411,7 @@
             "colors": [
               0,
               0,
-              128
+              136
             ],
             "hue": 0,
             "bright": 200,
@@ -442,7 +427,7 @@
         "colors": [
           0,
           0,
-          128
+          136
         ],
         "bright": 255,
         "speed": 9
@@ -465,7 +450,7 @@
             "colors": [
               0,
               0,
-              128
+              136
             ],
             "hue": 0,
             "sat": 200,
@@ -478,7 +463,7 @@
             "colors": [
               0,
               0,
-              128
+              136
             ],
             "hue": 0,
             "sat": 200,
@@ -505,17 +490,32 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "confetti",
-          "colors": [
-            0,
-            0,
-            128,
-            "w"
-          ],
-          "bright": 255,
-          "speed": 10
-        }
+        "default": [
+          {
+            "mode": "strobe",
+            "colors": [
+              0,
+              0,
+              0,
+              136,
+              "w"
+            ],
+            "bright": 255,
+            "speed": 9,
+            "seconds": 4
+          },
+          {
+            "mode": "glitch",
+            "colors": [
+              0,
+              136,
+              "w"
+            ],
+            "bright": 245,
+            "speed": 9,
+            "seconds": 3
+          }
+        ]
       },
       "audio": false,
       "burst": {
@@ -573,7 +573,7 @@
       "burst": {
         "mode": "glitch",
         "seconds": 1,
-        "hue": 128,
+        "hue": 136,
         "bright": 200,
         "speed": 6
       }
@@ -603,7 +603,7 @@
       "burst": {
         "mode": "glitch",
         "seconds": 1,
-        "hue": 128,
+        "hue": 136,
         "bright": 200,
         "speed": 6
       }
@@ -630,7 +630,7 @@
       "burst": {
         "mode": "glitch",
         "seconds": 1,
-        "hue": 128,
+        "hue": 136,
         "bright": 200,
         "speed": 6
       }
@@ -872,7 +872,7 @@
             64,
             64,
             64,
-            128
+            136
           ],
           "bright": 140
         }
