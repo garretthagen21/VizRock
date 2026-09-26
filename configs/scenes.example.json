@@ -100,9 +100,9 @@
       },
       "lights": {
         "default": {
-          "mode": "firework",
+          "mode": "confetti",
           "hue": 136,
-          "bright": 70,
+          "bright": 100,
           "speed": 0
         }
       },
