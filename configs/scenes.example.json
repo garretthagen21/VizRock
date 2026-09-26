@@ -100,10 +100,10 @@
       },
       "lights": {
         "default": {
-          "mode": "tempo",
+          "mode": "firework",
           "hue": 136,
-          "bright": 22,
-          "speed": 60
+          "bright": 70,
+          "speed": 0
         }
       },
       "audio": false,
@@ -169,24 +169,11 @@
             "colors": [
               136,
               136,
-              136,
-              0
-            ],
-            "bright": 200,
-            "speed": 6,
-            "seconds": 6,
-            "once": true
-          },
-          {
-            "mode": "glitch",
-            "colors": [
-              136,
-              136,
               0
             ],
             "bright": 235,
             "speed": 8,
-            "seconds": 4,
+            "seconds": 3,
             "once": true
           },
           {
