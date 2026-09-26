@@ -239,11 +239,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "strobe",
-        "seconds": 0.5,
+        "mode": "tempo",
+        "seconds": 0.6,
+        "hue": 136,
         "bright": 255,
-        "sat": 0,
-        "speed": 9
+        "speed": 165
       }
     },
     {
