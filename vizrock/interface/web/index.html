@@ -1666,30 +1666,48 @@ function trimWords(v){
   if(!v) return 'Normal';
   return Math.round(Math.abs(v)/255*100) + '% ' + (v>0 ? 'brighter' : 'dimmer');
 }
-function setTrim(v){
-  v = Math.max(-TRIM_LIMIT, Math.min(TRIM_LIMIT, v));
-  ws.send(JSON.stringify({type:"set_light_trim", value:v}));
+function trimOf(name){
+  const t = state.light_trim || {};
+  return (name in t) ? t[name] : (t.default || 0);
 }
-function stepTrim(delta){ setTrim((state.light_trim||0) + delta); }
+function setTrim(name, v){
+  v = Math.max(-TRIM_LIMIT, Math.min(TRIM_LIMIT, v));
+  ws.send(JSON.stringify({type:"set_light_trim", peripheral:name, value:v}));
+}
+function stepTrim(name, delta){ setTrim(name, trimOf(name) + delta); }
+
+// One row per peripheral. `Default` is the fallback every cab uses unless it has been
+// given its own — the same meaning `default` has in a scene's light configs.
+function trimRow(name){
+  const v = trimOf(name), own = state.light_trim && (name in state.light_trim);
+  const atMin = v<=-TRIM_LIMIT, atMax = v>=TRIM_LIMIT;
+  const title = name==='default' ? 'Default' : name;
+  const sub = name==='default' ? 'Used by any light without its own'
+            : (own ? 'Set for this light' : 'Following the default');
+  return `<div class="upd"><div class="learn" style="margin:0;border-style:solid;display:block">
+    <div class="sectlab" style="margin:0 0 10px">${title}</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="copyall" style="width:58px;font-size:18px;margin:0"
+        onclick="stepTrim('${name}',-${TRIM_STEP})" ${atMin?'disabled':''}>&minus;</button>
+      <div style="flex:1;text-align:center">
+        <div style="font-family:var(--mono);font-size:15px;color:var(--ink)">${trimWords(v)}</div>
+        <div class="sectlab" style="margin:4px 0 0">${sub}</div>
+      </div>
+      <button class="copyall" style="width:58px;font-size:18px;margin:0"
+        onclick="stepTrim('${name}',${TRIM_STEP})" ${atMax?'disabled':''}>+</button>
+    </div>
+    ${v ? `<button class="copyall" style="margin-top:12px"
+             onclick="setTrim('${name}',0)">Back to normal</button>` : ''}
+  </div></div>`;
+}
 
 function renderTrim(){
   const box=document.getElementById('trimBox'); if(!box) return;
-  const v=state.light_trim||0;
-  const atMin = v<=-TRIM_LIMIT, atMax = v>=TRIM_LIMIT;
-  box.innerHTML=`<div class="upd"><div class="learn" style="margin:0;border-style:solid;display:block">
-    <div style="display:flex;align-items:center;gap:10px">
-      <button class="copyall" style="width:58px;font-size:18px;margin:0"
-        onclick="stepTrim(-${TRIM_STEP})" ${atMin?'disabled':''}>&minus;</button>
-      <div style="flex:1;text-align:center">
-        <div style="font-family:var(--mono);font-size:15px;color:var(--ink)">${trimWords(v)}</div>
-        <div class="sectlab" style="margin:4px 0 0">Every scene, up or down together</div>
-      </div>
-      <button class="copyall" style="width:58px;font-size:18px;margin:0"
-        onclick="stepTrim(${TRIM_STEP})" ${atMax?'disabled':''}>+</button>
-    </div>
-    ${v ? `<button class="copyall" style="margin-top:12px" onclick="setTrim(0)">Back to normal</button>` : ''}
-    <div class="sectlab" style="margin-top:${v?12:14}px">Scenes that are off stay off</div>
-  </div></div>`;
+  const names = Object.keys(state.light_groups || {default:0});
+  if(!names.includes('default')) names.unshift('default');
+  names.sort((a,b)=> a==='default' ? -1 : b==='default' ? 1 : a.localeCompare(b));
+  box.innerHTML = names.map(trimRow).join('')
+    + `<div class="sectlab" style="margin-top:2px">Scenes that are off stay off</div>`;
 }
 
 function renderOuts(){

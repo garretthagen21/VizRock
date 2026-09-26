@@ -37,11 +37,20 @@ class VizRockSettings:
         self.light_groups.update(self.raw.get('light_groups', {}))
         # how long a light step holds when it does not say; 0 in a step means hold
         self.light_step_seconds = float(self.raw.get('light_step_seconds', 8))
-        # A venue trim added to every scene's brightness, -255..255, clamped at the
-        # ends. One knob for "the room is brighter than the rehearsal space" rather
-        # than editing every scene. A scene that is `off` is never trimmed up — the
-        # dark scenes are dark on purpose and a positive trim must not light them.
-        self.light_trim = int(self.raw.get('light_trim', 0))
+        # A venue trim added to a scene's brightness, -255..255, clamped at the ends.
+        # One knob for "the room is brighter than the rehearsal space" rather than
+        # editing every scene, and one per peripheral because two cabs are rarely the
+        # same distance from the room or the same strip.
+        #
+        # Keyed by peripheral name with `default` as the fallback, exactly as a scene's
+        # light configs are. A bare number in the config means the old single trim and
+        # becomes the default. A scene that is `off` is never trimmed up — the dark
+        # scenes are dark on purpose and a positive trim must not light them.
+        raw_trim = self.raw.get('light_trim', 0)
+        if isinstance(raw_trim, dict):
+            self.light_trim = {str(k): int(v) for k, v in raw_trim.items()}
+        else:
+            self.light_trim = {'default': int(raw_trim)}
         # hues that cycle_color steps through; the scene's own hue is also a stop
         self.palette = self.raw.get('palette', [0, 32, 64, 96, 160, 200])
         self.midi_inputs = self.raw.get('midi_inputs', [])
@@ -50,6 +59,10 @@ class VizRockSettings:
         # a pre-2026-09 box has outputs.rings; the output is called lights now
         if 'rings' in self.outputs and 'lights' not in self.outputs:
             self.outputs['lights'] = self.outputs.pop('rings')
+
+    def trim_for(self, peripheral):
+        """This peripheral's brightness trim, falling back to the default."""
+        return self.light_trim.get(peripheral, self.light_trim.get('default', 0))
 
     def update_output(self, name, spec):
         """Merge into one output. The caller must rebuild it for this to take effect."""

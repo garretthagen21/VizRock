@@ -573,10 +573,10 @@ class Brain:
         fallback = configs[self._default_config_name(configs)]
         resolved = {}
         for name, group in vizrock_settings.light_groups.items():
-            resolved[group] = self._one_light(configs.get(name, fallback))
+            resolved[group] = self._one_light(configs.get(name, fallback), name)
         return resolved
 
-    def _one_light(self, steps):
+    def _one_light(self, steps, peripheral='default'):
         """
         One peripheral's light dict for the current step.
 
@@ -607,7 +607,7 @@ class Brain:
         # The venue trim goes on last so it catches a burst's brightness too — a pop
         # is part of the show and should ride the same knob. `off` is left alone: the
         # dark scenes are dark by design and a positive trim must not light them.
-        trim = vizrock_settings.light_trim
+        trim = vizrock_settings.trim_for(peripheral)
         if trim and light.get('mode') != 'off':
             light['bright'] = max(0, min(255, int(light.get('bright', 0)) + trim))
         return light
@@ -681,12 +681,13 @@ class Brain:
     def _output_enabled(self, name):
         return bool(vizrock_settings.outputs.get(name, {}).get('enabled', True))
 
-    def set_light_trim(self, value):
-        """Shift every scene's brightness by one number, for the room you are in."""
-        vizrock_settings.light_trim = max(-255, min(255, int(value)))
-        vizrock_settings.raw['light_trim'] = vizrock_settings.light_trim
+    def set_light_trim(self, value, peripheral='default'):
+        """Shift one peripheral's brightness, or the default, for the room you are in."""
+        vizrock_settings.light_trim[peripheral] = max(-255, min(255, int(value)))
+        vizrock_settings.raw['light_trim'] = dict(vizrock_settings.light_trim)
         vizrock_settings.save()
-        self.last_event = 'light trim %+d' % vizrock_settings.light_trim
+        self.last_event = 'light trim %s %+d' % (
+            peripheral, vizrock_settings.light_trim[peripheral])
         logger.info(self.last_event)
         self._render()
         self.push_state()

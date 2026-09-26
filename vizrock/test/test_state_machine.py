@@ -725,7 +725,7 @@ def _a_once_step_fires_exactly_once():
 
 def _light_trim_lifts_scenes_but_never_lights_a_dark_one():
     """
-    One knob for the room, clamped, and it must not undo the dark scenes.
+    A trim per peripheral, clamped, and it must not undo the dark scenes.
 
     Scenes 1-4 and the cursor are `off` on purpose — the cabs read as closed until
     the machine wakes. A positive trim that lit them would spend the one moment the
@@ -734,27 +734,39 @@ def _light_trim_lifts_scenes_but_never_lights_a_dark_one():
     from vizrock.configurations.settings import vizrock_settings
 
     brain = Brain()
-    group = vizrock_settings.light_groups.get('default', 0)
+    groups = dict(vizrock_settings.light_groups)
+    before_groups = dict(vizrock_settings.light_groups)
+    before_trim = dict(vizrock_settings.light_trim)
+    vizrock_settings.light_groups = {'default': 0, 'cabA': 1, 'cabB': 2}
     brain.scene_library.scenes[2]['lights'] = {'default': {'mode': 'solid', 'bright': 100}}
     brain.scene_library.scenes[3]['lights'] = {'default': {'mode': 'off'}}
-    before = vizrock_settings.light_trim
     try:
         brain.handle('goto', 2)
-        vizrock_settings.light_trim = 40
-        assert brain._effective_scene()['lights'][group]['bright'] == 140
 
-        vizrock_settings.light_trim = 255           # must clamp, not overflow
-        assert brain._effective_scene()['lights'][group]['bright'] == 255
-        vizrock_settings.light_trim = -255
-        assert brain._effective_scene()['lights'][group]['bright'] == 0
+        vizrock_settings.light_trim = {'default': 40}
+        lit = brain._effective_scene()['lights']
+        assert lit[0]['bright'] == lit[1]['bright'] == lit[2]['bright'] == 140, lit
 
-        vizrock_settings.light_trim = 80
+        # one cab louder than the other — two cabs are rarely the same strip or the
+        # same distance from the room
+        vizrock_settings.light_trim = {'default': 0, 'cabA': 40, 'cabB': -30}
+        lit = brain._effective_scene()['lights']
+        assert (lit[0]['bright'], lit[1]['bright'], lit[2]['bright']) == (100, 140, 70), lit
+
+        vizrock_settings.light_trim = {'default': 255}      # must clamp, not overflow
+        assert brain._effective_scene()['lights'][0]['bright'] == 255
+        vizrock_settings.light_trim = {'default': -255}
+        assert brain._effective_scene()['lights'][0]['bright'] == 0
+
+        vizrock_settings.light_trim = {'default': 80}
         brain.handle('goto', 3)
-        lit = brain._effective_scene()['lights'][group]
-        assert lit.get('bright', 0) == 0 and lit['mode'] == 'off', \
-            f'a trim must not light an off scene: {lit}'
+        off = brain._effective_scene()['lights'][0]
+        assert off.get('bright', 0) == 0 and off['mode'] == 'off', \
+            f'a trim must not light an off scene: {off}'
     finally:
-        vizrock_settings.light_trim = before
+        vizrock_settings.light_trim = before_trim
+        vizrock_settings.light_groups = before_groups
+        assert groups == before_groups
 
 
 def _restart_refires_without_rearming():
