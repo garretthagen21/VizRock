@@ -333,7 +333,7 @@
             ],
             "hue": 0,
             "bright": 150,
-            "speed": 5,
+            "speed": 10,
             "seconds": 16
           },
           {
@@ -345,7 +345,7 @@
             ],
             "hue": 0,
             "bright": 170,
-            "speed": 4,
+            "speed": 8,
             "seconds": 12
           },
           {
@@ -358,7 +358,7 @@
             ],
             "hue": 0,
             "bright": 180,
-            "speed": 5,
+            "speed": 9,
             "seconds": 14
           },
           {
@@ -371,7 +371,7 @@
             ],
             "hue": 0,
             "bright": 120,
-            "speed": 4,
+            "speed": 7,
             "seconds": 14
           },
           {
@@ -383,7 +383,7 @@
             ],
             "hue": 0,
             "bright": 160,
-            "speed": 5,
+            "speed": 9,
             "seconds": 10
           },
           {
@@ -406,7 +406,7 @@
             ],
             "hue": 0,
             "bright": 200,
-            "speed": 7,
+            "speed": 10,
             "seconds": 12
           }
         ]
