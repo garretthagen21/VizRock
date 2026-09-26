@@ -102,7 +102,7 @@
         "default": {
           "mode": "tempo",
           "hue": 136,
-          "bright": 90,
+          "bright": 22,
           "speed": 60
         }
       },
@@ -111,7 +111,7 @@
         "mode": "glitch",
         "seconds": 1,
         "hue": 136,
-        "bright": 220,
+        "bright": 150,
         "speed": 9
       }
     },
