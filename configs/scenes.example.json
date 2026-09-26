@@ -166,12 +166,7 @@
         "default": [
           {
             "mode": "glitch",
-            "colors": [
-              136,
-              136,
-              136,
-              0
-            ],
+            "hue": 136,
             "bright": 235,
             "speed": 8,
             "seconds": 3,
@@ -180,6 +175,11 @@
           {
             "mode": "strobe",
             "colors": [
+              136,
+              136,
+              136,
+              136,
+              136,
               136,
               136,
               0
@@ -260,7 +260,7 @@
       },
       "lights": {
         "default": {
-          "mode": "firework",
+          "mode": "strobe",
           "colors": [
             "w",
             "w",
@@ -290,14 +290,16 @@
       },
       "lights": {
         "default": {
-          "mode": "confetti",
-          "bright": 212,
-          "speed": 7,
+          "mode": "firework",
           "colors": [
-            136,
+            "w",
+            "w",
             0,
+            136,
             "w"
-          ]
+          ],
+          "bright": 255,
+          "speed": 8
         }
       },
       "audio": false,
