@@ -1219,20 +1219,20 @@ function popPane(s){
     <div class="slider"><div class="lightmini" id="popmini"></div>
       <div style="flex:1"><select id="p_mode">${opts}</select></div></div>
     <div style="margin-top:12px">
-      <div class="rowlab"><span>seconds</span><span id="l_psecs">${pop.seconds??1}s</span></div>
+      <div class="rowlab"><span>Seconds</span><span id="l_psecs">${pop.seconds??1}s</span></div>
       <input type="range" id="p_secs" min="0.5" max="10" step="0.5" value="${pop.seconds??1}">
-      <div class="rowlab"><span>bright</span><span id="l_pbright">${pop.bright??255}</span></div>
+      <div class="rowlab"><span>Bright</span><span id="l_pbright">${pop.bright??255}</span></div>
       <input type="range" id="p_bright" min="0" max="255" value="${pop.bright??255}">
-      <div class="rowlab"><span>speed</span><span id="l_pspeed">${pop.speed??9}</span></div>
+      <div class="rowlab"><span>Speed</span><span id="l_pspeed">${pop.speed??9}</span></div>
       <input type="range" id="p_speed" min="0" max="10" value="${pop.speed??9}">
       <div class="switchrow" style="margin-top:14px">
         <span class="hint">Give the pop its own colour. Off, it keeps the scene\u2019s.</span>
         <button class="switch" id="p_colorOn" role="switch" aria-checked="${coloured}"
                 aria-label="Pop has its own colour" onclick="togglePopColor()"></button>
       </div>
-      ${coloured?`<div class="rowlab"><span>hue</span><span id="l_phue">${pop.hue??0}</span></div>
+      ${coloured?`<div class="rowlab"><span>Hue</span><span id="l_phue">${pop.hue??0}</span></div>
       <input type="range" id="p_hue" min="0" max="255" value="${pop.hue??0}">
-      <div class="rowlab"><span>saturation</span><span id="l_psat">${pop.sat??255}</span></div>
+      <div class="rowlab"><span>Saturation</span><span id="l_psat">${pop.sat??255}</span></div>
       <input type="range" id="p_sat" min="0" max="255" value="${pop.sat??255}">`:''}
     </div>
     ${own?`<button class="copyall" style="margin-top:12px" onclick="togglePopOverride()">USE THE GLOBAL POP</button>`:''}`;
@@ -1400,10 +1400,10 @@ function renderInsp(){
                 aria-label="Mark as a main loop" onclick="toggleMain()"></button>
       </div></div>
     <div class="field"><label>VISUALS — RESOLUME</label>${s.resolume?.clear
-      ? `<div class="val">clear all</div>`
-      : `<div class="row2"><div><div class="rowlab"><span>layer</span></div>
+      ? `<div class="val">Clear all</div>`
+      : `<div class="row2"><div><div class="rowlab"><span>Layer</span></div>
            <input type="number" id="f_layer" min="1" value="${s.resolume?.layer??1}"></div>
-         <div><div class="rowlab"><span>clip</span></div>
+         <div><div class="rowlab"><span>Clip</span></div>
            <input type="number" id="f_clip" min="1" value="${s.resolume?.clip??1}"></div></div>`}</div>
     ${state.output_config?.dmx?.enabled===false ? '' : `
     <div class="field"><label>DMX CUE</label>
@@ -1418,17 +1418,17 @@ function renderInsp(){
       <div class="slider"><div class="lightmini" id="mini"></div>
         <div style="flex:1"><select id="f_mode">${opts}</select></div></div>
       <div style="margin-top:12px">
-        <div class="rowlab"><span>hue</span><span id="l_hue">${r.hue??0}</span></div>
+        <div class="rowlab"><span>Hue</span><span id="l_hue">${r.hue??0}</span></div>
         <input type="range" id="f_hue" min="0" max="255" value="${r.hue??0}">
-        <div class="rowlab"><span>saturation</span><span id="l_sat">${r.sat??255}</span></div>
+        <div class="rowlab"><span>Saturation</span><span id="l_sat">${r.sat??255}</span></div>
         <input type="range" id="f_sat" min="0" max="255" value="${r.sat??255}">
-        <div class="rowlab"><span>bright</span><span id="l_bright">${r.bright??0}</span></div>
+        <div class="rowlab"><span>Bright</span><span id="l_bright">${r.bright??0}</span></div>
         <input type="range" id="f_bright" min="0" max="255" value="${r.bright??0}">
-        <div class="rowlab"><span>${r.mode==='tempo'?'tempo':'speed'}</span><span id="l_speed">${r.mode==='tempo'?(r.speed||120)+' bpm':(r.speed??0)}</span></div>
+        <div class="rowlab"><span>${r.mode==='tempo'?'Tempo':'Speed'}</span><span id="l_speed">${r.mode==='tempo'?(r.speed||120)+' bpm':(r.speed??0)}</span></div>
         <input type="range" id="f_speed" min="${r.mode==='tempo'?40:0}" max="${r.mode==='tempo'?220:10}" value="${r.mode==='tempo'?(r.speed||120):(r.speed??0)}">
-        ${steps.length>1?`<div class="rowlab"><span>hold</span><span id="l_secs">${r.seconds??8}s</span></div>
+        ${steps.length>1?`<div class="rowlab"><span>Hold</span><span id="l_secs">${r.seconds??8}s</span></div>
         <input type="range" id="f_secs" min="1" max="60" value="${r.seconds??8}">`:''}
-        ${r.mode!=='off'?`<div class="rowlab"><span>colors</span><span id="l_pal"></span></div>
+        ${r.mode!=='off'?`<div class="rowlab"><span>Colors</span><span id="l_pal"></span></div>
         <div class="palrow" id="palRow"></div>`:''}
       </div>
       <button class="auditionbtn" id="audLights" data-audition="audition_lights">HOLD TO AUDITION LIGHTS</button>`}
@@ -1575,7 +1575,7 @@ function renderDirty(){
 function renderNetwork(){
   const box=document.getElementById('netBox'); if(!box) return;
   const n=state.network;
-  if(!n){ box.innerHTML=`<div class="upd"><div class="msg">unavailable</div></div>`; return; }
+  if(!n){ box.innerHTML=`<div class="upd"><div class="msg">Unavailable</div></div>`; return; }
   const urls=[`${n.hostname}.local`, ...(n.addresses||[])]
     .map(h=>`<li><span class="ver">http://${esc(h)}:8080</span></li>`).join("");
   box.innerHTML=`<div class="upd">
@@ -1586,7 +1586,7 @@ let confirmingUpdate = false;
 function renderUpdate(){
   const box=document.getElementById('updBox'); if(!box) return;
   const u=state.update;
-  if(!u){ box.innerHTML=`<div class="upd"><div class="msg">unavailable</div></div>`; return; }
+  if(!u){ box.innerHTML=`<div class="upd"><div class="msg">Unavailable</div></div>`; return; }
   const net=u.online?"ONLINE":"OFFLINE";
   const list=u.incoming?.length
     ? `<ul class="list">${u.incoming.map(c=>`<li>${c.sha} ${esc(c.subject)}</li>`).join("")}</ul>` : "";
@@ -1657,19 +1657,39 @@ function renderCues(){
 // scene's brightness rather than scaling it, so the step between a dim scene and a
 // bright one stays the same size. Scenes that are `off` are never lifted — the dark
 // stretches are dark on purpose.
+// One step is 10% of full scale, and the range stops at half. A slider reading
+// "+40" told you nothing you could act on; the question at a venue is only ever
+// "brighter or dimmer than we rehearsed", so the control answers that and says the
+// answer in words.
+const TRIM_STEP = 26, TRIM_LIMIT = 128;
+function trimWords(v){
+  if(!v) return 'Normal';
+  return Math.round(Math.abs(v)/255*100) + '% ' + (v>0 ? 'brighter' : 'dimmer');
+}
+function setTrim(v){
+  v = Math.max(-TRIM_LIMIT, Math.min(TRIM_LIMIT, v));
+  ws.send(JSON.stringify({type:"set_light_trim", value:v}));
+}
+function stepTrim(delta){ setTrim((state.light_trim||0) + delta); }
+
 function renderTrim(){
   const box=document.getElementById('trimBox'); if(!box) return;
   const v=state.light_trim||0;
+  const atMin = v<=-TRIM_LIMIT, atMax = v>=TRIM_LIMIT;
   box.innerHTML=`<div class="upd"><div class="learn" style="margin:0;border-style:solid;display:block">
-    <div class="rowlab"><span>added to every scene</span><span id="l_trim">${v>0?'+':''}${v}</span></div>
-    <input type="range" id="f_trim" min="-128" max="128" value="${v}">
-    <div class="sectlab" style="margin-top:6px">Clamped to 0..255 per scene. Dark scenes stay dark.</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="copyall" style="width:58px;font-size:18px;margin:0"
+        onclick="stepTrim(-${TRIM_STEP})" ${atMin?'disabled':''}>&minus;</button>
+      <div style="flex:1;text-align:center">
+        <div style="font-family:var(--mono);font-size:15px;color:var(--ink)">${trimWords(v)}</div>
+        <div class="sectlab" style="margin:4px 0 0">Every scene, up or down together</div>
+      </div>
+      <button class="copyall" style="width:58px;font-size:18px;margin:0"
+        onclick="stepTrim(${TRIM_STEP})" ${atMax?'disabled':''}>+</button>
+    </div>
+    ${v ? `<button class="copyall" style="margin-top:12px" onclick="setTrim(0)">Back to normal</button>` : ''}
+    <div class="sectlab" style="margin-top:${v?12:14}px">Scenes that are off stay off</div>
   </div></div>`;
-  const el=document.getElementById('f_trim'), lab=document.getElementById('l_trim');
-  el.addEventListener('input',()=>{ lab.textContent=(el.value>0?'+':'')+el.value; });
-  // commit on release, not on every pixel of drag — each one is a save and a re-render
-  const commit=()=>ws.send(JSON.stringify({type:"set_light_trim", value:Number(el.value)}));
-  el.addEventListener('change', commit);
 }
 
 function renderOuts(){
@@ -1752,7 +1772,7 @@ function renderTriggers(){
   // only what the switch grid above could not place
   const rows=(state.triggers||[]).map((r,i)=>({...r, i}))
     .filter(r => !((r.midi||{}).kind==='pc' && r.midi.program>=0 && r.midi.program<=7));
-  if(!rows.length){ box.innerHTML=`<div class="learn"><span>none \u2014 every message is a switch above</span></div>`; return; }
+  if(!rows.length){ box.innerHTML=`<div class="learn"><span>None \u2014 every message is a switch above</span></div>`; return; }
   const known=state.known_actions||[];
   box.innerHTML=rows.map(r=>{
     const m=r.midi||{};
