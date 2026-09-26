@@ -660,7 +660,7 @@
         <div class="sectlab">SCENE TABLE</div><div id="sceneList"></div>
       </div>
       <div class="col right detail" id="editDetail">
-        <button class="backbtn" id="editBack" onclick="setEditDetail(false)">‹ SCENES</button>
+        <button class="backbtn" id="editBack" onclick="editBackPressed()">‹ SCENES</button>
 
         <!-- per scene -->
         <div id="detailScene">
@@ -670,23 +670,31 @@
 
         <!-- everything below applies to the whole show, not one scene -->
         <div id="detailPedal" class="hidden">
-          <button class="backbtn" style="display:block" onclick="openSettings()">\u2039 SETTINGS</button>
-          <div class="sectlab">M-VAVE CHOCOLATE \u00b7 WHAT EACH PRESS FIRES</div>
+          <div class="sectlab">M-VAVE CHOCOLATE · WHAT EACH PRESS FIRES</div>
           <div id="pedalBox"></div>
           <div class="sectlab mt">OTHER MESSAGES</div><div id="trigBox"></div>
         </div>
-        <div id="detailSettings" class="hidden">
-          <div class="sectlab">GLOBAL · APPLIES TO EVERY SCENE</div>
+        <div id="detailLights" class="hidden">
+          <div class="sectlab">LIGHTS · EVERY SCENE, EVERY CAB</div>
           <div class="sectlab mt">BRIGHTNESS TRIM</div><div id="trimBox"></div>
-          <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
-          <div class="sectlab mt">VISUALS</div>
+        </div>
+        <div id="detailVisuals" class="hidden">
+          <div class="sectlab">VISUALS · THE SCREEN</div>
+          <div class="sectlab mt">EFFECTS</div>
           <div class="upd"><div class="learn" style="margin:0;border-style:solid">
             <span>Force every Resolume effect off. Does not move the show.</span>
             <button class="learnbtn" onclick="act('clear_effects')">CLEAR EFFECTS</button>
           </div></div>
-          <div class="sectlab mt">FOOTSWITCH</div>
+        </div>
+        <div id="detailSettings" class="hidden">
+          <div class="sectlab">GLOBAL · APPLIES TO EVERY SCENE</div>
+          <button class="settingsbtn" style="margin:0 0 10px" onclick="openLights()">
+            ☀ LIGHTS · BRIGHTNESS TRIM</button>
+          <button class="settingsbtn" style="margin:0 0 10px" onclick="openVisuals()">
+            ▣ VISUALS · EFFECTS</button>
           <button class="settingsbtn" style="margin:0" onclick="openPedal()">
-            \u2687 PEDAL LAYOUT \u00b7 SHORT AND LONG PRESS</button>
+            ⎘ PEDAL LAYOUT · SHORT AND LONG PRESS</button>
+          <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
           <div class="sectlab mt">CONNECT</div><div id="netBox"></div>
           <div class="sectlab mt">SOFTWARE</div><div id="updBox"></div>
         </div>
@@ -1060,17 +1068,27 @@ function setEditDetail(on){
 }
 // Per-scene and global settings are different kinds of thing, so they are different
 // screens. Mixing them invites editing a shared host thinking it is per-scene.
+// Panes that live under global settings. Back from one of these goes up to settings
+// rather than all the way out to the scene list — a sub-pane that dumps you two levels
+// out is how you lose your place mid-show.
+const SUBPANES = {pedal:'detailPedal', lights:'detailLights', visuals:'detailVisuals'};
 function setDetailMode(mode){
   detailMode = mode;
   document.getElementById('detailScene')?.classList.toggle('hidden', mode !== 'scene');
   document.getElementById('detailSettings')?.classList.toggle('hidden', mode !== 'settings');
-  document.getElementById('detailPedal')?.classList.toggle('hidden', mode !== 'pedal');
+  for(const [name, id] of Object.entries(SUBPANES))
+    document.getElementById(id)?.classList.toggle('hidden', mode !== name);
   document.querySelector('.settingsbtn')?.classList.toggle('on', mode === 'settings');
   const back = document.getElementById('editBack');
-  if(back) back.textContent = '‹ SCENES';
+  if(back) back.textContent = (mode in SUBPANES) ? '‹ SETTINGS' : '‹ SCENES';
+}
+function editBackPressed(){
+  if(detailMode in SUBPANES) openSettings(); else setEditDetail(false);
 }
 function openSettings(){ setDetailMode('settings'); setEditDetail(true); }
 function openPedal(){ setDetailMode('pedal'); setEditDetail(true); renderPedal(); }
+function openLights(){ setDetailMode('lights'); setEditDetail(true); renderTrim(); }
+function openVisuals(){ setDetailMode('visuals'); setEditDetail(true); }
 function renderList(){
   const wrap=document.getElementById('sceneList'); wrap.innerHTML="";
   // Reordering is desktop-only: dragging with a finger fights scrolling, and a
@@ -1963,7 +1981,7 @@ window.act=act; window.setView=setView; window.testFire=testFire;
 window.dropOn=dropOn; window.toggleMain=toggleMain;
 window.setLightTab=setLightTab; window.setLightStep=setLightStep;
 window.addPeripheral=addPeripheral; window.removePeripheral=removePeripheral;
-window.copyToPeripheral=copyToPeripheral; window.setLightPane=setLightPane; window.togglePopOverride=togglePopOverride; window.togglePopColor=togglePopColor; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.saveEdits=saveEdits; window.discardEdits=discardEdits; window.selectScene=selectScene; window.openSettings=openSettings; window.applyOutput=applyOutput; window.setOutputEnabled=setOutputEnabled; window.setTriggerAction=setTriggerAction; window.openPedal=openPedal; window.renderPedal=renderPedal; window.renderCues=renderCues; window.askUpdate=askUpdate;
+window.copyToPeripheral=copyToPeripheral; window.setLightPane=setLightPane; window.togglePopOverride=togglePopOverride; window.togglePopColor=togglePopColor; window.addStep=addStep; window.removeStep=removeStep; window.setEditDetail=setEditDetail; window.saveEdits=saveEdits; window.discardEdits=discardEdits; window.selectScene=selectScene; window.openSettings=openSettings; window.applyOutput=applyOutput; window.setOutputEnabled=setOutputEnabled; window.setTriggerAction=setTriggerAction; window.openPedal=openPedal; window.openLights=openLights; window.openVisuals=openVisuals; window.editBackPressed=editBackPressed; window.renderPedal=renderPedal; window.renderCues=renderCues; window.askUpdate=askUpdate;
 </script>
 </body>
 </html>

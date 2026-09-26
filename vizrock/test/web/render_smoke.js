@@ -17,9 +17,14 @@ const mk = () => new Proxy({
   textContent:'', value:'', getAttribute:()=>null, setAttribute(){}, blur(){}, focus(){},
 }, { get:(t,k)=> k in t ? t[k] : (typeof k === 'string' ? mk() : undefined) });
 
+// Cached by id, as a real document is: getElementById handing back a fresh object
+// each call meant nothing written to an element could ever be read back, so a check
+// on what a control actually says was impossible.
+const byId = new Map();
 global.document = {
   activeElement: null,
-  getElementById: mk, createElement: mk, querySelector: mk,
+  getElementById: (id) => { if(!byId.has(id)) byId.set(id, mk()); return byId.get(id); },
+  createElement: mk, querySelector: mk,
   querySelectorAll: () => [], addEventListener(){}, head: mk(), body: mk(),
 };
 global.window = {}; global.location = { hostname: 'test' };
@@ -33,7 +38,8 @@ const html = fs.readFileSync(process.argv[2], 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 eval(script + `\n;globalThis.__ui = {state, renderCues, renderList, renderShow, render, renderInsp, renderCues, pick(id){ selected = id; },
   paintLight, LIGHT_MODES, RECT_MODES, kf, setLightPane, renderPedal, renderTriggers, renderOuts,
-  editing, isDirty, saveEdits, discardEdits, selectScene, get selected(){return selected}};`);
+  editing, isDirty, saveEdits, discardEdits, selectScene, get selected(){return selected},
+  setDetailMode, editBackPressed, openSettings, SUBPANES, get detailMode(){return detailMode}};`);
 const ui = globalThis.__ui;
 const state = ui.state;
 
@@ -186,5 +192,23 @@ ui.selectScene(2);
 check('switching scenes while dirty is blocked', ui.selected === 1);
 ui.discardEdits();
 check('discarding then releases the pending switch', ui.selected === 2);
+
+// Every pane under global settings must go back UP to settings, not out to the scene
+// list. The pedal pane shipped with a back button that dropped you two levels.
+const back = document.getElementById('editBack');
+for (const pane of Object.keys(ui.SUBPANES)) {
+  ui.setDetailMode(pane);
+  check(`${pane} pane offers back to settings`, back.textContent.includes('SETTINGS'));
+  ui.editBackPressed();
+  check(`${pane} pane goes back to settings`, ui.detailMode === 'settings');
+}
+ui.setDetailMode('settings');
+check('settings offers back to scenes', back.textContent.includes('SCENES'));
+
+// Escapes only mean something inside a JS string. In the raw markup they print.
+const body = html.split('<script>')[0];
+const literal = (body.match(/\\u[0-9a-fA-F]{4}/g) || []);
+check('no unrendered escapes in the markup', literal.length === 0,
+      literal.slice(0, 4).join(' '));
 
 process.exit(failed ? 1 : 0);
