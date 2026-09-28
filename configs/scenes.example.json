@@ -715,12 +715,53 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "pulse",
-          "hue": 160,
-          "bright": 110,
-          "speed": 2
-        }
+        "default": [
+          {
+            "mode": "chase",
+            "colors": [
+              192,
+              160,
+              136
+            ],
+            "bright": 175,
+            "speed": 9,
+            "seconds": 12
+          },
+          {
+            "mode": "glitch",
+            "colors": [
+              192,
+              160,
+              136
+            ],
+            "bright": 185,
+            "speed": 8,
+            "seconds": 10
+          },
+          {
+            "mode": "confetti",
+            "colors": [
+              192,
+              192,
+              160,
+              136
+            ],
+            "bright": 170,
+            "speed": 7,
+            "seconds": 12
+          },
+          {
+            "mode": "scan",
+            "colors": [
+              160,
+              192,
+              136
+            ],
+            "bright": 180,
+            "speed": 8,
+            "seconds": 10
+          }
+        ]
       },
       "audio": false,
       "burst": {
