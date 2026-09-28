@@ -521,18 +521,18 @@
             "hue": 0,
             "bright": 255,
             "speed": 9,
-            "seconds": 2
+            "seconds": 0.5
           },
           {
             "mode": "off",
-            "seconds": 2
+            "seconds": 1
           },
           {
             "mode": "strobe",
             "hue": 136,
             "bright": 255,
             "speed": 9,
-            "seconds": 2
+            "seconds": 0.5
           },
           {
             "mode": "pulse",
