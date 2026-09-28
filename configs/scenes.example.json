@@ -544,7 +544,8 @@
           {
             "mode": "solid",
             "hue": 0,
-            "bright": 180
+            "bright": 180,
+            "seconds": 0
           }
         ]
       },

@@ -101,6 +101,7 @@ def run():
     _commit_reset_ignores_the_incoming_scene_override()
     _reset_covers_scene_effects_without_a_configured_list()
     _a_once_step_fires_exactly_once()
+    _a_zero_second_last_step_holds_forever()
     _light_trim_lifts_scenes_but_never_lights_a_dark_one()
     _restart_refires_without_rearming()
     _next_main_is_a_dead_button_with_no_mains()
@@ -767,6 +768,42 @@ def _light_trim_lifts_scenes_but_never_lights_a_dark_one():
         vizrock_settings.light_trim = before_trim
         vizrock_settings.light_groups = before_groups
         assert groups == before_groups
+
+
+def _a_zero_second_last_step_holds_forever():
+    """
+    `seconds: 0` holds. An absent `seconds` does NOT — it falls back to the global
+    default and wraps to the start.
+
+    Man End closes on a held red, and it was authored by simply leaving `seconds` off
+    the last step. That looked like "no duration, so no advance" and is the opposite:
+    the scene rolled back to its opening strobe eight seconds later, mid-song.
+    """
+    brain = Brain()
+    lights = brain.scene_library.scenes[3]['lights']
+
+    def schedules_another(steps):
+        brain.scene_library.scenes[3]['lights'] = {'default': steps}
+        brain.handle('goto', 3)
+        brain._light_step = len(steps) - 1       # sit on the last step
+        if brain._light_timer:
+            brain._light_timer.cancel()
+        brain._light_timer = None
+        brain._schedule_light_step()
+        armed = brain._light_timer is not None
+        if brain._light_timer:
+            brain._light_timer.cancel()
+        return armed
+
+    try:
+        assert not schedules_another([
+            {'mode': 'strobe', 'seconds': 1},
+            {'mode': 'solid', 'seconds': 0}]), 'seconds 0 must hold'
+        assert schedules_another([
+            {'mode': 'strobe', 'seconds': 1},
+            {'mode': 'solid'}]), 'an absent seconds takes the default and wraps'
+    finally:
+        brain.scene_library.scenes[3]['lights'] = lights
 
 
 def _restart_refires_without_rearming():
