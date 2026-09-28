@@ -658,15 +658,50 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "strobe",
-          "colors": [
-            192,
-            160
-          ],
-          "bright": 220,
-          "speed": 8
-        }
+        "default": [
+          {
+            "mode": "strobe",
+            "colors": [
+              192,
+              160
+            ],
+            "bright": 240,
+            "speed": 9,
+            "seconds": 4
+          },
+          {
+            "mode": "glitch",
+            "colors": [
+              192,
+              136
+            ],
+            "bright": 230,
+            "speed": 10,
+            "seconds": 3
+          },
+          {
+            "mode": "strobe",
+            "colors": [
+              192,
+              136,
+              160
+            ],
+            "bright": 235,
+            "speed": 8,
+            "seconds": 4
+          },
+          {
+            "mode": "glitch",
+            "colors": [
+              136,
+              136,
+              192
+            ],
+            "bright": 225,
+            "speed": 10,
+            "seconds": 3
+          }
+        ]
       },
       "audio": false,
       "burst": {
