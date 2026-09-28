@@ -717,59 +717,59 @@
       "lights": {
         "default": [
           {
-            "mode": "chase",
+            "mode": "strobe",
             "colors": [
               192,
               160,
               136
             ],
-            "bright": 175,
+            "bright": 255,
             "speed": 9,
-            "seconds": 12
+            "seconds": 6
           },
           {
             "mode": "glitch",
             "colors": [
               192,
-              160,
-              136
+              136,
+              "w"
             ],
-            "bright": 185,
-            "speed": 8,
-            "seconds": 10
+            "bright": 250,
+            "speed": 9,
+            "seconds": 5
           },
           {
-            "mode": "confetti",
+            "mode": "firework",
             "colors": [
               192,
-              192,
               160,
-              136
+              136,
+              "w"
             ],
-            "bright": 170,
-            "speed": 7,
-            "seconds": 12
+            "bright": 255,
+            "speed": 9,
+            "seconds": 5
           },
           {
-            "mode": "scan",
+            "mode": "strobe",
             "colors": [
-              160,
-              192,
-              136
+              136,
+              136,
+              192
             ],
-            "bright": 180,
-            "speed": 8,
-            "seconds": 10
+            "bright": 255,
+            "speed": 10,
+            "seconds": 4
           }
         ]
       },
       "audio": false,
       "burst": {
-        "mode": "glitch",
+        "mode": "strobe",
         "seconds": 1,
-        "hue": 136,
-        "bright": 200,
-        "speed": 6
+        "sat": 0,
+        "bright": 255,
+        "speed": 10
       }
     },
     {
