@@ -568,13 +568,48 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "chase",
-          "hue": 30,
-          "sat": 180,
-          "bright": 70,
-          "speed": 3
-        }
+        "default": [
+          {
+            "mode": "chase",
+            "hue": 30,
+            "sat": 180,
+            "bright": 70,
+            "speed": 3,
+            "seconds": 32
+          },
+          {
+            "mode": "wave",
+            "hue": 36,
+            "sat": 190,
+            "bright": 65,
+            "speed": 2,
+            "seconds": 30
+          },
+          {
+            "mode": "noise",
+            "hue": 24,
+            "sat": 170,
+            "bright": 60,
+            "speed": 2,
+            "seconds": 35
+          },
+          {
+            "mode": "pulse",
+            "hue": 30,
+            "sat": 180,
+            "bright": 70,
+            "speed": 3,
+            "seconds": 26
+          },
+          {
+            "mode": "scan",
+            "hue": 40,
+            "sat": 190,
+            "bright": 65,
+            "speed": 2,
+            "seconds": 30
+          }
+        ]
       },
       "audio": false,
       "main": true,
@@ -793,13 +828,48 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "chase",
-          "hue": 30,
-          "sat": 180,
-          "bright": 70,
-          "speed": 3
-        }
+        "default": [
+          {
+            "mode": "chase",
+            "hue": 30,
+            "sat": 180,
+            "bright": 70,
+            "speed": 3,
+            "seconds": 32
+          },
+          {
+            "mode": "wave",
+            "hue": 36,
+            "sat": 190,
+            "bright": 65,
+            "speed": 2,
+            "seconds": 30
+          },
+          {
+            "mode": "noise",
+            "hue": 24,
+            "sat": 170,
+            "bright": 60,
+            "speed": 2,
+            "seconds": 35
+          },
+          {
+            "mode": "pulse",
+            "hue": 30,
+            "sat": 180,
+            "bright": 70,
+            "speed": 3,
+            "seconds": 26
+          },
+          {
+            "mode": "scan",
+            "hue": 40,
+            "sat": 190,
+            "bright": 65,
+            "speed": 2,
+            "seconds": 30
+          }
+        ]
       },
       "audio": false,
       "burst": {
@@ -820,13 +890,48 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "chase",
-          "hue": 30,
-          "sat": 180,
-          "bright": 70,
-          "speed": 3
-        }
+        "default": [
+          {
+            "mode": "chase",
+            "hue": 30,
+            "sat": 180,
+            "bright": 70,
+            "speed": 3,
+            "seconds": 32
+          },
+          {
+            "mode": "wave",
+            "hue": 36,
+            "sat": 190,
+            "bright": 65,
+            "speed": 2,
+            "seconds": 30
+          },
+          {
+            "mode": "noise",
+            "hue": 24,
+            "sat": 170,
+            "bright": 60,
+            "speed": 2,
+            "seconds": 35
+          },
+          {
+            "mode": "pulse",
+            "hue": 30,
+            "sat": 180,
+            "bright": 70,
+            "speed": 3,
+            "seconds": 26
+          },
+          {
+            "mode": "scan",
+            "hue": 40,
+            "sat": 190,
+            "bright": 65,
+            "speed": 2,
+            "seconds": 30
+          }
+        ]
       },
       "audio": false,
       "burst": {
@@ -846,13 +951,48 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "chase",
-          "hue": 30,
-          "sat": 180,
-          "bright": 70,
-          "speed": 3
-        }
+        "default": [
+          {
+            "mode": "chase",
+            "hue": 30,
+            "sat": 180,
+            "bright": 70,
+            "speed": 3,
+            "seconds": 32
+          },
+          {
+            "mode": "wave",
+            "hue": 36,
+            "sat": 190,
+            "bright": 65,
+            "speed": 2,
+            "seconds": 30
+          },
+          {
+            "mode": "noise",
+            "hue": 24,
+            "sat": 170,
+            "bright": 60,
+            "speed": 2,
+            "seconds": 35
+          },
+          {
+            "mode": "pulse",
+            "hue": 30,
+            "sat": 180,
+            "bright": 70,
+            "speed": 3,
+            "seconds": 26
+          },
+          {
+            "mode": "scan",
+            "hue": 40,
+            "sat": 190,
+            "bright": 65,
+            "speed": 2,
+            "seconds": 30
+          }
+        ]
       },
       "audio": false,
       "burst": {
@@ -1167,13 +1307,48 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "chase",
-          "hue": 30,
-          "sat": 180,
-          "bright": 70,
-          "speed": 3
-        }
+        "default": [
+          {
+            "mode": "chase",
+            "hue": 30,
+            "sat": 180,
+            "bright": 70,
+            "speed": 3,
+            "seconds": 32
+          },
+          {
+            "mode": "wave",
+            "hue": 36,
+            "sat": 190,
+            "bright": 65,
+            "speed": 2,
+            "seconds": 30
+          },
+          {
+            "mode": "noise",
+            "hue": 24,
+            "sat": 170,
+            "bright": 60,
+            "speed": 2,
+            "seconds": 35
+          },
+          {
+            "mode": "pulse",
+            "hue": 30,
+            "sat": 180,
+            "bright": 70,
+            "speed": 3,
+            "seconds": 26
+          },
+          {
+            "mode": "scan",
+            "hue": 40,
+            "sat": 190,
+            "bright": 65,
+            "speed": 2,
+            "seconds": 30
+          }
+        ]
       },
       "audio": false,
       "main": true,
