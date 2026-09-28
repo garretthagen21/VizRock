@@ -800,7 +800,7 @@
     },
     {
       "id": 22,
-      "name": "Pink Pony Drop",
+      "name": "Pink Pony Drop / Main",
       "resolume": {
         "layer": 1,
         "clip": 22
@@ -812,16 +812,11 @@
         "default": [
           {
             "mode": "strobe",
+            "hue": 224,
             "bright": 255,
             "speed": 9,
             "seconds": 3,
-            "once": true,
-            "colors": [
-              224,
-              224,
-              224,
-              "w"
-            ]
+            "once": true
           },
           {
             "mode": "chase",
@@ -832,15 +827,10 @@
           },
           {
             "mode": "sparkle",
+            "hue": 224,
             "bright": 160,
             "speed": 7,
-            "seconds": 10,
-            "colors": [
-              224,
-              224,
-              224,
-              "w"
-            ]
+            "seconds": 10
           },
           {
             "mode": "pulse",
@@ -853,8 +843,9 @@
       },
       "audio": false,
       "burst": {
-        "mode": "firework",
+        "mode": "strobe",
         "seconds": 1,
+        "hue": 224,
         "bright": 255,
         "speed": 9
       }
