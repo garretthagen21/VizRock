@@ -521,7 +521,7 @@
             "hue": 0,
             "bright": 255,
             "speed": 9,
-            "seconds": 0.8
+            "seconds": 1.25
           },
           {
             "mode": "off",
@@ -532,7 +532,7 @@
             "hue": 136,
             "bright": 255,
             "speed": 9,
-            "seconds": 0.8
+            "seconds": 1.25
           },
           {
             "mode": "pulse",
