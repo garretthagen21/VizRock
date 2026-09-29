@@ -210,7 +210,12 @@
   .auditionbtn.blocked{border-color:#3a2530; color:#ff8a8a}
 
   .transport{display:flex; align-items:center; gap:9px; padding:12px 16px; border-top:1px solid var(--line); background:var(--panel)}
-  .log{flex:1; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  /* The buttons share the bar at every width. This used to live only in the narrow
+     media queries, so the kiosk looked right and a desktop browser sized the buttons
+     to their text and bunched them on the left while the log ate the rest. */
+  .transport .btn{flex:1 1 0; min-width:0}
+  /* The log takes what is left rather than all of it — it is a readout, not a control. */
+  .log{flex:0 1 260px; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .log .t{color:var(--muted2)}
   .btn{font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.1em; cursor:pointer; background:var(--panel2);
     color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:11px 15px; transition:.15s}

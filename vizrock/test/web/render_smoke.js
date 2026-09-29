@@ -211,4 +211,11 @@ const literal = (body.match(/\\u[0-9a-fA-F]{4}/g) || []);
 check('no unrendered escapes in the markup', literal.length === 0,
       literal.slice(0, 4).join(' '));
 
+// The transport buttons were sized only inside the narrow media queries, so the kiosk
+// looked right and a desktop browser bunched them on the left. A layout rule that only
+// exists at one breakpoint is the bug, so check the base stylesheet carries it.
+// `base` above is already the stylesheet with every @media block stripped.
+check('transport buttons are sized outside any media query',
+      /\.transport\s+\.btn\s*\{[^}]*flex\s*:/.test(base));
+
 process.exit(failed ? 1 : 0);
