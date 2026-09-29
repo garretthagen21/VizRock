@@ -483,16 +483,28 @@ class Brain:
         list silently stops covering the show the moment someone adds an effect to a
         scene and forgets. An empty one means effects never clear at all.
 
-        `burst.osc_end` in show_config.json is merged over the top, so it can still
-        name an address no scene mentions or override the off value for one that does.
+        Derived from every `osc` the show can fire — a scene's own, and any a POP can
+        trigger, global or per-scene. `burst.osc_end` in show_config.json is merged over
+        the top, so it can still name an address nothing mentions or override the off
+        value for one that does.
         The derived value is always 1 because `bypassed` is the only thing VizRock
         flips; anything needing a different off value has to be explicit.
         """
         reset = {}
-        for scene in self.scene_library.scenes.values():
-            for message in scene.get('osc') or ():
+
+        def collect(messages):
+            for message in messages or ():
                 if message.get('address'):
                     reset[message['address']] = 1
+
+        for scene in self.scene_library.scenes.values():
+            collect(scene.get('osc'))
+            # Anything a POP can switch on, too. An effect fired only by a burst is
+            # normally taken down by that burst's own `osc_end` — but OSC is
+            # fire-and-forget, and if that packet drops the escape hatches are all that
+            # is left. They would not have known the address existed.
+            collect((scene.get('burst') or {}).get('osc'))
+        collect(vizrock_settings.burst.get('osc'))
         for message in vizrock_settings.burst.get('osc_end') or ():
             if message.get('address'):
                 reset[message['address']] = message.get('value', 1)
