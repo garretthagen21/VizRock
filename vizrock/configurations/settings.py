@@ -55,6 +55,14 @@ class VizRockSettings:
         self.palette = self.raw.get('palette', [0, 32, 64, 96, 160, 200])
         self.midi_inputs = self.raw.get('midi_inputs', [])
         self.triggers = self.raw.get('triggers', [])
+        # The M-VAVE's bank gesture emits a *second* Program Change a few ms after the
+        # real one, and because our PCs are contiguous that second message lands on the
+        # next switch's action: a double-press of switch 3 sends arm_next then go, which
+        # arms and commits a scene nobody asked for. Observed 7-40ms apart.
+        #
+        # Two deliberate presses on a four-switch board are never this close, so a
+        # message arriving inside this window is the artifact, not playing. 0 disables.
+        self.midi_debounce_ms = int(self.raw.get('midi_debounce_ms', 120))
         self.outputs = self.raw.setdefault('outputs', {})
         # a pre-2026-09 box has outputs.rings; the output is called lights now
         if 'rings' in self.outputs and 'lights' not in self.outputs:

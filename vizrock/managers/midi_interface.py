@@ -40,6 +40,8 @@ class MidiInterface:
         self.open_ports = []
         self._last_unmatched = None
         self._last_unmatched_at = 0.0
+        self._last_fired = None
+        self._last_fired_at = 0.0
         self._announced = set()
         self._watching = False
 
@@ -120,6 +122,19 @@ class MidiInterface:
             self._log_unmatched(message, source)
             return
         action, scene = match
+        # The pedal's bank gesture emits a second Program Change a few milliseconds
+        # behind the real one. Our PCs are contiguous, so that stray message lands on
+        # the next switch's action — a double-press of switch 3 sends arm_next and then
+        # go, which commits a scene. Drop anything arriving inside the window; two
+        # deliberate presses are never this close together.
+        window = vizrock_settings.midi_debounce_ms / 1000.0
+        now = time.monotonic()
+        if window and now - self._last_fired_at < window:
+            logger.info('MIDI %s (%s) -> %s IGNORED, %dms after %s',
+                        message, source, action,
+                        (now - self._last_fired_at) * 1000, self._last_fired)
+            return
+        self._last_fired, self._last_fired_at = action, now
         logger.info('MIDI %s (%s) -> %s', message, source, action)
         self.handler(action, scene)
 

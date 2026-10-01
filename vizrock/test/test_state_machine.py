@@ -101,6 +101,7 @@ def run():
     _commit_reset_ignores_the_incoming_scene_override()
     _reset_covers_scene_effects_without_a_configured_list()
     _a_once_step_fires_exactly_once()
+    _a_pedal_bank_gesture_cannot_fire_a_cue()
     _a_zero_second_last_step_holds_forever()
     _light_trim_lifts_scenes_but_never_lights_a_dark_one()
     _restart_refires_without_rearming()
@@ -804,6 +805,44 @@ def _a_zero_second_last_step_holds_forever():
             {'mode': 'solid'}]), 'an absent seconds takes the default and wraps'
     finally:
         brain.scene_library.scenes[3]['lights'] = lights
+
+
+def _a_pedal_bank_gesture_cannot_fire_a_cue():
+    """
+    The M-VAVE emits a second Program Change a few milliseconds behind the real one
+    when its bank gesture fires. Our PCs are contiguous, so that stray message lands on
+    the *next* switch's action: double-pressing switch 3 sends PC 2 then PC 3, which is
+    `arm_next` followed by `go` — it arms a scene and commits it.
+
+    Replays the pair observed on 2026-10-01, 40ms apart.
+    """
+    import time as _time
+    from vizrock.configurations.settings import vizrock_settings
+
+    fired = []
+    midi = MidiInterface(lambda action, scene: fired.append(action))
+    before = vizrock_settings.midi_debounce_ms
+    try:
+        vizrock_settings.midi_debounce_ms = 120
+        midi._on_message(message(type='program_change', program=2))   # switch 3
+        _time.sleep(0.04)                                             # the gesture's echo
+        midi._on_message(message(type='program_change', program=3))   # lands on GO
+        assert fired == ['arm_next'], f'the stray go must be dropped: {fired}'
+
+        # a real second press, well clear of the window, still works
+        fired.clear()
+        _time.sleep(0.15)
+        midi._on_message(message(type='program_change', program=3))
+        assert fired == ['go'], f'a deliberate press must still fire: {fired}'
+
+        # and the guard can be turned off
+        fired.clear()
+        vizrock_settings.midi_debounce_ms = 0
+        midi._on_message(message(type='program_change', program=2))
+        midi._on_message(message(type='program_change', program=3))
+        assert fired == ['arm_next', 'go'], f'0 disables the guard: {fired}'
+    finally:
+        vizrock_settings.midi_debounce_ms = before
 
 
 def _restart_refires_without_rearming():
