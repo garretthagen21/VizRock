@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
 <title>VizRock</title>
 <!-- Add to Home Screen: launches fullscreen with no browser chrome, which matters on a
      pedalboard where a stray swipe on the address bar loses the show. -->
@@ -27,7 +27,18 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
   body{background:var(--void); color:var(--ink); font-family:var(--disp); -webkit-font-smoothing:antialiased;
-    overflow:hidden; background-image:radial-gradient(circle at 50% -10%, #131a26 0%, var(--void) 60%);}
+    overflow:hidden; background-image:radial-gradient(circle at 50% -10%, #131a26 0%, var(--void) 60%);
+    /* This is a control surface operated with a thumb mid-song, not a document. A
+       pinch that zooms the transport off screen, a double-tap that zooms instead of
+       firing, or a long-press that raises a copy tooltip over GO are all failures you
+       only discover at the worst moment.
+       `manipulation` keeps taps and scrolling while dropping double-tap zoom. */
+    touch-action:manipulation;
+    -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;}
+  /* Anything you actually type into, or would legitimately want to copy — an address
+     to paste elsewhere, for instance — opts back in. */
+  input, textarea, select, [contenteditable], #detailSettings{
+    -webkit-user-select:text; user-select:text; -webkit-touch-callout:default}
   .app{height:100vh; display:flex; flex-direction:column}
   /* The view wrappers must grow, or everything sizes to content and the page ends
      half way down. .show and .cuegrid have flex:1 but that only works if the parent

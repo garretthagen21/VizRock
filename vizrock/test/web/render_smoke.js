@@ -218,4 +218,16 @@ check('no unrendered escapes in the markup', literal.length === 0,
 check('transport buttons are sized outside any media query',
       /\.transport\s+\.btn\s*\{[^}]*flex\s*:/.test(base));
 
+// The panel is a control surface operated with a thumb mid-song. A pinch that zooms the
+// transport off screen, or a long-press that raises a copy tooltip over GO, is a failure
+// you only find at the worst moment — so the suppressions are pinned.
+const viewport = (html.match(/<meta name="viewport"[^>]*>/) || [''])[0];
+check('page cannot be zoomed', /user-scalable=no/.test(viewport) && /maximum-scale=1/.test(viewport));
+check('double-tap zoom is off', /body\s*\{[^}]*touch-action\s*:\s*manipulation/.test(base));
+check('long-press cannot select or raise a callout',
+      /body\s*\{[^}]*user-select\s*:\s*none/.test(base) &&
+      /body\s*\{[^}]*touch-callout\s*:\s*none/.test(base));
+check('form controls opt back in',
+      /input[^{]*\{[^}]*user-select\s*:\s*text/.test(base));
+
 process.exit(failed ? 1 : 0);
