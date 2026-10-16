@@ -55,8 +55,9 @@ class ResolumeOsc(Output):
             raise ValueError(f'every host must be a non-empty string, got {hosts!r}')
         self.hosts = [host.strip() for host in hosts]
         self.port = _valid_port(port)
-        self.resolved = {}
-        self.connected = None    # (layer, clip) currently playing                 # host -> [(ip, port), ...]
+        self.resolved = {}       # host -> [(ip, port), ...]
+        self.connected = None    # (layer, clip) currently playing
+        self.wanted = None       # (layer, clip) the show has cued, sent or not
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.is_running = True
         self.thread = threading.Thread(target=self._resolve_loop, daemon=True)
@@ -80,18 +81,25 @@ class ResolumeOsc(Output):
             return
         if resolume.get('clear'):
             self._send('/composition/disconnectall', 1)
-            self.connected = None
+            self.connected = self.wanted = None
             return
         target = (resolume['layer'], resolume['clip'])
         if target == self.connected and not scene.get('restart'):
             return
-        self.connected = target
-        self._send(f"/composition/layers/{target[0]}/clips/{target[1]}/connect", 1)
+        # Only a packet with somewhere to go counts as connected. A cue fired before the
+        # visuals machine resolved was marked playing anyway, and every re-dispatch after
+        # skipped it as a repeat — the scene never reached Resolume at all.
+        self.wanted = target
+        self.connected = target if self.resolved else None
+        self._connect(target)
+
+    def _connect(self, target, addresses=None):
+        self._send(f"/composition/layers/{target[0]}/clips/{target[1]}/connect", 1, addresses)
 
     def silence(self):
         """Disconnect everything, so muting the output leaves a black screen."""
         self._send('/composition/disconnectall', 1)
-        self.connected = None
+        self.connected = self.wanted = None
 
     def status(self):
         # nothing resolved means we cannot even address a target — say so
@@ -119,10 +127,18 @@ class ResolumeOsc(Output):
                 try:
                     info = socket.getaddrinfo(host, self.port, socket.AF_INET, socket.SOCK_DGRAM)
                     addresses = list(dict.fromkeys(entry[4] for entry in info))
-                    if self.resolved.get(host) != addresses:
+                    known = self.resolved.get(host, [])
+                    if known != addresses:
                         logger.info('resolved %s to %s', host, ', '.join(ip for ip, _ in addresses))
                     self.resolved[host] = addresses
                     reported.discard(host)      # recovered: a later failure must warn again
+                    # An address that has never had the current cue gets it now — a
+                    # machine that joined late, or a cue fired before anything resolved.
+                    fresh = [a for a in addresses if a not in known]
+                    wanted = self.wanted
+                    if wanted and fresh:
+                        self.connected = wanted
+                        self._connect(wanted, fresh)
                 except OSError as error:
                     # report the transition, not the state — a typo'd name would
                     # otherwise warn on every pass for the length of the show
@@ -148,7 +164,7 @@ class ResolumeOsc(Output):
                 self._send(address, message.get('value', 1))
                 logger.info('osc %s %s', address, message.get('value', 1))
 
-    def _send(self, path, argument):
+    def _send(self, path, argument, addresses=None):
         """
         Minimal OSC 1.0 encoder: address, typetag, one argument.
 
@@ -162,9 +178,10 @@ class ResolumeOsc(Output):
             message = pad(path.encode()) + pad(b',f') + struct.pack('>f', argument)
         else:
             message = pad(path.encode()) + pad(b',i') + int(argument).to_bytes(4, 'big', signed=True)
-        for addresses in list(self.resolved.values()):
-            for address in addresses:
-                try:
-                    self.socket.sendto(message, address)
-                except OSError as error:
-                    logger.warning('osc send to %s failed: %s', address, error)
+        targets = addresses if addresses is not None else \
+            [a for found in list(self.resolved.values()) for a in found]
+        for address in targets:
+            try:
+                self.socket.sendto(message, address)
+            except OSError as error:
+                logger.warning('osc send to %s failed: %s', address, error)

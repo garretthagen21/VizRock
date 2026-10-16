@@ -39,7 +39,8 @@ const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 eval(script + `\n;globalThis.__ui = {state, renderCues, renderList, renderShow, render, renderInsp, renderCues, pick(id){ selected = id; },
   paintLight, LIGHT_MODES, RECT_MODES, kf, setLightPane, renderPedal, renderTriggers, renderOuts,
   editing, isDirty, saveEdits, discardEdits, selectScene, get selected(){return selected},
-  setDetailMode, editBackPressed, openSettings, SUBPANES, get detailMode(){return detailMode}};`);
+  setDetailMode, editBackPressed, openSettings, SUBPANES, get detailMode(){return detailMode},
+  act, setEverConnected(v){ everConnected = v; }};`);
 const ui = globalThis.__ui;
 const state = ui.state;
 
@@ -229,5 +230,21 @@ check('long-press cannot select or raise a callout',
       /body\s*\{[^}]*touch-callout\s*:\s*none/.test(base));
 check('form controls opt back in',
       /input[^{]*\{[^}]*user-select\s*:\s*text/.test(base));
+
+
+// A press while the brain is away must not look like it went anywhere. The demo
+// simulation used to run during every reconnect, so a GO tapped then showed
+// "LIVE -> ... dispatched" for a cue that reached nothing.
+{
+  const before = state.live;
+  ui.setEverConnected(false);
+  ui.act('go');
+  check('with no brain ever seen, the demo still simulates', state.live !== before);
+  const demoLive = state.live;
+  ui.setEverConnected(true);
+  ui.act('go');
+  check('after a disconnect, GO does not pretend to dispatch',
+        state.live === demoLive && /NOT SENT/.test(state.last_event));
+}
 
 process.exit(failed ? 1 : 0);

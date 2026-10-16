@@ -16,7 +16,6 @@ import logging
 from aiohttp import WSMsgType, web
 
 import vizrock.constants.paths as vizrock_paths
-from vizrock.configurations.settings import vizrock_settings
 
 logger = logging.getLogger(__name__)
 
@@ -66,13 +65,19 @@ class UiServer:
         creates one — it has to be scheduled on the loop or nothing is ever sent.
         push_state is sync by design, so scheduling is the only option.
         """
-        payload = json.dumps({**snapshot, 'ui_build': self._ui_build()})
+        payload = self._payload(snapshot)
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
             return                                  # no loop (tests) — nothing to send on
         for client in list(self.clients):
             loop.create_task(self._send(client, payload))
+
+    def _payload(self, snapshot):
+        # Every send carries the stamp, the first one included. A kiosk that only
+        # learned it from a broadcast recorded whatever was current *after* a deploy,
+        # and so never noticed it was running the old page.
+        return json.dumps({**snapshot, 'ui_build': self._ui_build()})
 
     async def _send(self, client, payload):
         try:
@@ -84,12 +89,17 @@ class UiServer:
         websocket = web.WebSocketResponse()
         await websocket.prepare(request)
         self.clients.add(websocket)
-        await websocket.send_str(json.dumps(self.brain.snapshot()))
+        await websocket.send_str(self._payload(self.brain.snapshot()))
         try:
             async for message in websocket:
                 if message.type != WSMsgType.TEXT:
                     continue
-                self._handle_message(json.loads(message.data))
+                # A malformed message must cost that message, not the operator's
+                # connection — an exception here ends the loop and drops the socket.
+                try:
+                    self._handle_message(json.loads(message.data))
+                except Exception as error:
+                    logger.warning('ignored a bad UI message %.120s: %s', message.data, error)
         finally:
             self.clients.discard(websocket)
         return websocket

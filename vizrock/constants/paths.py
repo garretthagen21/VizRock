@@ -54,3 +54,27 @@ def ensure_seeded(path):
         if example.exists():
             path.write_text(example.read_text())
     return path
+
+
+def write_atomic(path, text):
+    """
+    Replace a file whole or not at all.
+
+    `write_text` truncates first, so power pulled mid-save left a half-written JSON —
+    and a config that will not parse stops the box booting. The Pi is unplugged at the
+    end of every night; a rename is atomic, a truncate-and-write is not.
+    """
+    import tempfile
+    path = Path(path)
+    # a unique temporary, so a save on another thread cannot write into this one's
+    handle, temporary = tempfile.mkstemp(dir=path.parent, prefix=path.name + '.')
+    try:
+        with os.fdopen(handle, 'w') as out:
+            out.write(text)
+            out.flush()
+            os.fsync(out.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        os.unlink(temporary)
+        raise
+

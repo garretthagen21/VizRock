@@ -122,10 +122,11 @@ every output degrades to a no-op and the web UI still drives the full state mach
   initial snapshot silently vanished until this was fixed.
 - **Gate every `:hover` behind `@media (hover:hover)`.** On touch, `:hover` latches after a
   tap, which made the transport buttons look stuck on. Pair each one with `:active`.
-- **Boot dark with the first main loaded.** `Brain.boot()` comes up with blackout on and LIVE
-  set to the lowest-id main, falling back to the first scene if none are marked. Powering on
-  must never throw a visual at a screen nobody is ready for, but releasing blackout has to
-  land somewhere rather than nothing.
+- **Boot dark with the opener loaded.** `Brain.boot()` comes up with blackout on and LIVE set
+  to scene 1 — the set opens there, and a main is where you go when something breaks, not
+  where the night starts. Its light steps start running under the blackout, as any cue's do.
+  Powering on must never throw a visual at a screen nobody is ready for, but releasing
+  blackout has to land somewhere rather than nothing.
 - **Never reuse the word "live" for anything but the playing scene.** The connection indicator
   said `live` when it meant "websocket connected", which is exactly the overload that makes a
   glanceable UI unreadable. It says `connected` / `no brain`.
@@ -136,8 +137,9 @@ every output degrades to a no-op and the web UI still drives the full state mach
   undoing a blackout someone put on deliberately would be the worst kind of surprise.
   *(Superseded 2026-09-07: blackout used to set `live = None` and restore from `_restore_to`.)*
 - **Lights are a separate switch from blackout.** Blackout is the panic control and kills
-  everything; `toggle_lights` mutes only the lights, because "lights off, visuals running" is
-  a real ask and the reverse never is. A scoped blackout (mute either half independently) was
+  everything; the lights output's own enable toggle in global settings mutes only the lights,
+  because "lights off, visuals running" is a real ask. *(It was a `toggle_lights` action until
+  per-output muting replaced it.)* A scoped blackout (mute either half independently) was
   built and thrown away — four combinations to reason about at 1am, buying a case nobody wants.
 - **One precedence order, in one place.** `blackout > lights off > burst > color override >
   the scene`, resolved in `Brain._effective_scene`. An explicit mute always outranks a
@@ -316,9 +318,14 @@ stacks differently:
   Skipped ports are logged, so a filter that matches nothing is visible.
 - Triggers match `note` / `pc` / `cc`. The M-VAVE Chocolate ships sending **Program Change
   0-3**, one message per press, left to right — confirmed on hardware. The map matches the
-  pedal rather than requiring CubeSuite: `0→home · 1→arm_prev · 2→arm_next · 3→go`, i.e.
-  **HOME · PREV · NEXT · GO** left to right. The UI transport uses the same order — there
-  must be nothing to translate between the pedal and the screen.
+  pedal rather than requiring CubeSuite: short presses are `0→light_burst · 1→arm_prev ·
+  2→arm_next · 3→go`, i.e. **POP · PREV · NEXT · GO** left to right, and long presses are PC
+  4-7 (`cycle_color · blackout · next_main · restart_scene`). **Every bank on the pedal must
+  send the same eight** — a double-press changes bank. The UI transport uses the same order:
+  there must be nothing to translate between the pedal and the screen.
+- **A trigger within `midi_debounce_ms` (120) of the last one is dropped.** The pedal's bank
+  gesture emits a stray second PC a few ms behind the real one, which on contiguous PCs
+  lands on the next switch — `arm_next` then `go`.
 - **`midi_inputs` names `SINCO` deliberately.** An FM3 also sends Program Change, so an open
   filter would let its preset changes fire show cues.
 - **Resolume OSC is on 38200, not the default 7000.** Logic Pro squats on 7000 *and* 7001, and
@@ -334,5 +341,14 @@ stacks differently:
 - `burst` is what "make the lights pop" does — `{"mode": "strobe", "seconds": 5, "speed": 9}`,
   overridable per scene. `palette` is the hue list `cycle_color` steps through; the scene's own
   hue is also a stop, so there is always a way back that does not depend on counting presses.
-- **Actions:** `go · arm · arm_prev · arm_next · goto · next_main · restart_scene · blackout ·
-  toggle_lights · light_burst · cycle_color`.
+- **Actions:** `KNOWN_ACTIONS` in `brain.py` is the list — `go · goto · arm_prev · arm_next ·
+  next_main · restart_scene · blackout · clear_effects · light_burst · cycle_color` and the
+  three `audition_*`.
+- **The light output writes the moment a cue changes it**, then heartbeats every 250ms. It
+  used to wait for the next heartbeat, so every GO and every timed step left 0-250ms late,
+  at random — most of a beat at 165bpm.
+- **Every config save is atomic** (`paths.write_atomic`: temp file, fsync, rename). The Pi
+  is unplugged every night, and a half-written JSON stops it booting.
+- **A timer callback checks it is still the current timer** (`Brain._start_timer`).
+  `cancel()` cannot recall a callback already queued on the loop, so a light step expiring
+  as GO landed used to advance the new scene and start a second, orphaned timer chain.

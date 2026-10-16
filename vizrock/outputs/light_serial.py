@@ -26,7 +26,8 @@ class LightSerial(Output):
     """
     Owns a background thread that keeps the port open and re-broadcasts the latest
     payload every ~250ms, so a dropped ESP-NOW packet self-heals on the next tick.
-    apply() only updates the payload — instant, never blocks the dispatch path.
+    apply() only updates the payload and wakes the writer — a cue goes out at once,
+    and the dispatch path never blocks.
     """
 
     name = 'lights'
@@ -46,6 +47,9 @@ class LightSerial(Output):
         self.latest_payload = 'LIGHT 0 off 0 0 0\n'   # one line per group, joined
         self.serial_port = None
         self.is_running = True
+        # Wakes the writer the moment a cue changes the payload. Without it every GO
+        # waited for the next heartbeat — 0-250ms late, at random.
+        self._changed = threading.Event()
         self.thread = threading.Thread(target=self._run, daemon=True)
         self.thread.start()
 
@@ -65,6 +69,7 @@ class LightSerial(Output):
                 light.get('bright', 0), light.get('speed', 0), _palette(light),
                 _saturation(light))
             for group, light in sorted(lights.items()))
+        self._changed.set()
 
     def silence(self):
         """
@@ -87,6 +92,7 @@ class LightSerial(Output):
 
     def close(self):
         self.is_running = False
+        self._changed.set()
         if self.serial_port:
             self.serial_port.close()
 
@@ -134,7 +140,9 @@ class LightSerial(Output):
                 except Exception:
                     pass
                 self.serial_port = None
-            time.sleep(REBROADCAST_INTERVAL_SECONDS)
+            # the heartbeat, cut short the moment a new cue arrives
+            self._changed.wait(REBROADCAST_INTERVAL_SECONDS)
+            self._changed.clear()
 
 
 def _palette(light):

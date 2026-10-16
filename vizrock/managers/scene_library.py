@@ -75,7 +75,7 @@ class SceneLibrary:
     def save(self):
         data = {'meta': self.meta,
                 'scenes': [self.scenes[i] for i in sorted(self.scenes)]}
-        vizrock_paths.Files.SCENES_FILE.write_text(json.dumps(data, indent=2))
+        vizrock_paths.write_atomic(vizrock_paths.Files.SCENES_FILE, json.dumps(data, indent=2))
         logger.info('scenes.json saved')
 
     def reorder(self, ordered_ids):

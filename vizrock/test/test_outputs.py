@@ -37,6 +37,8 @@ def run():
     _null_port_means_autodetect()
     _ring_wire_format()
     _clip_is_not_retriggered()
+    _a_cue_reaches_the_lights_at_once()
+    _a_clip_sent_nowhere_is_sent_again()
 
 
 def _osc_floats_and_effect_messages():
@@ -232,6 +234,107 @@ def _oled_variants():
     assert OledDisplay(driver='sh1106').address_label() == 'i2c 0x3c sh1106'
 
 
+def _a_cue_reaches_the_lights_at_once():
+    """
+    A new payload goes out on the next write, not at the next 250ms heartbeat.
+
+    The writer slept a fixed quarter second between writes, so every GO and every timed
+    step left the Pi 0-250ms late, at random. At 165bpm that is most of a beat, and it
+    made a 1.25s strobe step land anywhere from 1.0 to 1.5s.
+    """
+    import threading
+    writes = []
+
+    class Port:
+        is_open = True
+        port = 'fake'
+        def write(self, data):
+            writes.append((time.monotonic(), data))
+        def close(self):
+            self.is_open = False
+
+    serial_out = LightSerial.__new__(LightSerial)
+    serial_out.port_hint, serial_out.baud = 'fake', 115200
+    serial_out.latest_payload = 'LIGHT 0 off 0 0 0\n'
+    serial_out.serial_port = Port()
+    serial_out.is_running = True
+    serial_out._changed = threading.Event()
+    threading.Thread(target=serial_out._run, daemon=True).start()
+    try:
+        deadline = time.monotonic() + 2
+        while not writes and time.monotonic() < deadline:
+            time.sleep(0.005)
+        assert writes, 'the writer never wrote'
+        time.sleep(0.02)                         # land mid-way through the heartbeat
+        cued = time.monotonic()
+        serial_out.apply({'lights': {0: {'mode': 'strobe', 'hue': 0, 'bright': 255, 'speed': 9}}})
+        while time.monotonic() < cued + 1:
+            hit = [t for t, data in writes if b'strobe' in data]
+            if hit:
+                break
+            time.sleep(0.002)
+        assert hit, 'the cue was never written'
+        lag = hit[0] - cued
+        assert lag < 0.05, f'cue left {lag * 1000:.0f}ms late — waiting for the heartbeat'
+        # the heartbeat itself is unchanged: an idle payload still repeats
+        before = len(writes)
+        time.sleep(0.6)
+        assert len(writes) - before >= 2, 'the 250ms heartbeat must keep running'
+    finally:
+        serial_out.close()
+
+
+def _a_clip_sent_nowhere_is_sent_again():
+    """
+    A GO before the visuals machine has resolved must not count as connected.
+
+    The clip was marked playing whether or not the packet had anywhere to go, so a cue
+    fired in the first seconds after boot — or while the laptop was off the network —
+    never reached Resolume, and every re-dispatch after that skipped it as a repeat.
+    """
+    osc = ResolumeOsc.__new__(ResolumeOsc)
+    osc.connected, osc.wanted, osc.resolved = None, None, {}
+    sent = []
+    osc._send = lambda path, value, *_: sent.append(path)
+    scene = {'resolume': {'layer': 1, 'clip': 8}}
+    osc.apply(scene)                                  # nothing resolved yet
+    osc.resolved = {'laptop.local': [('10.0.0.2', 38200)]}
+    osc.apply(scene)                                  # the next re-dispatch
+    assert sent.count('/composition/layers/1/clips/8/connect') == 2, (
+        'the clip must be sent again once there is somewhere to send it', sent)
+
+    # A single-look scene never re-dispatches, so the resolver itself must catch up.
+    import threading
+    listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    listener.bind(('127.0.0.1', 0))
+    listener.settimeout(3)
+    osc = ResolumeOsc.__new__(ResolumeOsc)
+    osc.hosts, osc.port = ['127.0.0.1'], listener.getsockname()[1]
+    osc.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    osc.resolved, osc.connected, osc.wanted, osc.is_running = {}, None, None, True
+    try:
+        osc.apply(scene)                               # cued with nowhere to send
+        assert osc.connected is None
+        threading.Thread(target=osc._resolve_loop, daemon=True).start()
+        data, _ = listener.recvfrom(256)
+        assert b'/clips/8/connect' in data, data
+        # a second machine joining later gets the cue too, not only the first
+        late = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        late.bind(('127.0.0.1', 0))
+        late.settimeout(3)
+        osc._send = lambda path, value, addresses=None: [
+            osc.socket.sendto(path.encode(), a) for a in (addresses or [])]
+        osc.hosts.append('localhost')
+        osc.port = late.getsockname()[1]
+        threading.Thread(target=osc._resolve_loop, daemon=True).start()
+        data, _ = late.recvfrom(256)
+        assert b'/clips/8/connect' in data, 'a host that resolved later never got the cue'
+        late.close()
+    finally:
+        osc.close()
+        listener.close()
+
+
 def _clip_is_not_retriggered():
     """
     A clip already playing must not be re-connected: /connect restarts it from the top.
@@ -241,9 +344,10 @@ def _clip_is_not_retriggered():
     a scene whose lights step every 12 seconds restarts its video every 12 seconds.
     """
     osc = ResolumeOsc.__new__(ResolumeOsc)
-    osc.connected = None
+    osc.connected = osc.wanted = None
+    osc.resolved = {'laptop.local': [('10.0.0.2', 38200)]}
     sent = []
-    osc._send = lambda path, value: sent.append(path)
+    osc._send = lambda path, value, *_: sent.append(path)
 
     scene = {'resolume': {'layer': 1, 'clip': 8}}
     osc.apply(scene)

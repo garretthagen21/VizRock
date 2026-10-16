@@ -102,6 +102,10 @@ def run():
     _reset_covers_scene_effects_without_a_configured_list()
     _a_once_step_fires_exactly_once()
     _a_pedal_bank_gesture_cannot_fire_a_cue()
+    _a_stale_timer_cannot_act_on_the_next_scene()
+    _an_audition_is_not_overwritten_by_the_live_scene()
+    _a_rebuilt_output_stays_muted()
+    _a_pop_under_blackout_sends_no_effect()
     _a_zero_second_last_step_holds_forever()
     _light_trim_lifts_scenes_but_never_lights_a_dark_one()
     _restart_refires_without_rearming()
@@ -252,6 +256,16 @@ def _boots_dark_with_the_opener_loaded():
     assert brain.live == opener, \
         f'the set opens on scene 1, so that is what boots loaded, got {brain.live}'
     assert sent == ['Blackout'], f'outputs must still get all-off, got {sent}'
+
+    # A stepped opener must have its clock running, exactly as a cue under blackout
+    # does — boot never started it, so the opener sat on step 1 after blackout lifted.
+    stepped = Brain()
+    stepped.scene_library.scenes[stepped.scene_library.order[0]]['lights'] = {'default': [
+        {'mode': 'pulse', 'seconds': 60}, {'mode': 'chase', 'seconds': 60}]}
+    stepped.outputs = []
+    stepped.boot()
+    assert stepped._light_timer is not None, 'the opener\'s light steps never started'
+    stepped._light_timer.cancel()
     assert brain.armed == brain.scene_library.step_from(opener, +1), \
         'the scene after the opener should be queued, not the opener itself'
 
@@ -843,6 +857,132 @@ def _a_pedal_bank_gesture_cannot_fire_a_cue():
         assert fired == ['arm_next', 'go'], f'0 disables the guard: {fired}'
     finally:
         vizrock_settings.midi_debounce_ms = before
+
+
+class _Recorder:
+    """An output that records what it was given, and any OSC sent through it."""
+    def __init__(self, name='spy'):
+        self.name, self.scenes, self.osc = name, [], []
+
+    def apply(self, scene):
+        self.scenes.append(scene)
+
+    def send_messages(self, messages, repeat=1):
+        self.osc.extend(messages)
+
+    def on_state(self, _):
+        pass
+
+    def status(self):
+        return 'ok'
+
+    def address_label(self):
+        return ''
+
+    def close(self):
+        pass
+
+
+def _a_stale_timer_cannot_act_on_the_next_scene():
+    """
+    A timer that fires just as GO lands must not act on the scene GO brought up.
+
+    cancel() cannot recall a callback already queued on the loop, so a light step that
+    expired a moment before a cue advanced the *new* scene — and started a second timer
+    chain that nothing held a reference to, stepping every scene twice as fast for the
+    rest of the night. The same race let a dying scene effect clear the next one's.
+    """
+    brain = Brain()
+    spy = _Recorder()
+    brain.outputs = [spy]
+    for scene_id in (2, 3):
+        brain.scene_library.scenes[scene_id]['lights'] = {'default': [
+            {'mode': 'pulse', 'seconds': 60}, {'mode': 'chase', 'seconds': 60}]}
+    brain.handle('goto', 2)
+    stale = brain._light_timer
+    brain.handle('goto', 3)
+    stale.function()                      # the expiry that was already queued
+    assert brain._light_step == 0, f'the new scene was stepped by the old timer: {brain._light_step}'
+    brain._light_timer.cancel()
+
+
+def _an_audition_is_not_overwritten_by_the_live_scene():
+    """
+    The live scene's own timers must not paint over a preview someone is holding.
+
+    A light step or a burst ending re-rendered LIVE, so auditioning while a stepped
+    scene was playing silently ended the preview a few seconds in.
+    """
+    brain = Brain()
+    spy = _Recorder()
+    brain.outputs = [spy]
+    brain.scene_library.scenes[2]['lights'] = {'default': [
+        {'mode': 'pulse', 'seconds': 60}, {'mode': 'chase', 'seconds': 60}]}
+    brain.handle('goto', 2)
+    brain.handle('audition_scene', 3)
+    brain._advance_light_step()
+    brain._end_burst()
+    brain.handle('light_burst')
+    brain.handle('cycle_color')
+    brain._cancel_burst()
+    assert spy.scenes[-1]['resolume']['clip'] == 3, 'the preview was painted over'
+    brain.handle('audition_end')
+    assert spy.scenes[-1]['resolume']['clip'] == 2
+    # and a real cue always wins over a preview
+    brain.handle('audition_scene', 3)
+    brain.handle('goto', 1)
+    assert not brain._auditioning, 'a cue must end the preview'
+    if brain._light_timer:
+        brain._light_timer.cancel()
+
+
+def _a_rebuilt_output_stays_muted():
+    """
+    Editing a muted output's config must not light it back up.
+
+    replace_output brought the new output up to the live scene without asking whether
+    it was enabled, so the toggle still read muted while the stage lit.
+    """
+    from vizrock.configurations.settings import vizrock_settings
+    import vizrock.brain as brain_module
+    brain = Brain()
+    brain.handle('goto', 2)
+    built = _Recorder('lights')
+    real_build, before = brain_module.build_output, dict(vizrock_settings.outputs.get('lights', {}))
+    brain_module.build_output = lambda name, spec: built
+    vizrock_settings.outputs['lights'] = {**before, 'enabled': False}
+    try:
+        brain.replace_output('lights')
+        assert not built.scenes, 'a muted output was sent the live scene'
+    finally:
+        brain_module.build_output = real_build
+        vizrock_settings.outputs['lights'] = before
+
+
+def _a_pop_under_blackout_sends_no_effect():
+    """
+    POP under blackout must not switch a visual effect on.
+
+    A cue under blackout already skips its effects — an effect on a composition nobody
+    can see is a stuck parameter waiting for the blackout to lift. POP did not.
+    """
+    brain = Brain()
+    spy = _Recorder()
+    brain.outputs = [spy]
+    brain.handle('goto', 2)
+    brain.handle('blackout')
+    spy.osc.clear()
+    from vizrock.configurations.settings import vizrock_settings
+    saved = dict(vizrock_settings.burst)
+    vizrock_settings.burst['osc'] = [{'address': '/fx/strobe/bypassed', 'value': 0}]
+    try:
+        brain.handle('light_burst')
+        assert not any(m.get('value') == 0 for m in spy.osc), f'an effect went on: {spy.osc}'
+    finally:
+        vizrock_settings.burst.clear()
+        vizrock_settings.burst.update(saved)
+        brain._cancel_burst()
+        brain.handle('blackout')
 
 
 def _restart_refires_without_rearming():

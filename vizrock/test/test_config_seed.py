@@ -24,6 +24,7 @@ def run():
     local edits makes `git pull` fail, which would break self-update the first time
     anyone changed a scene. So a fresh clone has to seed them from the examples.
     """
+    _a_failed_save_leaves_the_old_file()
     live = [vizrock_paths.Files.SHOW_CONFIG_FILE, vizrock_paths.Files.SCENES_FILE]
     backups = {}
     for path in live:
@@ -44,3 +45,39 @@ def run():
     finally:
         for path, backup in backups.items():
             shutil.copy(backup, path)
+
+
+def _a_failed_save_leaves_the_old_file():
+    """
+    A save that dies part way must leave the previous config whole.
+
+    write_text truncates first, so power pulled mid-save left half a JSON file — and a
+    config that will not parse stops the box booting.
+    """
+    import os
+    from pathlib import Path
+    folder = Path(tempfile.mkdtemp())
+    try:
+        target = folder / 'show_config.json'
+        target.write_text('{"intact": true}')
+        real_fsync = os.fsync
+
+        def power_cut(_):
+            raise OSError('power cut')
+        os.fsync = power_cut
+        try:
+            vizrock_paths.write_atomic(target, '{"half": ')
+        except OSError:
+            pass
+        finally:
+            os.fsync = real_fsync
+        assert target.read_text() == '{"intact": true}', target.read_text()
+        assert [p.name for p in folder.iterdir()] == ['show_config.json'], \
+            'a failed save must not leave its temporary behind'
+
+        vizrock_paths.write_atomic(target, '{"new": 1}')
+        assert target.read_text() == '{"new": 1}'
+        assert [p.name for p in folder.iterdir()] == ['show_config.json']
+    finally:
+        shutil.rmtree(folder)
+

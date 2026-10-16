@@ -17,7 +17,6 @@ from vizrock.configurations.settings import vizrock_settings
 from vizrock.managers.scene_library import BLACKOUT_SCENE, SceneLibrary
 from vizrock.outputs import build_output
 import vizrock.utilities.system as vizrock_system
-from vizrock.managers.updater import Updater
 
 logger = logging.getLogger(__name__)
 
@@ -135,12 +134,13 @@ class Brain:
         # where you go when something breaks, not where the night starts.
         opener = self.scene_library.order[0] if self.scene_library.order else None
         self.blackout = True
-        # LIVE shows the scene so you can see what you will get back; every output is
-        # muted, so nothing actually reaches the stage until blackout is released
-        self.live = opener
-        if opener is not None:
-            self.armed = self.scene_library.step_from(opener, +1)
-        self._render()
+        # A cue under blackout, like any other: LIVE shows what you will get back, its
+        # light steps run, and every output is held off until blackout is released.
+        # Going through _commit is what keeps boot from drifting from it.
+        if opener is None:
+            self._render()
+        else:
+            self._commit(opener)
         self.last_event = 'booted blacked out · opener loaded'
         logger.info('booted blacked out with scene %s loaded, %s armed', opener, self.armed)
 
@@ -225,8 +225,12 @@ class Brain:
             self.outputs.pop(existing)
         if replacement:
             self.outputs.insert(existing if existing is not None else len(self.outputs), replacement)
-            # a new output starts blank — bring it up to whatever is already on stage
-            if self.live in self.scene_library.scenes:
+            # A new output starts blank — bring it up to whatever is on stage, or hold
+            # it silent if it is muted. Editing a muted output's config used to light it
+            # back up while its toggle still said muted.
+            if not self._output_enabled(name):
+                self._silence(replacement)
+            elif self.live in self.scene_library.scenes:
                 try:
                     replacement.apply(self._effective_scene())
                 except Exception as error:
@@ -305,10 +309,8 @@ class Brain:
         self._burst_until = time.monotonic() + seconds
         if self._burst_timer:
             self._burst_timer.cancel()
-        self._burst_timer = threading.Timer(seconds, lambda: self._from_thread(self._end_burst))
-        self._burst_timer.daemon = True
-        self._burst_timer.start()
-        self._send_effects('osc')
+        self._start_timer('_burst_timer', seconds, self._end_burst)
+        self._fire_effects(self._burst_spec().get('osc'))
         self.last_event = f"{self._burst_spec().get('mode', 'strobe')} burst · {seconds:g}s"
         self._render()
         self.push_state()
@@ -325,6 +327,24 @@ class Brain:
             self.loop.call_soon_threadsafe(function)
         else:
             function()                    # tests and dev runs without a loop
+
+    def _start_timer(self, attribute, seconds, callback):
+        """
+        Run `callback` after `seconds`, unless the timer held in `attribute` has since
+        been cancelled or replaced.
+
+        cancel() cannot recall a callback already queued on the loop. A light step
+        that expired just as GO landed advanced the *new* scene and started a second
+        timer chain nothing held a reference to. The check runs on the loop, where
+        every cancel and replacement also happens, so it cannot race.
+        """
+        def fire():
+            if getattr(self, attribute) is timer:
+                callback()
+        timer = threading.Timer(seconds, lambda: self._from_thread(fire))
+        timer.daemon = True
+        setattr(self, attribute, timer)
+        timer.start()
 
     def _light_summary(self, scene):
         """How the lights read in a log line, across every peripheral."""
@@ -398,10 +418,7 @@ class Brain:
         seconds = float(step.get('seconds', vizrock_settings.light_step_seconds) or 0)
         if seconds <= 0:
             return                        # 0 means hold here rather than advance
-        self._light_timer = threading.Timer(
-            seconds, lambda: self._from_thread(self._advance_light_step))
-        self._light_timer.daemon = True
-        self._light_timer.start()
+        self._start_timer('_light_timer', seconds, self._advance_light_step)
 
     def _advance_light_step(self):
         # Monotonic, not wrapped to the default's length: every peripheral indexes it
@@ -513,6 +530,14 @@ class Brain:
     def _send_reset(self):
         """Take every effect in the show down. Safe to over-send; OSC has no ack."""
         self._send_osc(self._effect_reset(), repeat=EFFECT_RESET_REPEAT)
+
+    def _fire_effects(self, messages):
+        """
+        Switch effects on — except under blackout, where an effect nobody can see is a
+        stuck parameter waiting for the blackout to lift. Resets are never skipped.
+        """
+        if not self.blackout:
+            self._send_osc(messages)
 
     def _send_effects(self, key, repeat=1):
         """Fire the burst's OSC at whichever output can carry it."""
@@ -663,6 +688,11 @@ class Brain:
         Push current state out. Precedence: blackout > lights off > burst > color >
         the scene, in one place so the UI and the outputs cannot disagree.
         """
+        # A held preview outranks everything but blackout, so the live scene's own
+        # clock, a POP or a trim cannot paint over it. Every way out of an audition —
+        # release, a cue — clears the flag before it renders.
+        if self._auditioning and not self.blackout:
+            return
         effective = self._effective_scene()
         if effective is not None:
             if self._restart_visuals:
@@ -697,7 +727,8 @@ class Brain:
         """Shift one peripheral's brightness, or the default, for the room you are in."""
         vizrock_settings.light_trim[peripheral] = max(-255, min(255, int(value)))
         vizrock_settings.raw['light_trim'] = dict(vizrock_settings.light_trim)
-        vizrock_settings.save()
+        # a stepper pressed mid-set: coalesce, and keep the SD card off the loop
+        vizrock_settings.save_soon()
         self.last_event = 'light trim %s %+d' % (
             peripheral, vizrock_settings.light_trim[peripheral])
         logger.info(self.last_event)
@@ -723,18 +754,18 @@ class Brain:
             self._render()                      # catch up on whatever it missed
         else:
             for output in self.outputs:
-                if output.name != name:
-                    continue
-                silence = getattr(output, 'silence', None)
-                if not silence:
-                    continue
-                try:
-                    silence()
-                except Exception as error:
-                    logger.warning('silencing %s failed: %s', name, error)
+                if output.name == name:
+                    self._silence(output)
         self.last_event = f"{name} {'on' if enabled else 'muted'}"
         logger.info('output %s %s', name, 'enabled' if enabled else 'muted')
         self.push_state()
+
+    @staticmethod
+    def _silence(output):
+        try:
+            output.silence()
+        except Exception as error:
+            logger.warning('silencing %s failed: %s', output.name, error)
 
     def _dispatch(self, scene):
         """Fan a scene out to every output, each isolated so one failure cannot spread."""
@@ -759,6 +790,8 @@ class Brain:
             logger.warning('commit to missing scene %s', scene_id)
             return
         self.live = scene_id
+        # a real cue always ends a preview — the stage is about to show the cue
+        self._auditioning = False
         # A colour cycled by hand is a momentary fiddle, not a setting: it dies at the
         # next cue so every scene comes up the colour it was authored. Without this a
         # colour picked during one song quietly repainted the rest of the set.
@@ -790,16 +823,13 @@ class Brain:
         # Cancelled unconditionally, outside the blackout guard: a timer left running
         # from the previous scene would fire later and clear *this* scene's effect.
         self._cancel_scene_effect()
+        self._fire_effects(scene.get('osc'))
         if not self.blackout:
-            self._send_osc(scene.get('osc'))
             # `osc_seconds` makes it a burst that clears itself; without it the effect
             # holds for the whole scene and the next cue's reset takes it down.
             seconds = float(scene.get('osc_seconds') or 0)
             if seconds > 0:
-                self._scene_effect_timer = threading.Timer(
-                    seconds, lambda: self._from_thread(self._end_scene_effect))
-                self._scene_effect_timer.daemon = True
-                self._scene_effect_timer.start()
+                self._start_timer('_scene_effect_timer', seconds, self._end_scene_effect)
         # auto-arm the next scene so a linear set is just GO, GO, GO
         if rearm and scene_id in self.scene_library.order:
             self.armed = self.scene_library.step_from(scene_id, +1)

@@ -168,7 +168,7 @@ def main(argv=None):
         print(f'\n{len(merged["scenes"])} scene(s) would be written — re-run with --write')
         return 1 if issues else 0
 
-    scenes_file.write_text(json.dumps(merged, indent=2))
+    vizrock_paths.write_atomic(scenes_file, json.dumps(merged, indent=2))
     print(f'\nwrote {scenes_file} ({len(merged["scenes"])} scenes)')
     return 1 if issues else 0
 

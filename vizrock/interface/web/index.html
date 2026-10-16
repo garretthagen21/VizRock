@@ -752,6 +752,11 @@ const DEMO = {
 let state = structuredClone(DEMO);
 let uiBuild = null;   // stamp of the served UI, so a long-lived kiosk notices a deploy
 let selected = 1, ws = null, online = false;
+// Set by the first real connection. Before it the page is a demo; after it, a press
+// with the brain gone must not pretend to have gone anywhere.
+let everConnected = false;
+// Whether a message would actually reach the brain right now.
+const linked = () => online && ws && ws.readyState===1;
 
 const H = h => Math.round(h/255*360);
 const now = () => new Date().toTimeString().slice(0,8);
@@ -764,7 +769,7 @@ const nextMain = from => { const m=state.scenes.filter(s=>s.main).map(s=>s.id);
 // ---- websocket to the brain (graceful demo fallback) ----
 function connect(){
   try{ ws = new WebSocket(`ws://${location.host}/ws`); }catch(e){ return; }
-  ws.onopen = ()=>{ online=true; document.getElementById('conn').classList.add('online');
+  ws.onopen = ()=>{ online=true; everConnected=true; document.getElementById('conn').classList.add('online');
     // not "live" — LIVE means the playing scene everywhere else in this UI
     document.getElementById('mode').textContent="connected"; };
   ws.onmessage = e => { const d=JSON.parse(e.data);
@@ -782,8 +787,11 @@ function connect(){
   ws.onerror = ()=>{ try{ws.close();}catch(_){} };
 }
 function act(action, sceneId){
-  if(online && ws && ws.readyState===1){ ws.send(JSON.stringify({type:"action",action,scene:sceneId})); return; }
-  demoAct(action, sceneId);                          // local simulation
+  if(linked()){ ws.send(JSON.stringify({type:"action",action,scene:sceneId})); return; }
+  // The local simulation is only for a page that never had a brain. During a
+  // reconnect it showed "LIVE → … · dispatched" for a GO that reached nothing.
+  if(everConnected){ state.last_event = `${action} NOT SENT · no brain`; render(); return; }
+  demoAct(action, sceneId);
 }
 function demoAct(action, sceneId){
   const ord=order();
@@ -1147,7 +1155,7 @@ function dropOn(targetId){
   const from=order.indexOf(dragId), to=order.indexOf(targetId);
   if(from<0 || to<0) return;
   order.splice(to, 0, order.splice(from, 1)[0]);
-  if(online && ws && ws.readyState===1) ws.send(JSON.stringify({type:"reorder", order}));
+  if(linked()) ws.send(JSON.stringify({type:"reorder", order}));
   dragId=null;
 }
 // Section headers, the way an iOS list groups rows — a hint about a mode's character,
@@ -1208,7 +1216,7 @@ function isDirty(){
 function discardEdits(){ draft = null; draftFor = null; renderInsp(); renderList(); applyPending(); }
 function saveEdits(){
   const s = editing(); if(!s) return;
-  if(online && ws && ws.readyState===1) ws.send(JSON.stringify({type:"edit_scene", scene:s}));
+  if(linked()) ws.send(JSON.stringify({type:"edit_scene", scene:s}));
   else { state.scenes = state.scenes.map(x => x.id===s.id ? s : x); }
   draft = null; draftFor = null;
   const tag=document.getElementById('savedTag');
@@ -1514,7 +1522,7 @@ function wireAudition(){
   document.querySelectorAll('[data-audition]').forEach(button=>{
     const stop = () => { button.classList.remove('holding'); send('audition_end'); };
     const send = (action) => {
-      if(!(online && ws && ws.readyState===1)) return;
+      if(!linked()) return;
       // Preview the working copy, not what is on disk — auditioning exists to answer
       // "what did I just change", and saved values answer the wrong question.
       const override = action==='audition_end' ? undefined : editing();
@@ -1645,7 +1653,7 @@ function askUpdate(){
     return;
   }
   confirmingUpdate=false;
-  if(online && ws && ws.readyState===1) ws.send(JSON.stringify({type:"update", to:u.incoming[0].sha}));
+  if(linked()) ws.send(JSON.stringify({type:"update", to:u.incoming[0].sha}));
   renderUpdate();
 }
 function renderCues(){
@@ -1706,6 +1714,7 @@ function trimOf(name){
 }
 function setTrim(name, v){
   v = Math.max(-TRIM_LIMIT, Math.min(TRIM_LIMIT, v));
+  if(!linked()) return;
   ws.send(JSON.stringify({type:"set_light_trim", peripheral:name, value:v}));
 }
 function stepTrim(name, delta){ setTrim(name, trimOf(name) + delta); }
@@ -1774,7 +1783,7 @@ function renderOuts(){
   });
 }
 function setOutputEnabled(name, enabled){
-  if(!(online && ws && ws.readyState===1)) return;
+  if(!linked()) return;
   // Muting sends the output's safe-off first, then stops dispatching to it. The
   // brain does that; the UI only asks.
   ws.send(JSON.stringify({type:"set_output_enabled", name, enabled}));
@@ -1793,7 +1802,7 @@ function applyOutput(name,btn){
     const cfg=state.output_config?.[name]||{};
     spec.port = cfg.type==="serial" ? port.trim() : parseInt(port,10);
   }
-  if(!(online && ws && ws.readyState===1)){ flashApply(btn,"OFFLINE"); return; }
+  if(!linked()){ flashApply(btn,"OFFLINE"); return; }
   ws.send(JSON.stringify({type:"edit_config",name,spec}));
   flashApply(btn,"APPLIED");
 }
@@ -1870,7 +1879,7 @@ function renderPedal(){
   renderTriggers();
 }
 function setTriggerAction(index, action){
-  if(!(online && ws && ws.readyState===1)) return;
+  if(!linked()) return;
   ws.send(JSON.stringify({type:"set_trigger_action", index, action}));
 }
 

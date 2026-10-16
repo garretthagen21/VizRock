@@ -56,7 +56,7 @@ def main():
         live = json.loads(live_path.read_text())
         added = merge_missing(live, json.loads(example_path.read_text()))
         if added:
-            live_path.write_text(json.dumps(live, indent=2))
+            vizrock_paths.write_atomic(live_path, json.dumps(live, indent=2))
             print(f'  {name}: added {", ".join(added)}')
         else:
             print(f'  {name}: up to date')

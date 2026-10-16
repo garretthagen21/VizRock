@@ -11,6 +11,7 @@
 
 import json
 import logging
+import threading
 
 import vizrock.constants.paths as vizrock_paths
 
@@ -77,8 +78,24 @@ class VizRockSettings:
         self.outputs.setdefault(name, {}).update(spec)
 
     def save(self):
-        vizrock_paths.Files.SHOW_CONFIG_FILE.write_text(json.dumps(self.raw, indent=2))
+        vizrock_paths.write_atomic(vizrock_paths.Files.SHOW_CONFIG_FILE, json.dumps(self.raw, indent=2))
         logger.info('show_config.json saved')
+
+    def save_soon(self, delay=0.5):
+        """
+        Save shortly, off the event loop, coalescing a run of changes into one write.
+
+        For controls touched mid-set, like the trim steppers: an fsync on an SD card can
+        take 100ms, and on the loop that is 100ms in which GO cannot dispatch. The text
+        is taken now, on the loop, so the writer never reads a dict being changed.
+        """
+        text = json.dumps(self.raw, indent=2)
+        if getattr(self, '_pending_save', None):
+            self._pending_save.cancel()
+        self._pending_save = threading.Timer(
+            delay, vizrock_paths.write_atomic, (vizrock_paths.Files.SHOW_CONFIG_FILE, text))
+        # not a daemon: a trim nudged just before shutdown still reaches disk
+        self._pending_save.start()
 
 
 vizrock_settings = VizRockSettings()

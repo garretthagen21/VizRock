@@ -32,6 +32,7 @@ def run():
     asyncio.run(_delivers())
     _outside_a_loop_is_safe()
     _addresses_are_reported()
+    asyncio.run(_first_snapshot_carries_the_build())
 
 
 async def _delivers():
@@ -72,3 +73,40 @@ def _addresses_are_reported():
     before = vizrock_system._cache['at']
     vizrock_system.local_addresses()
     assert vizrock_system._cache['at'] == before or not addresses, 'result was not cached'
+
+
+async def _first_snapshot_carries_the_build():
+    """
+    The snapshot sent on connect must carry the UI stamp too.
+
+    Only broadcasts did, so a kiosk sitting idle through a deploy took its first stamp
+    from the *new* build and never reloaded the old page it was still showing.
+    """
+    import json
+
+    class _Brain:
+        def snapshot(self):
+            return {'type': 'state'}
+
+    class _Socket(_Client):
+        async def prepare(self, request):
+            pass
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            raise StopAsyncIteration
+
+    import vizrock.interface.ui_server as module
+    server = UiServer.__new__(UiServer)
+    server.brain, server.clients = _Brain(), set()
+    socket = _Socket()
+    real = module.web.WebSocketResponse
+    module.web.WebSocketResponse = lambda: socket
+    try:
+        await server._websocket(None)
+    finally:
+        module.web.WebSocketResponse = real
+    assert 'ui_build' in json.loads(socket.sent[0]), socket.sent[0]
+

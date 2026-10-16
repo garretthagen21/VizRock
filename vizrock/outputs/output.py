@@ -32,4 +32,7 @@ class Output:
     def address_label(self):
         return ''
 
+    def silence(self):
+        """Hold this output at its safe-off. A no-op where there is nothing to hold."""
+
     def close(self): ...
