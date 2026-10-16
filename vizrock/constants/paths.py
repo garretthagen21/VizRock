@@ -73,6 +73,8 @@ def write_atomic(path, text):
             out.write(text)
             out.flush()
             os.fsync(out.fileno())
+        if path.exists():                        # mkstemp makes it 0600; keep the old mode
+            os.chmod(temporary, path.stat().st_mode & 0o777)
         os.replace(temporary, path)
     except BaseException:
         os.unlink(temporary)

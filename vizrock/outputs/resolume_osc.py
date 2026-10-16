@@ -58,6 +58,7 @@ class ResolumeOsc(Output):
         self.resolved = {}       # host -> [(ip, port), ...]
         self.connected = None    # (layer, clip) currently playing
         self.wanted = None       # (layer, clip) the show has cued, sent or not
+        self.delivered = set()   # host names that have been sent `wanted`
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.is_running = True
         self.thread = threading.Thread(target=self._resolve_loop, daemon=True)
@@ -82,6 +83,7 @@ class ResolumeOsc(Output):
         if resolume.get('clear'):
             self._send('/composition/disconnectall', 1)
             self.connected = self.wanted = None
+            self.delivered = set()
             return
         target = (resolume['layer'], resolume['clip'])
         if target == self.connected and not scene.get('restart'):
@@ -91,6 +93,7 @@ class ResolumeOsc(Output):
         # skipped it as a repeat — the scene never reached Resolume at all.
         self.wanted = target
         self.connected = target if self.resolved else None
+        self.delivered = set(self.resolved)
         self._connect(target)
 
     def _connect(self, target, addresses=None):
@@ -100,6 +103,7 @@ class ResolumeOsc(Output):
         """Disconnect everything, so muting the output leaves a black screen."""
         self._send('/composition/disconnectall', 1)
         self.connected = self.wanted = None
+        self.delivered = set()
 
     def status(self):
         # nothing resolved means we cannot even address a target — say so
@@ -127,18 +131,19 @@ class ResolumeOsc(Output):
                 try:
                     info = socket.getaddrinfo(host, self.port, socket.AF_INET, socket.SOCK_DGRAM)
                     addresses = list(dict.fromkeys(entry[4] for entry in info))
-                    known = self.resolved.get(host, [])
-                    if known != addresses:
+                    if self.resolved.get(host) != addresses:
                         logger.info('resolved %s to %s', host, ', '.join(ip for ip, _ in addresses))
                     self.resolved[host] = addresses
                     reported.discard(host)      # recovered: a later failure must warn again
-                    # An address that has never had the current cue gets it now — a
-                    # machine that joined late, or a cue fired before anything resolved.
-                    fresh = [a for a in addresses if a not in known]
+                    # A machine that has never had the current cue gets it now — one that
+                    # joined late, or a cue fired before anything resolved. Tracked per
+                    # host, not per address: an address coming and going on a machine
+                    # that already has the cue must not re-send /connect, which restarts it.
                     wanted = self.wanted
-                    if wanted and fresh:
+                    if wanted and host not in self.delivered:
+                        self.delivered.add(host)
                         self.connected = wanted
-                        self._connect(wanted, fresh)
+                        self._connect(wanted, addresses)
                 except OSError as error:
                     # report the transition, not the state — a typo'd name would
                     # otherwise warn on every pass for the length of the show

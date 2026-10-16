@@ -64,6 +64,9 @@ class VizRockSettings:
         # Two deliberate presses on a four-switch board are never this close, so a
         # message arriving inside this window is the artifact, not playing. 0 disables.
         self.midi_debounce_ms = int(self.raw.get('midi_debounce_ms', 120))
+        self._save_lock = threading.Lock()
+        self._save_version = 0
+        self._pending_save = None
         self.outputs = self.raw.setdefault('outputs', {})
         # a pre-2026-09 box has outputs.rings; the output is called lights now
         if 'rings' in self.outputs and 'lights' not in self.outputs:
@@ -78,8 +81,20 @@ class VizRockSettings:
         self.outputs.setdefault(name, {}).update(spec)
 
     def save(self):
-        vizrock_paths.write_atomic(vizrock_paths.Files.SHOW_CONFIG_FILE, json.dumps(self.raw, indent=2))
+        self._write(json.dumps(self.raw, indent=2), self._next_version())
         logger.info('show_config.json saved')
+
+    def _next_version(self):
+        # Every save takes a number, and only the newest may land. A coalesced save
+        # holds an older snapshot; if it fired after a full save it would undo it.
+        with self._save_lock:
+            self._save_version += 1
+            return self._save_version
+
+    def _write(self, text, version):
+        with self._save_lock:
+            if version == self._save_version:
+                vizrock_paths.write_atomic(vizrock_paths.Files.SHOW_CONFIG_FILE, text)
 
     def save_soon(self, delay=0.5):
         """
@@ -90,10 +105,7 @@ class VizRockSettings:
         is taken now, on the loop, so the writer never reads a dict being changed.
         """
         text = json.dumps(self.raw, indent=2)
-        if getattr(self, '_pending_save', None):
-            self._pending_save.cancel()
-        self._pending_save = threading.Timer(
-            delay, vizrock_paths.write_atomic, (vizrock_paths.Files.SHOW_CONFIG_FILE, text))
+        self._pending_save = threading.Timer(delay, self._write, (text, self._next_version()))
         # not a daemon: a trim nudged just before shutdown still reaches disk
         self._pending_save.start()
 

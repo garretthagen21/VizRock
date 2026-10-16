@@ -928,6 +928,11 @@ def _an_audition_is_not_overwritten_by_the_live_scene():
     assert spy.scenes[-1]['resolume']['clip'] == 3, 'the preview was painted over'
     brain.handle('audition_end')
     assert spy.scenes[-1]['resolume']['clip'] == 2
+    # a lost release must not leave the panic control broken: blackout ends a preview
+    brain.handle('audition_scene', 3)
+    brain.handle('blackout')
+    brain.handle('blackout')
+    assert spy.scenes[-1]['resolume']['clip'] == 2, 'releasing blackout left the stage dark'
     # and a real cue always wins over a preview
     brain.handle('audition_scene', 3)
     brain.handle('goto', 1)

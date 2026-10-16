@@ -102,6 +102,9 @@ class UiServer:
                     logger.warning('ignored a bad UI message %.120s: %s', message.data, error)
         finally:
             self.clients.discard(websocket)
+            # an audition is a held button; a client that vanished cannot release it
+            if getattr(self.brain, '_auditioning', False):
+                self.brain.handle('audition_end')
         return websocket
 
     def _handle_message(self, data):

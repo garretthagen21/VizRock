@@ -334,6 +334,38 @@ def _a_clip_sent_nowhere_is_sent_again():
         osc.close()
         listener.close()
 
+    # An address that comes and goes on a host that already has the cue — a dual-homed
+    # laptop, a re-plugged cable — must not re-send /connect: that restarts the clip.
+    sent = []
+    osc = ResolumeOsc.__new__(ResolumeOsc)
+    osc.hosts, osc.port = ['laptop.local'], 38200
+    osc.resolved, osc.connected, osc.wanted = {'laptop.local': [('10.0.0.2', 38200)]}, None, None
+    osc.delivered, osc.socket = set(), socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    osc._send = lambda path, value, addresses=None: sent.append(path)
+    try:
+        osc.apply(scene)
+        answers = iter([[('10.0.0.2', 38200), ('169.254.1.9', 38200)], [('10.0.0.2', 38200)],
+                        [('10.0.0.2', 38200), ('169.254.1.9', 38200)]])
+        real_getaddrinfo, real_sleep = socket.getaddrinfo, time.sleep
+        socket.getaddrinfo = lambda *a, **k: [(0, 0, 0, '', addr) for addr in next(answers)]
+        passes = []
+
+        def sleep(_):
+            passes.append(1)
+            if len(passes) == 3:
+                osc.is_running = False
+        time.sleep = sleep
+        osc.is_running = True
+        try:
+            osc._resolve_loop()
+        finally:
+            socket.getaddrinfo, time.sleep = real_getaddrinfo, real_sleep
+        assert sent.count('/composition/layers/1/clips/8/connect') == 1, (
+            'a host that already had the cue was sent it again', sent)
+    finally:
+        osc.close()
+        listener.close()
+
 
 def _clip_is_not_retriggered():
     """

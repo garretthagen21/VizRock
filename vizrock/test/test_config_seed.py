@@ -81,3 +81,20 @@ def _a_failed_save_leaves_the_old_file():
     finally:
         shutil.rmtree(folder)
 
+    # A full save supersedes a pending coalesced one. Otherwise: nudge the trim, mute an
+    # output within half a second, and the trim's older snapshot lands last on disk.
+    import time
+    from vizrock.configurations.settings import vizrock_settings
+    written, real = [], vizrock_paths.write_atomic
+    vizrock_paths.write_atomic = lambda path, text: written.append(text)
+    try:
+        vizrock_settings.raw['_probe'] = 'stale'
+        vizrock_settings.save_soon(delay=0.1)
+        vizrock_settings.raw['_probe'] = 'current'
+        vizrock_settings.save()
+        time.sleep(0.3)
+        assert '"current"' in written[-1], 'a stale coalesced save overwrote a newer one'
+    finally:
+        vizrock_paths.write_atomic = real
+        vizrock_settings.raw.pop('_probe', None)
+

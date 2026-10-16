@@ -247,6 +247,10 @@ class Brain:
         reveals the scene instead of the brain having to remember and restore one.
         """
         self.blackout = not self.blackout
+        # Blackout ends any preview. A release is a websocket message, so a phone that
+        # drops mid-hold loses it — and a stuck preview would hold the stage dark after
+        # blackout lifts, breaking the panic control.
+        self._auditioning = False
         if self.blackout:
             # every output off has to mean effects too — otherwise a blackout hides
             # the clip and leaves the effect running on nothing
