@@ -244,7 +244,7 @@
     line-height:1.1; padding-left:11px; padding-right:11px}
   .bsub{font-size:8.5px; letter-spacing:.03em; color:var(--muted2); opacity:.9; font-weight:500}
   .btn[data-long="blackout"] .bsub{color:#c96b7a}
-  .btn[data-long="next_main"] .bsub{color:var(--home)}
+  .btn[data-long="restart_scene"] .bsub{color:var(--home)}
   .btn[data-long="cycle_color"] .bsub{color:var(--pop)}
   .btn.holding .bsub{opacity:1; font-weight:700}
   .btn.holding{border-color:var(--active)}
@@ -661,10 +661,10 @@
         ><span>✦ POP</span><span class="bsub">COLOR</span></button>
       <button class="btn" data-short="arm_prev" data-long="blackout"
         ><span>◄ PREV</span><span class="bsub">BLACKOUT</span></button>
-      <button class="btn" data-short="arm_next" data-long="next_main"
-        ><span>NEXT ►</span><span class="bsub">⌂ MAIN</span></button>
-      <button class="btn go" data-short="go" data-long="restart_scene"
-        ><span>GO ▸</span><span class="bsub">RESTART</span></button>
+      <button class="btn" data-short="arm_next" data-long="restart_scene"
+        ><span>NEXT ►</span><span class="bsub">RESTART</span></button>
+      <!-- No long action: GO fires on touch, so a held or sliding press still lands. -->
+      <button class="btn go" data-short="go"><span>GO ▸</span></button>
       <div class="log" id="log"><span class="t">[--:--:--]</span> connecting…</div>
     </div>
   </div>
@@ -728,8 +728,8 @@ const DEMO = {
   addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", lights:"/dev/light_tx (searching)"},
   output_config:{resolume:{type:"osc",hosts:["Garretts-M2-MacBook-Pro.local"],port:38200},
                  lights:{type:"serial",port:"auto"}},
-  triggers:[{midi:{kind:"pc",program:0},do:"next_main"},{midi:{kind:"pc",program:1},do:"arm_prev"},
-            {midi:{kind:"pc",program:2},do:"arm_next"},{midi:{kind:"pc",program:3},do:"go"}],
+  triggers:["light_burst","arm_prev","arm_next","go","cycle_color","blackout","restart_scene","go"]
+            .map((action,program)=>({midi:{kind:"pc",program},do:action})),
   known_actions:["go","goto","arm","arm_prev","arm_next","next_main","restart_scene","blackout",
                  "clear_effects","light_burst","cycle_color"],
   blackout:false, color_index:null, mains:[1], action_seq:0, last_action:null,
@@ -1959,6 +1959,7 @@ document.querySelectorAll('.transport .btn[data-short]').forEach(button=>{
   let timer=null, fired=false;
   const start = event => {
     event.preventDefault();
+    if(!button.dataset.long){ fired=true; act(button.dataset.short); return; }
     fired=false;
     button.classList.add('holding');
     timer=setTimeout(()=>{

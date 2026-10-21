@@ -69,7 +69,7 @@ def run():
     # the right, and POP is furthest from it so the two cannot be confused mid-song.
     midi = MidiInterface(lambda action, scene: None)
     short = ['light_burst', 'arm_prev', 'arm_next', 'go']
-    long_ = ['cycle_color', 'blackout', 'next_main', 'restart_scene']
+    long_ = ['cycle_color', 'blackout', 'restart_scene', 'go']   # a held GO is still GO
     for program, action in enumerate(short):
         assert midi.match_trigger(message(type='program_change', program=program)) \
             == (action, None), f'PC {program} should be {action}'

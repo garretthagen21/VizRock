@@ -320,7 +320,8 @@ stacks differently:
   0-3**, one message per press, left to right — confirmed on hardware. The map matches the
   pedal rather than requiring CubeSuite: short presses are `0→light_burst · 1→arm_prev ·
   2→arm_next · 3→go`, i.e. **POP · PREV · NEXT · GO** left to right, and long presses are PC
-  4-7 (`cycle_color · blackout · next_main · restart_scene`). **Every bank on the pedal must
+  4-7 (`cycle_color · blackout · restart_scene · go`) — a held GO is still GO, so a late
+  release never costs the cue. **Every bank on the pedal must
   send the same eight** — a double-press changes bank. The UI transport uses the same order:
   there must be nothing to translate between the pedal and the screen.
 - **A trigger within `midi_debounce_ms` (120) of the last one is dropped.** The pedal's bank

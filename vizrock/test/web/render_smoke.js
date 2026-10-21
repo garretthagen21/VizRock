@@ -83,7 +83,7 @@ state.triggers = [
   {midi:{kind:'pc',program:0},do:'light_burst'}, {midi:{kind:'pc',program:1},do:'arm_prev'},
   {midi:{kind:'pc',program:2},do:'arm_next'},    {midi:{kind:'pc',program:3},do:'go'},
   {midi:{kind:'pc',program:4},do:'cycle_color'}, {midi:{kind:'pc',program:5},do:'blackout'},
-  {midi:{kind:'pc',program:6},do:'next_main'},   {midi:{kind:'pc',program:7},do:'restart_scene'},
+  {midi:{kind:'pc',program:6},do:'restart_scene'}, {midi:{kind:'pc',program:7},do:'go'},
   {midi:{kind:'cc',cc:20,value:127},do:'clear_effects'},   // outside the switch grid
   {midi:{kind:'pc',program:9},do:'home'},                  // an action that no longer exists
 ];

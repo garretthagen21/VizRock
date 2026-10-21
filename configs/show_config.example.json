@@ -97,14 +97,14 @@
         "kind": "pc",
         "program": 6
       },
-      "do": "next_main"
+      "do": "restart_scene"
     },
     {
       "midi": {
         "kind": "pc",
         "program": 7
       },
-      "do": "restart_scene"
+      "do": "go"
     }
   ],
   "burst": {
