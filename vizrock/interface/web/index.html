@@ -224,7 +224,8 @@
   /* The buttons share the bar at every width. This used to live only in the narrow
      media queries, so the kiosk looked right and a desktop browser sized the buttons
      to their text and bunched them on the left while the log ate the rest. */
-  .transport .btn{flex:1 1 0; min-width:0}
+  /* Stretched to the row, so GO, which has no long-press subtitle, is as tall as the rest. */
+  .transport .btn{flex:1 1 0; min-width:0; align-self:stretch}
   /* The log takes what is left rather than all of it — it is a readout, not a control. */
   .log{flex:0 1 260px; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .log .t{color:var(--muted2)}
