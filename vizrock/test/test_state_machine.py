@@ -108,6 +108,7 @@ def run():
     _a_pop_under_blackout_sends_no_effect()
     _a_zero_second_last_step_holds_forever()
     _light_trim_lifts_scenes_but_never_lights_a_dark_one()
+    _epilepsy_safe_swaps_every_flash()
     _restart_refires_without_rearming()
     _next_main_is_a_dead_button_with_no_mains()
 
@@ -739,6 +740,55 @@ def _a_once_step_fires_exactly_once():
     assert live_mode() == 'strobe', 'a fresh cue must fire the stab again'
 
 
+def _epilepsy_safe_swaps_every_flash():
+    """
+    Epilepsy-safe mode swaps strobe, firework and glitch for looks that do not flash,
+    covers a POP as well as the scene, and keeps flashing Resolume effects off.
+    Resets still go out — turning an effect off is never the hazard.
+    """
+    from vizrock.configurations.settings import vizrock_settings
+
+    brain = Brain()
+    sent = []
+
+    class EffectSpy:
+        name = 'visuals'
+        def apply(self, scene): pass
+        def send_messages(self, messages, repeat=1):
+            sent.extend((m['address'], m.get('value')) for m in messages)
+        def status(self): return 'ok'
+        def address_label(self): return ''
+        def close(self): pass
+
+    brain.outputs = [EffectSpy()]
+    brain.blackout = False
+    before = vizrock_settings.epilepsy_safe
+    brain.scene_library.scenes[2]['lights'] = {
+        'default': {'mode': 'strobe', 'hue': 136, 'bright': 255, 'speed': 9}}
+    brain.scene_library.scenes[2]['burst'] = {'mode': 'firework', 'seconds': 5}
+    brain.scene_library.scenes[2]['osc'] = [
+        {'address': '/composition/video/effects/strobe/bypassed', 'value': 0},
+        {'address': '/composition/video/effects/rgbshift/bypassed', 'value': 0}]
+    try:
+        vizrock_settings.epilepsy_safe = True
+        brain.handle('goto', 2)
+        light = brain._effective_scene()['lights'][0]
+        assert (light['mode'], light['hue']) == ('pulse', 136), light
+        # 0 switches an effect on; the commit's own reset (1) may name strobe freely
+        assert ('/composition/video/effects/strobe/bypassed', 0) not in sent, sent
+        assert ('/composition/video/effects/rgbshift/bypassed', 0) in sent, sent
+
+        brain.handle('light_burst')
+        assert brain._effective_scene()['lights'][0]['mode'] == 'confetti'
+
+        vizrock_settings.epilepsy_safe = False
+        assert brain._effective_scene()['lights'][0]['mode'] == 'firework', \
+            'turning it off must give the authored look straight back'
+    finally:
+        vizrock_settings.epilepsy_safe = before
+        brain._cancel_burst()
+
+
 def _light_trim_lifts_scenes_but_never_lights_a_dark_one():
     """
     A trim per peripheral, clamped, and it must not undo the dark scenes.
@@ -1138,7 +1188,8 @@ def _scene_effects():
     brain.handle('goto', 2)
     running = brain._scene_effect_timer
     brain.handle('goto', 3)
-    assert not running.is_alive(), 'a stale effect timer must be cancelled on the next cue'
+    # `finished` is what cancel() sets; is_alive() races the thread's own exit
+    assert running.finished.is_set(), 'a stale effect timer must be cancelled on the next cue'
     assert brain._scene_effect_timer is None, brain._scene_effect_timer
     del brain.scene_library.scenes[2]['osc_seconds']
 

@@ -78,6 +78,9 @@
   .pill.ready .led{background:var(--active);box-shadow:0 0 8px var(--active)}
   .pill.retrying .led{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:blink 1s steps(2) infinite}
   .pill.off{opacity:.5}
+  /* white: every hue already means something else */
+  .pill.safe{border-color:var(--ink); color:var(--ink)}
+  .pill.safe .led{background:var(--ink)}
   .pill .st{color:var(--muted);font-weight:500}
   .pill.ok .st{color:var(--live)} .pill.retrying .st{color:var(--warn)}
   .pill.ready .st{color:var(--active)}
@@ -711,6 +714,14 @@
             ▣ VISUALS · EFFECTS</button>
           <button class="settingsbtn" style="margin:0" onclick="openPedal()">
             ⎘ PEDAL LAYOUT · SHORT AND LONG PRESS</button>
+          <div class="sectlab mt">EPILEPSY SAFE</div>
+          <div class="upd"><div class="learn switchrow" style="margin:0;border-style:solid">
+            <span class="hint">No strobing. Strobe, firework and glitch lights become
+              swells and scatter, and Resolume's strobe and glitch effects stay off.
+              Flashes inside the clips themselves are not changed.</span>
+            <button class="switch" id="epSafe" role="switch" aria-checked="false"
+              aria-label="Epilepsy safe" onclick="setEpilepsySafe()"></button>
+          </div></div>
           <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
           <div class="sectlab mt">CONNECT</div><div id="netBox"></div>
           <div class="sectlab mt">SOFTWARE</div><div id="updBox"></div>
@@ -1018,6 +1029,13 @@ function renderPills(){
     el.innerHTML=`<span class="led"></span>${labels[k]||k.toUpperCase()} <span class="st">${justSent?"sent":st}</span>`;
     wrap.appendChild(el);
   });
+  // Always visible while on, so nobody wonders why the drops look soft.
+  if(state.epilepsy_safe){
+    const e=document.createElement('div'); e.className="pill safe";
+    e.innerHTML=`<span class="led"></span>EPILEPSY SAFE`;
+    wrap.appendChild(e);
+  }
+  document.getElementById('epSafe')?.setAttribute('aria-checked', !!state.epilepsy_safe);
   const b=document.createElement('div'); b.className="midiblip"; b.id="blip";
   b.title="flashes when the brain pushes new state";
   b.innerHTML=`<span class="sq"></span>${esc(state.last_event||"")}`;
@@ -1782,6 +1800,10 @@ function renderOuts(){
       + (fields?`<div class="outcfg">${fields}<button class="applybtn" onclick="applyOutput('${k}',this)">APPLY</button></div>`:"");
     wrap.appendChild(el);
   });
+}
+function setEpilepsySafe(){
+  if(!linked()) return;
+  ws.send(JSON.stringify({type:"set_epilepsy_safe", enabled:!state.epilepsy_safe}));
 }
 function setOutputEnabled(name, enabled){
   if(!linked()) return;

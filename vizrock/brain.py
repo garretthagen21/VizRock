@@ -33,6 +33,14 @@ KNOWN_ACTIONS = (
 # reset is sent more than once rather than trusted to land.
 EFFECT_RESET_REPEAT = 3
 
+# Epilepsy-safe mode swaps every whole-cab flash for a look that moves without
+# flashing: strobe and firework flash every lit pixel together at ~25Hz, and glitch
+# blanks runs of the cab every frame, all far past the 3-flashes-a-second limit.
+# A swap rather than a cut, so each scene keeps its colour and character.
+SAFE_MODES = {'strobe': 'pulse', 'firework': 'confetti', 'glitch': 'noise'}
+# Resolume effects that flash the screen, matched in the OSC address.
+UNSAFE_EFFECTS = ('strobe', 'glitch')
+
 
 class Brain:
     """
@@ -165,6 +173,7 @@ class Brain:
             'auditioning': self._auditioning,
             'light_groups': vizrock_settings.light_groups,
             'light_trim': vizrock_settings.light_trim,
+            'epilepsy_safe': vizrock_settings.epilepsy_safe,
             'burst_active': self._burst_until > time.monotonic(),
             'mains': self.scene_library.mains,
             'update': self.updater.snapshot() if self.updater else None,
@@ -540,8 +549,12 @@ class Brain:
         Switch effects on — except under blackout, where an effect nobody can see is a
         stuck parameter waiting for the blackout to lift. Resets are never skipped.
         """
-        if not self.blackout:
-            self._send_osc(messages)
+        if self.blackout:
+            return
+        if vizrock_settings.epilepsy_safe:
+            messages = [m for m in messages or ()
+                        if not any(e in m.get('address', '') for e in UNSAFE_EFFECTS)]
+        self._send_osc(messages)
 
     def _send_effects(self, key, repeat=1):
         """Fire the burst's OSC at whichever output can carry it."""
@@ -648,6 +661,8 @@ class Brain:
         # The venue trim goes on last so it catches a burst's brightness too — a pop
         # is part of the show and should ride the same knob. `off` is left alone: the
         # dark scenes are dark by design and a positive trim must not light them.
+        if vizrock_settings.epilepsy_safe:
+            light['mode'] = SAFE_MODES.get(light.get('mode'), light.get('mode'))
         trim = vizrock_settings.trim_for(peripheral)
         if trim and light.get('mode') != 'off':
             light['bright'] = max(0, min(255, int(light.get('bright', 0)) + trim))
@@ -735,6 +750,19 @@ class Brain:
         vizrock_settings.save_soon()
         self.last_event = 'light trim %s %+d' % (
             peripheral, vizrock_settings.light_trim[peripheral])
+        logger.info(self.last_event)
+        self._render()
+        self.push_state()
+
+    def set_epilepsy_safe(self, enabled):
+        """Swap every flashing look for a safe one, from this moment on."""
+        vizrock_settings.epilepsy_safe = bool(enabled)
+        vizrock_settings.raw['epilepsy_safe'] = vizrock_settings.epilepsy_safe
+        vizrock_settings.save()
+        if enabled:
+            # an effect already flashing on the screen has to come down now
+            self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT)
+        self.last_event = 'epilepsy safe ' + ('on' if enabled else 'off')
         logger.info(self.last_event)
         self._render()
         self.push_state()

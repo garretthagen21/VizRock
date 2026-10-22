@@ -133,6 +133,7 @@
       }
     ]
   },
+  "epilepsy_safe": false,
   "palette": [
     0,
     32,

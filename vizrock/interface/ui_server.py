@@ -121,6 +121,8 @@ class UiServer:
             self.brain.set_trigger_action(int(data['index']), data['action'])
         elif data.get('type') == 'set_output_enabled':
             self.brain.set_output_enabled(data['name'], bool(data.get('enabled')))
+        elif data.get('type') == 'set_epilepsy_safe':
+            self.brain.set_epilepsy_safe(bool(data.get('enabled')))
         elif data.get('type') == 'set_light_trim':
             self.brain.set_light_trim(data.get('value', 0),
                                       data.get('peripheral', 'default'))
