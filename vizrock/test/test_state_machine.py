@@ -782,18 +782,8 @@ def _epilepsy_safe_swaps_every_flash():
     from vizrock.configurations.settings import vizrock_settings
 
     brain = Brain()
-    sent = []
-
-    class EffectSpy:
-        name = 'visuals'
-        def apply(self, scene): pass
-        def send_messages(self, messages, repeat=1):
-            sent.extend((m['address'], m.get('value')) for m in messages)
-        def status(self): return 'ok'
-        def address_label(self): return ''
-        def close(self): pass
-
-    brain.outputs = [EffectSpy()]
+    spy = _Recorder('visuals')
+    brain.outputs = [spy]
     brain.blackout = False
     before = vizrock_settings.epilepsy_safe
     brain.scene_library.scenes[2]['lights'] = {
@@ -808,11 +798,16 @@ def _epilepsy_safe_swaps_every_flash():
         light = brain._effective_scene()['lights'][0]
         assert (light['mode'], light['hue']) == ('pulse', 136), light
         # 0 switches an effect on; the commit's own reset (1) may name strobe freely
+        sent = [(m['address'], m.get('value')) for m in spy.osc]
         assert ('/composition/video/effects/strobe/bypassed', 0) not in sent, sent
         assert ('/composition/video/effects/rgbshift/bypassed', 0) in sent, sent
 
         brain.handle('light_burst')
         assert brain._effective_scene()['lights'][0]['mode'] == 'confetti'
+
+        brain.handle('audition_lights', 2)  # a preview must not strobe either
+        assert spy.scenes[-1]['lights'][0]['mode'] == 'pulse', spy.scenes[-1]['lights']
+        brain.handle('audition_end')
 
         vizrock_settings.epilepsy_safe = False
         assert brain._effective_scene()['lights'][0]['mode'] == 'firework', \

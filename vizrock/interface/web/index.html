@@ -252,7 +252,7 @@
   .btn[data-long="cycle_color"] .bsub{color:var(--pop)}
   .btn.go .bsub{color:var(--live)}
   /* the undo window drains across GO, so the time left reads without reading it */
-  .btn.go[data-long="undo_or_go"]{background:linear-gradient(90deg,
+  .btn.go[data-long]{background:linear-gradient(90deg,
     #24603f calc(var(--undo,0)*100%), #12271c 0)}
   .btn.holding .bsub{opacity:1; font-weight:700}
   .btn.holding{border-color:var(--active)}
@@ -815,7 +815,7 @@ function demoAct(action, sceneId){
   if(action==="arm_prev"){ let i=ord.indexOf(state.armed); state.armed=ord[Math.max(0,i-1)]; state.last_event=`armed → ${lbl(state.armed)}`; }
   else if(action==="arm_next"){ let i=ord.indexOf(state.armed); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`armed → ${lbl(state.armed)}`; }
   else if(action==="undo_or_go" && Date.now() < undoEnds && demoUndo){ Object.assign(state, demoUndo); demoUndo=null; undoEnds=0; state.last_event=`undo · LIVE → ${lbl(state.live)}`; }
-  else if(action==="go" || action==="undo_or_go"){ demoUndo={live:state.live, armed:state.armed}; undoEnds=Date.now()+5000; state.live=state.armed; let i=ord.indexOf(state.live); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`LIVE → ${lbl(state.live)} · dispatched`; }
+  else if(action==="go" || action==="undo_or_go"){ demoUndo={live:state.live, armed:state.armed}; undoEnds=Date.now()+undoMs(); state.live=state.armed; let i=ord.indexOf(state.live); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`LIVE → ${lbl(state.live)} · dispatched`; }
   else if(action==="goto"){ state.live=sceneId; state.last_event=`LIVE → ${lbl(sceneId)}`; }
   else if(action==="next_main"){ const h=nextMain(state.live); if(h!==null){ state.live=h; state.last_event=`LIVE → ${lbl(h)}`; } }
   else if(action==="restart_scene"){ state.last_event=`LIVE → ${lbl(state.live)} · restarted`; }
@@ -1024,19 +1024,23 @@ function render(){
 }
 // While a GO can still be taken back, long GO is UNDO and says how long is left.
 // The brain sends seconds remaining; the countdown runs here rather than by polling.
-let undoEnds = 0, demoUndo = null;
+// It only ticks while the window is open.
+let undoEnds = 0, demoUndo = null, undoTick = null;
+const undoMs = () => (state.undo_seconds || 5) * 1000;
 function renderUndo(){
   const go=document.getElementById('goBtn'), sub=document.getElementById('undoSub');
   if(!go || !sub) return;
-  const left = Math.ceil((undoEnds - Date.now())/1000);
+  const ms = undoEnds - Date.now();
   // the subtitle always names what a long press does right now
-  if(left > 0){
-    go.dataset.long='undo_or_go'; sub.textContent=`\u21B6 UNDO ${left}s`;
-    go.style.setProperty('--undo', (undoEnds - Date.now())/5000);
+  if(ms > 0){
+    go.dataset.long='undo_or_go'; sub.textContent=`\u21B6 UNDO ${Math.ceil(ms/1000)}s`;
+    go.style.setProperty('--undo', ms/undoMs());
+    undoTick ??= setInterval(renderUndo, 100);
+  } else {
+    delete go.dataset.long; sub.textContent='GO';
+    clearInterval(undoTick); undoTick = null;
   }
-  else { delete go.dataset.long; sub.textContent='GO'; }
 }
-setInterval(renderUndo, 100);
 const outputKeys = () => Object.keys(state.outputs||{});
 function renderPills(){
   // Adapters the repo still carries but the show does not run are simply absent from
@@ -1867,7 +1871,7 @@ const ACTION_LABELS = {
   go:'GO \u00b7 fire what is armed', goto:'Jump to a scene',
   arm_prev:'Previous scene', arm_next:'Next scene',
   next_main:'Next main loop', restart_scene:'Restart this scene',
-  undo_or_go:'UNDO the last GO for 5s, otherwise GO',
+  undo_or_go:'UNDO the last GO just after it, otherwise GO',
   blackout:'Blackout', clear_effects:'Clear effects',
   light_burst:'POP \u00b7 make the lights pop', cycle_color:'Cycle the colour',
   audition_scene:'Hold to preview a scene', audition_lights:'Hold to preview lights',

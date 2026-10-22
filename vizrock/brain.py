@@ -92,10 +92,10 @@ class Brain:
             self._arm_step(+1)
         elif action == 'arm_prev':
             self._arm_step(-1)
-        elif action == 'go' or (action == 'undo_or_go' and not self._undo_open()):
+        elif action == 'go':
             self._go()
         elif action == 'undo_or_go':
-            self._undo_go()
+            self._undo_go() if self._undo_open() else self._go()
         elif action == 'goto':
             self._commit(scene, rearm=True)
         elif action == 'next_main':
@@ -183,8 +183,8 @@ class Brain:
             'light_trim': vizrock_settings.light_trim,
             'epilepsy_safe': vizrock_settings.epilepsy_safe,
             # seconds of undo left, so the UI can count it down without polling
-            'undo_left': max(0.0, self._undo['until'] - time.monotonic())
-                         if self._undo_open() else 0,
+            'undo_left': self._undo_left(),
+            'undo_seconds': UNDO_SECONDS,
             'burst_active': self._burst_until > time.monotonic(),
             'mains': self.scene_library.mains,
             'update': self.updater.snapshot() if self.updater else None,
@@ -426,13 +426,13 @@ class Brain:
         configs = self._light_configs(scene)
         return configs[self._default_config_name(configs)]
 
-    def _restart_light_loop(self):
-        """Back to the first step and re-time. Called whenever LIVE changes."""
+    def _restart_light_loop(self, step=0, into_step=0.0):
+        """Back to the first step, or to where an undo left off, and re-time."""
         if self._light_timer:
             self._light_timer.cancel()
             self._light_timer = None
-        self._light_step = 0
-        self._schedule_light_step()
+        self._light_step = step
+        self._schedule_light_step(into_step)
 
     def _schedule_light_step(self, into_step=0.0):
         self._step_started = time.monotonic() - into_step
@@ -501,7 +501,15 @@ class Brain:
     def _authored_light(steps):
         light = dict(steps[0])
         light.pop('seconds', None)
+        Brain._make_safe(light)           # a preview must not strobe either
         return light
+
+    @staticmethod
+    def _make_safe(light):
+        """In epilepsy-safe mode, swap a flashing mode for its safe counterpart."""
+        if vizrock_settings.epilepsy_safe:
+            mode = light.get('mode')
+            light['mode'] = SAFE_MODES.get(mode, mode)
 
     def _end_audition(self):
         if not self._auditioning:
@@ -675,8 +683,7 @@ class Brain:
         # The venue trim goes on last so it catches a burst's brightness too — a pop
         # is part of the show and should ride the same knob. `off` is left alone: the
         # dark scenes are dark by design and a positive trim must not light them.
-        if vizrock_settings.epilepsy_safe:
-            light['mode'] = SAFE_MODES.get(light.get('mode'), light.get('mode'))
+        self._make_safe(light)
         trim = vizrock_settings.trim_for(peripheral)
         if trim and light.get('mode') != 'off':
             light['bright'] = max(0, min(255, int(light.get('bright', 0)) + trim))
@@ -772,7 +779,7 @@ class Brain:
         """Swap every flashing look for a safe one, from this moment on."""
         vizrock_settings.epilepsy_safe = bool(enabled)
         vizrock_settings.raw['epilepsy_safe'] = vizrock_settings.epilepsy_safe
-        vizrock_settings.save()
+        vizrock_settings.save_soon()      # keep the SD card off the loop
         if enabled:
             # an effect already flashing on the screen has to come down now
             self._send_effects('osc_end', repeat=EFFECT_RESET_REPEAT)
@@ -833,14 +840,19 @@ class Brain:
 
     def _go(self):
         """Commit ARMED, remembering what it replaced so a long GO can take it back."""
-        undo = {'until': time.monotonic() + UNDO_SECONDS, 'live': self.live,
-                'armed': self.armed, 'color_index': self.color_index,
-                'step': self._light_step, 'into_step': time.monotonic() - self._step_started}
+        now = time.monotonic()
+        undo = None if self.live is None else {
+            'until': now + UNDO_SECONDS, 'live': self.live, 'armed': self.armed,
+            'color_index': self.color_index, 'step': self._light_step,
+            'into_step': now - self._step_started}
         self._commit(self.armed, undo=undo)
 
+    def _undo_left(self):
+        """Seconds a long GO can still take back the last GO; 0 once it cannot."""
+        return max(0.0, self._undo['until'] - time.monotonic()) if self._undo else 0.0
+
     def _undo_open(self):
-        return bool(self._undo and self._undo['live'] is not None
-                    and time.monotonic() <= self._undo['until'])
+        return self._undo_left() > 0
 
     def _undo_go(self):
         """
@@ -848,21 +860,14 @@ class Brain:
         mid-step, as they were. The clip restarts from the top — VizRock only sends to
         Resolume and cannot know where it was. It only ever undoes once.
         """
-        undo = self._undo                 # the commit below closes the window
-        self._commit(undo['live'], rearm=False)
-        self.armed = undo['armed']
-        self.color_index = undo['color_index']
-        if self._light_timer:
-            self._light_timer.cancel()
-            self._light_timer = None
-        self._light_step = undo['step']
-        self._schedule_light_step(undo['into_step'])
-        self._render()
-        self.last_event = f'undo · LIVE → {self.scene_library.label(self.live)}'
-        logger.info(self.last_event)
-        self.push_state()
+        self._commit(self._undo['live'], rearm=False, resume=self._undo)
 
-    def _commit(self, scene_id, rearm=True, undo=None):
+    def _commit(self, scene_id, rearm=True, undo=None, resume=None):
+        """
+        `undo` is what a GO replaced, kept so a long GO can take it back. `resume` is
+        one being taken back: its colour, light step and ARMED are restored in this
+        same pass rather than patched on after it.
+        """
         if scene_id not in self.scene_library.scenes:
             logger.warning('commit to missing scene %s', scene_id)
             return
@@ -875,12 +880,12 @@ class Brain:
         # A colour cycled by hand is a momentary fiddle, not a setting: it dies at the
         # next cue so every scene comes up the colour it was authored. Without this a
         # colour picked during one song quietly repainted the rest of the set.
-        self.color_index = None
+        self.color_index = resume['color_index'] if resume else None
         # Every cue starts from a clean composition. OSC is fire-and-forget, so an
         # effect left on because its reset was dropped would be a stuck visual for
         # the rest of the song — cheaper to re-assert than to hope.
         self._send_reset()
-        self._restart_light_loop()
+        self._restart_light_loop(*((resume['step'], resume['into_step']) if resume else ()))
         scene = self.scene_library.scenes[scene_id]
         # say what was actually targeted — "which clip did it fire?" is the first
         # question when visuals look wrong, and the action alone does not answer it
@@ -911,10 +916,13 @@ class Brain:
             if seconds > 0:
                 self._start_timer('_scene_effect_timer', seconds, self._end_scene_effect)
         # auto-arm the next scene so a linear set is just GO, GO, GO
-        if rearm and scene_id in self.scene_library.order:
+        if resume:
+            self.armed = resume['armed']
+        elif rearm and scene_id in self.scene_library.order:
             self.armed = self.scene_library.step_from(scene_id, +1)
         # "dispatched" while blacked out sends you hunting for a broken output, which
         # is exactly the wrong place to look — say which one it was.
-        self.last_event = f'LIVE → {self.scene_library.label(scene_id)} · ' + \
+        self.last_event = ('undo · ' if resume else '') + \
+            f'LIVE → {self.scene_library.label(scene_id)} · ' + \
             ('HELD DARK · blackout is on' if self.blackout else 'dispatched')
         self.push_state()
