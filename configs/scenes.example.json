@@ -572,42 +572,173 @@
         "default": [
           {
             "mode": "chase",
-            "hue": 30,
-            "sat": 180,
-            "bright": 70,
-            "speed": 3,
-            "seconds": 32
+            "colors": [
+              28,
+              28,
+              212
+            ],
+            "bright": 120,
+            "speed": 5,
+            "seconds": 28
           },
           {
             "mode": "wave",
-            "hue": 36,
-            "sat": 190,
-            "bright": 65,
-            "speed": 2,
+            "colors": [
+              28,
+              48
+            ],
+            "bright": 110,
+            "speed": 3,
+            "seconds": 40
+          },
+          {
+            "mode": "confetti",
+            "colors": [
+              28,
+              212,
+              "w"
+            ],
+            "bright": 120,
+            "speed": 3,
+            "seconds": 24
+          },
+          {
+            "mode": "scan",
+            "colors": [
+              212,
+              212,
+              28
+            ],
+            "bright": 120,
+            "speed": 4,
             "seconds": 30
           },
           {
             "mode": "noise",
             "hue": 24,
-            "sat": 170,
-            "bright": 60,
+            "sat": 200,
+            "bright": 100,
             "speed": 2,
-            "seconds": 35
+            "seconds": 45
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              28,
+              "w"
+            ],
+            "bright": 120,
+            "speed": 5,
+            "seconds": 22
           },
           {
             "mode": "pulse",
-            "hue": 30,
-            "sat": 180,
-            "bright": 70,
-            "speed": 3,
+            "colors": [
+              212,
+              28
+            ],
+            "bright": 130,
+            "speed": 4,
             "seconds": 26
           },
           {
-            "mode": "scan",
-            "hue": 40,
-            "sat": 190,
-            "bright": 65,
+            "mode": "sparkle",
+            "colors": [
+              28,
+              48,
+              "w"
+            ],
+            "bright": 130,
+            "speed": 5,
+            "seconds": 34
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              48,
+              212,
+              "w"
+            ],
+            "bright": 120,
+            "speed": 6,
+            "seconds": 20
+          },
+          {
+            "mode": "fire",
+            "bright": 100,
+            "speed": 3,
+            "seconds": 36
+          }
+        ],
+        "cabB": [
+          {
+            "mode": "wave",
+            "colors": [
+              212,
+              28
+            ],
+            "bright": 110,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
+            "mode": "sparkle",
+            "colors": [
+              28,
+              "w"
+            ],
+            "bright": 120,
+            "speed": 4,
+            "seconds": 30
+          },
+          {
+            "mode": "noise",
+            "hue": 212,
+            "sat": 210,
+            "bright": 100,
             "speed": 2,
+            "seconds": 30
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              28,
+              28,
+              48
+            ],
+            "bright": 120,
+            "speed": 5,
+            "seconds": 30
+          },
+          {
+            "mode": "confetti",
+            "colors": [
+              212,
+              28,
+              48
+            ],
+            "bright": 120,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
+            "mode": "scan",
+            "colors": [
+              "w",
+              28
+            ],
+            "bright": 110,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
+            "mode": "pulse",
+            "colors": [
+              28,
+              48
+            ],
+            "bright": 120,
+            "speed": 3,
             "seconds": 30
           }
         ]
@@ -898,43 +1029,213 @@
       "lights": {
         "default": [
           {
-            "mode": "chase",
-            "hue": 30,
-            "sat": 180,
-            "bright": 70,
+            "mode": "wave",
+            "colors": [
+              48,
+              48,
+              8
+            ],
+            "bright": 110,
             "speed": 3,
+            "seconds": 40
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              8,
+              232
+            ],
+            "bright": 120,
+            "speed": 4,
+            "seconds": 30
+          },
+          {
+            "mode": "sparkle",
+            "colors": [
+              48,
+              "w"
+            ],
+            "bright": 130,
+            "speed": 4,
+            "seconds": 36
+          },
+          {
+            "mode": "noise",
+            "hue": 8,
+            "sat": 200,
+            "bright": 100,
+            "speed": 2,
+            "seconds": 50
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              232,
+              48
+            ],
+            "bright": 120,
+            "speed": 4,
+            "seconds": 24
+          },
+          {
+            "mode": "confetti",
+            "colors": [
+              48,
+              8,
+              232,
+              "w"
+            ],
+            "bright": 120,
+            "speed": 2,
             "seconds": 32
           },
           {
+            "mode": "scan",
+            "colors": [
+              232,
+              232,
+              48
+            ],
+            "bright": 120,
+            "speed": 3,
+            "seconds": 28
+          },
+          {
+            "mode": "pulse",
+            "colors": [
+              8,
+              48
+            ],
+            "bright": 130,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
             "mode": "wave",
-            "hue": 36,
-            "sat": 190,
-            "bright": 65,
+            "colors": [
+              232,
+              8
+            ],
+            "bright": 110,
+            "speed": 2,
+            "seconds": 44
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              48,
+              "w",
+              48,
+              232
+            ],
+            "bright": 120,
+            "speed": 5,
+            "seconds": 22
+          },
+          {
+            "mode": "fire",
+            "bright": 100,
+            "speed": 2,
+            "seconds": 34
+          },
+          {
+            "mode": "sparkle",
+            "colors": [
+              232,
+              8,
+              "w"
+            ],
+            "bright": 130,
+            "speed": 5,
+            "seconds": 30
+          },
+          {
+            "mode": "noise",
+            "hue": 48,
+            "sat": 180,
+            "bright": 100,
+            "speed": 3,
+            "seconds": 40
+          }
+        ],
+        "cabB": [
+          {
+            "mode": "chase",
+            "colors": [
+              48,
+              8
+            ],
+            "bright": 120,
+            "speed": 4,
+            "seconds": 30
+          },
+          {
+            "mode": "wave",
+            "colors": [
+              232,
+              48
+            ],
+            "bright": 110,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
+            "mode": "confetti",
+            "colors": [
+              8,
+              "w"
+            ],
+            "bright": 120,
             "speed": 2,
             "seconds": 30
           },
           {
             "mode": "noise",
-            "hue": 24,
-            "sat": 170,
-            "bright": 60,
+            "hue": 232,
+            "sat": 190,
+            "bright": 100,
             "speed": 2,
-            "seconds": 35
-          },
-          {
-            "mode": "pulse",
-            "hue": 30,
-            "sat": 180,
-            "bright": 70,
-            "speed": 3,
-            "seconds": 26
+            "seconds": 30
           },
           {
             "mode": "scan",
-            "hue": 40,
-            "sat": 190,
-            "bright": 65,
-            "speed": 2,
+            "colors": [
+              48,
+              48,
+              "w"
+            ],
+            "bright": 120,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
+            "mode": "sparkle",
+            "colors": [
+              8,
+              232
+            ],
+            "bright": 130,
+            "speed": 4,
+            "seconds": 30
+          },
+          {
+            "mode": "pulse",
+            "colors": [
+              48,
+              232
+            ],
+            "bright": 120,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              8,
+              48
+            ],
+            "bright": 120,
+            "speed": 4,
             "seconds": 30
           }
         ]
@@ -959,43 +1260,213 @@
       "lights": {
         "default": [
           {
-            "mode": "chase",
-            "hue": 30,
-            "sat": 180,
-            "bright": 70,
+            "mode": "wave",
+            "colors": [
+              48,
+              48,
+              8
+            ],
+            "bright": 110,
             "speed": 3,
+            "seconds": 40
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              8,
+              232
+            ],
+            "bright": 120,
+            "speed": 4,
+            "seconds": 30
+          },
+          {
+            "mode": "sparkle",
+            "colors": [
+              48,
+              "w"
+            ],
+            "bright": 130,
+            "speed": 4,
+            "seconds": 36
+          },
+          {
+            "mode": "noise",
+            "hue": 8,
+            "sat": 200,
+            "bright": 100,
+            "speed": 2,
+            "seconds": 50
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              232,
+              48
+            ],
+            "bright": 120,
+            "speed": 4,
+            "seconds": 24
+          },
+          {
+            "mode": "confetti",
+            "colors": [
+              48,
+              8,
+              232,
+              "w"
+            ],
+            "bright": 120,
+            "speed": 2,
             "seconds": 32
           },
           {
+            "mode": "scan",
+            "colors": [
+              232,
+              232,
+              48
+            ],
+            "bright": 120,
+            "speed": 3,
+            "seconds": 28
+          },
+          {
+            "mode": "pulse",
+            "colors": [
+              8,
+              48
+            ],
+            "bright": 130,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
             "mode": "wave",
-            "hue": 36,
-            "sat": 190,
-            "bright": 65,
+            "colors": [
+              232,
+              8
+            ],
+            "bright": 110,
+            "speed": 2,
+            "seconds": 44
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              48,
+              "w",
+              48,
+              232
+            ],
+            "bright": 120,
+            "speed": 5,
+            "seconds": 22
+          },
+          {
+            "mode": "fire",
+            "bright": 100,
+            "speed": 2,
+            "seconds": 34
+          },
+          {
+            "mode": "sparkle",
+            "colors": [
+              232,
+              8,
+              "w"
+            ],
+            "bright": 130,
+            "speed": 5,
+            "seconds": 30
+          },
+          {
+            "mode": "noise",
+            "hue": 48,
+            "sat": 180,
+            "bright": 100,
+            "speed": 3,
+            "seconds": 40
+          }
+        ],
+        "cabB": [
+          {
+            "mode": "chase",
+            "colors": [
+              48,
+              8
+            ],
+            "bright": 120,
+            "speed": 4,
+            "seconds": 30
+          },
+          {
+            "mode": "wave",
+            "colors": [
+              232,
+              48
+            ],
+            "bright": 110,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
+            "mode": "confetti",
+            "colors": [
+              8,
+              "w"
+            ],
+            "bright": 120,
             "speed": 2,
             "seconds": 30
           },
           {
             "mode": "noise",
-            "hue": 24,
-            "sat": 170,
-            "bright": 60,
+            "hue": 232,
+            "sat": 190,
+            "bright": 100,
             "speed": 2,
-            "seconds": 35
-          },
-          {
-            "mode": "pulse",
-            "hue": 30,
-            "sat": 180,
-            "bright": 70,
-            "speed": 3,
-            "seconds": 26
+            "seconds": 30
           },
           {
             "mode": "scan",
-            "hue": 40,
-            "sat": 190,
-            "bright": 65,
-            "speed": 2,
+            "colors": [
+              48,
+              48,
+              "w"
+            ],
+            "bright": 120,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
+            "mode": "sparkle",
+            "colors": [
+              8,
+              232
+            ],
+            "bright": 130,
+            "speed": 4,
+            "seconds": 30
+          },
+          {
+            "mode": "pulse",
+            "colors": [
+              48,
+              232
+            ],
+            "bright": 120,
+            "speed": 3,
+            "seconds": 30
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              8,
+              48
+            ],
+            "bright": 120,
+            "speed": 4,
             "seconds": 30
           }
         ]
@@ -1315,43 +1786,126 @@
       "lights": {
         "default": [
           {
+            "mode": "confetti",
+            "colors": "random",
+            "bright": 150,
+            "speed": 5,
+            "seconds": 24
+          },
+          {
             "mode": "chase",
-            "hue": 30,
-            "sat": 180,
-            "bright": 70,
-            "speed": 3,
-            "seconds": 32
+            "colors": [
+              0,
+              48,
+              160,
+              232
+            ],
+            "bright": 150,
+            "speed": 6,
+            "seconds": 20
           },
           {
-            "mode": "wave",
-            "hue": 36,
-            "sat": 190,
-            "bright": 65,
-            "speed": 2,
-            "seconds": 30
+            "mode": "rainbow",
+            "bright": 120,
+            "speed": 5,
+            "seconds": 24
           },
           {
-            "mode": "noise",
-            "hue": 24,
-            "sat": 170,
-            "bright": 60,
-            "speed": 2,
-            "seconds": 35
+            "mode": "theater",
+            "colors": [
+              232,
+              48,
+              "w"
+            ],
+            "bright": 150,
+            "speed": 6,
+            "seconds": 18
           },
           {
-            "mode": "pulse",
-            "hue": 30,
-            "sat": 180,
-            "bright": 70,
-            "speed": 3,
-            "seconds": 26
+            "mode": "sparkle",
+            "colors": "random",
+            "bright": 150,
+            "speed": 6,
+            "seconds": 22
           },
           {
             "mode": "scan",
-            "hue": 40,
-            "sat": 190,
-            "bright": 65,
-            "speed": 2,
+            "colors": [
+              160,
+              232,
+              48
+            ],
+            "bright": 150,
+            "speed": 5,
+            "seconds": 20
+          },
+          {
+            "mode": "wave",
+            "colors": [
+              32,
+              232,
+              160
+            ],
+            "bright": 130,
+            "speed": 4,
+            "seconds": 26
+          },
+          {
+            "mode": "pulse",
+            "colors": [
+              232,
+              48,
+              160
+            ],
+            "bright": 150,
+            "speed": 5,
+            "seconds": 18
+          }
+        ],
+        "cabB": [
+          {
+            "mode": "sparkle",
+            "colors": "random",
+            "bright": 150,
+            "speed": 6,
+            "seconds": 30
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              232,
+              160,
+              48
+            ],
+            "bright": 150,
+            "speed": 6,
+            "seconds": 30
+          },
+          {
+            "mode": "confetti",
+            "colors": [
+              0,
+              48,
+              "w"
+            ],
+            "bright": 150,
+            "speed": 5,
+            "seconds": 30
+          },
+          {
+            "mode": "wave",
+            "colors": [
+              160,
+              232
+            ],
+            "bright": 130,
+            "speed": 4,
+            "seconds": 30
+          },
+          {
+            "mode": "rainbow",
+            "bright": 120,
+            "speed": 4,
             "seconds": 30
           }
         ]
