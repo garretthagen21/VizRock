@@ -25,13 +25,17 @@ logger = logging.getLogger(__name__)
 # — which is how `home` survived in the pedal config after the action was removed.
 KNOWN_ACTIONS = (
     'go', 'goto', 'arm_prev', 'arm_next', 'next_main', 'restart_scene',
-    'blackout', 'clear_effects', 'light_burst', 'cycle_color',
+    'blackout', 'clear_effects', 'light_burst', 'cycle_color', 'undo_or_go',
     'audition_scene', 'audition_lights', 'audition_end',
 )
 
 # OSC has no delivery confirmation and no heartbeat the way the lights do, so a
 # reset is sent more than once rather than trusted to land.
 EFFECT_RESET_REPEAT = 3
+
+# How long after a GO a long GO takes it back. Past this a long GO is just GO, so a
+# foot held a beat too long in the normal run of the set still advances.
+UNDO_SECONDS = 5
 
 # Epilepsy-safe mode swaps every whole-cab flash for a look that moves without
 # flashing: strobe and firework flash every lit pixel together at ~25Hz, and glitch
@@ -70,6 +74,8 @@ class Brain:
         self._burst_timer = None
         self._light_step = 0             # position in a scene's looping light sequence
         self._light_timer = None
+        self._step_started = 0.0         # when the current light step began, monotonic
+        self._undo = None                # what the last GO replaced, while undo is open
         self._auditioning = False        # holding a preview of a scene being edited
         self.last_action = None
         self._action_seq = 0
@@ -86,8 +92,10 @@ class Brain:
             self._arm_step(+1)
         elif action == 'arm_prev':
             self._arm_step(-1)
-        elif action == 'go':
-            self._commit(self.armed)
+        elif action == 'go' or (action == 'undo_or_go' and not self._undo_open()):
+            self._go()
+        elif action == 'undo_or_go':
+            self._undo_go()
         elif action == 'goto':
             self._commit(scene, rearm=True)
         elif action == 'next_main':
@@ -174,6 +182,9 @@ class Brain:
             'light_groups': vizrock_settings.light_groups,
             'light_trim': vizrock_settings.light_trim,
             'epilepsy_safe': vizrock_settings.epilepsy_safe,
+            # seconds of undo left, so the UI can count it down without polling
+            'undo_left': max(0.0, self._undo['until'] - time.monotonic())
+                         if self._undo_open() else 0,
             'burst_active': self._burst_until > time.monotonic(),
             'mains': self.scene_library.mains,
             'update': self.updater.snapshot() if self.updater else None,
@@ -196,6 +207,7 @@ class Brain:
     def reorder(self, ordered_ids):
         """Renumber the setlist, keeping LIVE and ARMED on the same scenes."""
         mapping = self.scene_library.reorder(ordered_ids)
+        self._undo = None                 # its ids are the old numbering
         self.live = mapping.get(self.live, self.live)
         self.armed = mapping.get(self.armed, self.armed)
         if self.armed not in self.scene_library.scenes:
@@ -422,7 +434,8 @@ class Brain:
         self._light_step = 0
         self._schedule_light_step()
 
-    def _schedule_light_step(self):
+    def _schedule_light_step(self, into_step=0.0):
+        self._step_started = time.monotonic() - into_step
         scene = self.scene_library.scenes.get(self.live) or {}
         steps = self._light_steps(scene)
         if len(steps) < 2:
@@ -431,7 +444,8 @@ class Brain:
         seconds = float(step.get('seconds', vizrock_settings.light_step_seconds) or 0)
         if seconds <= 0:
             return                        # 0 means hold here rather than advance
-        self._start_timer('_light_timer', seconds, self._advance_light_step)
+        self._start_timer('_light_timer', max(0.05, seconds - into_step),
+                          self._advance_light_step)
 
     def _advance_light_step(self):
         # Monotonic, not wrapped to the default's length: every peripheral indexes it
@@ -817,11 +831,45 @@ class Brain:
         self.last_event = f'armed → {self.scene_library.label(self.armed)}'
         self.push_state()
 
-    def _commit(self, scene_id, rearm=True):
+    def _go(self):
+        """Commit ARMED, remembering what it replaced so a long GO can take it back."""
+        undo = {'until': time.monotonic() + UNDO_SECONDS, 'live': self.live,
+                'armed': self.armed, 'color_index': self.color_index,
+                'step': self._light_step, 'into_step': time.monotonic() - self._step_started}
+        self._commit(self.armed, undo=undo)
+
+    def _undo_open(self):
+        return bool(self._undo and self._undo['live'] is not None
+                    and time.monotonic() <= self._undo['until'])
+
+    def _undo_go(self):
+        """
+        Take back the last GO: LIVE, ARMED, the cycled colour and the light step,
+        mid-step, as they were. The clip restarts from the top — VizRock only sends to
+        Resolume and cannot know where it was. It only ever undoes once.
+        """
+        undo = self._undo                 # the commit below closes the window
+        self._commit(undo['live'], rearm=False)
+        self.armed = undo['armed']
+        self.color_index = undo['color_index']
+        if self._light_timer:
+            self._light_timer.cancel()
+            self._light_timer = None
+        self._light_step = undo['step']
+        self._schedule_light_step(undo['into_step'])
+        self._render()
+        self.last_event = f'undo · LIVE → {self.scene_library.label(self.live)}'
+        logger.info(self.last_event)
+        self.push_state()
+
+    def _commit(self, scene_id, rearm=True, undo=None):
         if scene_id not in self.scene_library.scenes:
             logger.warning('commit to missing scene %s', scene_id)
             return
         self.live = scene_id
+        # only GO is undoable; any other cue closes the window rather than letting a
+        # long GO reach back past it
+        self._undo = undo
         # a real cue always ends a preview — the stage is about to show the cue
         self._auditioning = False
         # A colour cycled by hand is a momentary fiddle, not a setting: it dies at the

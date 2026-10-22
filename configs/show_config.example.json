@@ -104,7 +104,7 @@
         "kind": "pc",
         "program": 7
       },
-      "do": "go"
+      "do": "undo_or_go"
     }
   ],
   "burst": {

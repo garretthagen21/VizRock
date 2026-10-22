@@ -69,7 +69,7 @@ def run():
     # the right, and POP is furthest from it so the two cannot be confused mid-song.
     midi = MidiInterface(lambda action, scene: None)
     short = ['light_burst', 'arm_prev', 'arm_next', 'go']
-    long_ = ['cycle_color', 'blackout', 'restart_scene', 'go']   # a held GO is still GO
+    long_ = ['cycle_color', 'blackout', 'restart_scene', 'undo_or_go']   # a held GO is GO, or UNDO just after one
     for program, action in enumerate(short):
         assert midi.match_trigger(message(type='program_change', program=program)) \
             == (action, None), f'PC {program} should be {action}'
@@ -109,6 +109,7 @@ def run():
     _a_zero_second_last_step_holds_forever()
     _light_trim_lifts_scenes_but_never_lights_a_dark_one()
     _epilepsy_safe_swaps_every_flash()
+    _long_go_undoes_only_just_after_a_go()
     _restart_refires_without_rearming()
     _next_main_is_a_dead_button_with_no_mains()
 
@@ -738,6 +739,38 @@ def _a_once_step_fires_exactly_once():
     # a cue is the one thing that legitimately re-arms it
     brain.handle('goto', 3)
     assert live_mode() == 'strobe', 'a fresh cue must fire the stab again'
+
+
+def _long_go_undoes_only_just_after_a_go():
+    """
+    For a few seconds after GO a long GO puts back what it replaced — LIVE, ARMED,
+    the cycled colour and the light step. Outside that window it is just GO, so a
+    foot held too long in the normal run of the set still advances.
+    """
+    brain = Brain()
+    brain.handle('goto', 1)
+    brain.armed = 3
+    brain.color_index = 1
+    brain._light_step = 4
+    brain.handle('go')
+    assert (brain.live, brain.color_index) == (3, None)
+    brain.handle('undo_or_go')
+    assert (brain.live, brain.armed, brain.color_index, brain._light_step) == (1, 3, 1, 4), \
+        (brain.live, brain.armed, brain.color_index, brain._light_step)
+
+    brain.handle('undo_or_go')            # undo is spent: this one is GO
+    assert (brain.live, brain.armed) == (3, 1), (brain.live, brain.armed)
+
+    brain._undo['until'] = 0              # the window has closed
+    brain.handle('undo_or_go')
+    assert (brain.live, brain.armed) == (1, 2), 'past the window a long GO is GO'
+
+    brain.handle('go')
+    brain.handle('goto', 3)               # any other cue closes the window
+    brain.handle('undo_or_go')
+    assert brain.live == 1, 'a long GO must not reach back past another cue'
+    if brain._light_timer:
+        brain._light_timer.cancel()
 
 
 def _epilepsy_safe_swaps_every_flash():

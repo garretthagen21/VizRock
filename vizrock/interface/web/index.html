@@ -250,6 +250,7 @@
   .btn[data-long="blackout"] .bsub{color:#c96b7a}
   .btn[data-long="restart_scene"] .bsub{color:var(--home)}
   .btn[data-long="cycle_color"] .bsub{color:var(--pop)}
+  .btn[data-long="undo_or_go"] .bsub{color:var(--live)}
   .btn.holding .bsub{opacity:1; font-weight:700}
   .btn.holding{border-color:var(--active)}
   .btn.fired{background:var(--active); color:#08131f}
@@ -667,8 +668,9 @@
         ><span>◄ PREV</span><span class="bsub">BLACKOUT</span></button>
       <button class="btn" data-short="arm_next" data-long="restart_scene"
         ><span>NEXT ►</span><span class="bsub">RESTART</span></button>
-      <!-- No long action: GO fires on touch, so a held or sliding press still lands. -->
-      <button class="btn go" data-short="go"><span>GO ▸</span></button>
+      <!-- Long GO is UNDO only for a few seconds after a GO; outside that window GO has
+           no long action and fires on touch, so a held or sliding press still lands. -->
+      <button class="btn go" id="goBtn" data-short="go"><span>GO ▸</span><span class="bsub" id="undoSub"></span></button>
       <div class="log" id="log"><span class="t">[--:--:--]</span> connecting…</div>
     </div>
   </div>
@@ -740,9 +742,9 @@ const DEMO = {
   addresses:{resolume:"Garretts-M2-MacBook-Pro.local\u2192192.168.2.1", lights:"/dev/light_tx (searching)"},
   output_config:{resolume:{type:"osc",hosts:["Garretts-M2-MacBook-Pro.local"],port:38200},
                  lights:{type:"serial",port:"auto"}},
-  triggers:["light_burst","arm_prev","arm_next","go","cycle_color","blackout","restart_scene","go"]
+  triggers:["light_burst","arm_prev","arm_next","go","cycle_color","blackout","restart_scene","undo_or_go"]
             .map((action,program)=>({midi:{kind:"pc",program},do:action})),
-  known_actions:["go","goto","arm","arm_prev","arm_next","next_main","restart_scene","blackout",
+  known_actions:["go","goto","arm","arm_prev","arm_next","next_main","restart_scene","undo_or_go","blackout",
                  "clear_effects","light_burst","cycle_color"],
   blackout:false, color_index:null, mains:[1], action_seq:0, last_action:null,
   light_groups:{default:0, cabA:1, cabB:2},
@@ -809,7 +811,8 @@ function demoAct(action, sceneId){
   const ord=order();
   if(action==="arm_prev"){ let i=ord.indexOf(state.armed); state.armed=ord[Math.max(0,i-1)]; state.last_event=`armed → ${lbl(state.armed)}`; }
   else if(action==="arm_next"){ let i=ord.indexOf(state.armed); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`armed → ${lbl(state.armed)}`; }
-  else if(action==="go"){ state.live=state.armed; let i=ord.indexOf(state.live); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`LIVE → ${lbl(state.live)} · dispatched`; }
+  else if(action==="undo_or_go" && Date.now() < undoEnds && demoUndo){ Object.assign(state, demoUndo); demoUndo=null; undoEnds=0; state.last_event=`undo · LIVE → ${lbl(state.live)}`; }
+  else if(action==="go" || action==="undo_or_go"){ demoUndo={live:state.live, armed:state.armed}; undoEnds=Date.now()+5000; state.live=state.armed; let i=ord.indexOf(state.live); state.armed=ord[Math.min(ord.length-1,i+1)]; state.last_event=`LIVE → ${lbl(state.live)} · dispatched`; }
   else if(action==="goto"){ state.live=sceneId; state.last_event=`LIVE → ${lbl(sceneId)}`; }
   else if(action==="next_main"){ const h=nextMain(state.live); if(h!==null){ state.live=h; state.last_event=`LIVE → ${lbl(h)}`; } }
   else if(action==="restart_scene"){ state.last_event=`LIVE → ${lbl(state.live)} · restarted`; }
@@ -1002,6 +1005,8 @@ function render(){
           bb.textContent = state.blackout ? "BLACKOUT ON" : "BLACKOUT"; }
   document.getElementById('showId').textContent = state.meta?.show || "—";
   renderPills();
+  if(online) undoEnds = Date.now() + (state.undo_left||0)*1000;
+  renderUndo();
   flashRemoteAction();
   if(!document.getElementById('viewShow').classList.contains('hidden')) renderShow();
   if(!document.getElementById('viewCues').classList.contains('hidden')) renderCues();
@@ -1014,6 +1019,17 @@ function render(){
   }
   const l=document.getElementById('log'); l.innerHTML=`<span class="t">[${now()}]</span> ${state.last_event||""}`;
 }
+// While a GO can still be taken back, long GO is UNDO and says how long is left.
+// The brain sends seconds remaining; the countdown runs here rather than by polling.
+let undoEnds = 0, demoUndo = null;
+function renderUndo(){
+  const go=document.getElementById('goBtn'), sub=document.getElementById('undoSub');
+  if(!go || !sub) return;
+  const left = Math.ceil((undoEnds - Date.now())/1000);
+  if(left > 0){ go.dataset.long='undo_or_go'; sub.textContent=`UNDO ${left}s`; }
+  else { delete go.dataset.long; sub.textContent=''; }
+}
+setInterval(renderUndo, 250);
 const outputKeys = () => Object.keys(state.outputs||{});
 function renderPills(){
   // Adapters the repo still carries but the show does not run are simply absent from
@@ -1844,6 +1860,7 @@ const ACTION_LABELS = {
   go:'GO \u00b7 fire what is armed', goto:'Jump to a scene',
   arm_prev:'Previous scene', arm_next:'Next scene',
   next_main:'Next main loop', restart_scene:'Restart this scene',
+  undo_or_go:'UNDO the last GO for 5s, otherwise GO',
   blackout:'Blackout', clear_effects:'Clear effects',
   light_burst:'POP \u00b7 make the lights pop', cycle_color:'Cycle the colour',
   audition_scene:'Hold to preview a scene', audition_lights:'Hold to preview lights',
