@@ -244,13 +244,16 @@
   /* A long action you can only discover by holding is a hidden feature, so it is
      always printed and tinted by what it does. In flow rather than absolutely placed:
      positioned, it did not size the button and BLACKOUT overflowed one sized by PREV. */
-  .btn[data-long]{display:flex; flex-direction:column; align-items:center; gap:3px;
+  .btn[data-long], .btn.go{display:flex; flex-direction:column; align-items:center; gap:3px;
     line-height:1.1; padding-left:11px; padding-right:11px}
   .bsub{font-size:8.5px; letter-spacing:.03em; color:var(--muted2); opacity:.9; font-weight:500}
   .btn[data-long="blackout"] .bsub{color:#c96b7a}
   .btn[data-long="restart_scene"] .bsub{color:var(--home)}
   .btn[data-long="cycle_color"] .bsub{color:var(--pop)}
-  .btn[data-long="undo_or_go"] .bsub{color:var(--live)}
+  .btn.go .bsub{color:var(--live)}
+  /* the undo window drains across GO, so the time left reads without reading it */
+  .btn.go[data-long="undo_or_go"]{background:linear-gradient(90deg,
+    #24603f calc(var(--undo,0)*100%), #12271c 0)}
   .btn.holding .bsub{opacity:1; font-weight:700}
   .btn.holding{border-color:var(--active)}
   .btn.fired{background:var(--active); color:#08131f}
@@ -670,7 +673,7 @@
         ><span>NEXT ►</span><span class="bsub">RESTART</span></button>
       <!-- Long GO is UNDO only for a few seconds after a GO; outside that window GO has
            no long action and fires on touch, so a held or sliding press still lands. -->
-      <button class="btn go" id="goBtn" data-short="go"><span>GO ▸</span><span class="bsub" id="undoSub"></span></button>
+      <button class="btn go" id="goBtn" data-short="go"><span>GO ▸</span><span class="bsub" id="undoSub">GO</span></button>
       <div class="log" id="log"><span class="t">[--:--:--]</span> connecting…</div>
     </div>
   </div>
@@ -1026,10 +1029,14 @@ function renderUndo(){
   const go=document.getElementById('goBtn'), sub=document.getElementById('undoSub');
   if(!go || !sub) return;
   const left = Math.ceil((undoEnds - Date.now())/1000);
-  if(left > 0){ go.dataset.long='undo_or_go'; sub.textContent=`UNDO ${left}s`; }
-  else { delete go.dataset.long; sub.textContent=''; }
+  // the subtitle always names what a long press does right now
+  if(left > 0){
+    go.dataset.long='undo_or_go'; sub.textContent=`\u21B6 UNDO ${left}s`;
+    go.style.setProperty('--undo', (undoEnds - Date.now())/5000);
+  }
+  else { delete go.dataset.long; sub.textContent='GO'; }
 }
-setInterval(renderUndo, 250);
+setInterval(renderUndo, 100);
 const outputKeys = () => Object.keys(state.outputs||{});
 function renderPills(){
   // Adapters the repo still carries but the show does not run are simply absent from
