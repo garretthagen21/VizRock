@@ -108,7 +108,7 @@
       },
       "audio": false,
       "burst": {
-        "mode": "glitch",
+        "mode": "strobe",
         "seconds": 1,
         "hue": 136,
         "bright": 150,
@@ -145,7 +145,7 @@
       },
       "audio": false,
       "burst": {
-        "mode": "glitch",
+        "mode": "strobe",
         "seconds": 1,
         "hue": 136,
         "bright": 255,
@@ -193,7 +193,7 @@
       },
       "audio": false,
       "burst": {
-        "mode": "glitch",
+        "mode": "strobe",
         "seconds": 1,
         "hue": 136,
         "bright": 255,
@@ -217,8 +217,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "off",
-        "seconds": 1
+        "mode": "strobe",
+        "seconds": 1,
+        "hue": 136,
+        "bright": 255,
+        "speed": 9
       }
     },
     {
@@ -273,9 +276,9 @@
       },
       "audio": false,
       "burst": {
-        "mode": "solid",
+        "mode": "strobe",
         "seconds": 1,
-        "speed": 0
+        "speed": 9
       }
     },
     {
@@ -304,10 +307,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "firework",
+        "mode": "strobe",
         "seconds": 1,
         "bright": 255,
-        "speed": 9
+        "speed": 9,
+        "sat": 0
       },
       "main": false
     },
@@ -402,7 +406,7 @@
       },
       "audio": false,
       "burst": {
-        "mode": "firework",
+        "mode": "strobe",
         "seconds": 1,
         "colors": [
           0,
@@ -454,8 +458,10 @@
         ]
       },
       "burst": {
-        "mode": "off",
-        "seconds": 1
+        "mode": "strobe",
+        "seconds": 1,
+        "bright": 255,
+        "speed": 9
       },
       "audio": false
     },
@@ -499,9 +505,9 @@
       },
       "audio": false,
       "burst": {
-        "mode": "solid",
+        "mode": "strobe",
         "seconds": 1,
-        "speed": 0
+        "speed": 9
       }
     },
     {
@@ -808,7 +814,7 @@
       },
       "audio": false,
       "burst": {
-        "mode": "glitch",
+        "mode": "strobe",
         "seconds": 1,
         "hue": 136,
         "bright": 200,
@@ -873,7 +879,7 @@
       },
       "audio": false,
       "burst": {
-        "mode": "glitch",
+        "mode": "strobe",
         "seconds": 1,
         "hue": 136,
         "bright": 200,
@@ -900,7 +906,7 @@
       },
       "audio": false,
       "burst": {
-        "mode": "glitch",
+        "mode": "strobe",
         "seconds": 1,
         "hue": 136,
         "bright": 200,
@@ -1533,10 +1539,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "solid",
+        "mode": "strobe",
         "seconds": 1,
         "sat": 0,
-        "bright": 255
+        "bright": 255,
+        "speed": 9
       }
     },
     {
@@ -1559,10 +1566,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "solid",
+        "mode": "strobe",
         "seconds": 1,
         "sat": 0,
-        "bright": 255
+        "bright": 255,
+        "speed": 9
       }
     },
     {
@@ -1589,10 +1597,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "solid",
+        "mode": "strobe",
         "seconds": 1,
         "sat": 0,
-        "bright": 255
+        "bright": 255,
+        "speed": 9
       }
     },
     {
@@ -1635,7 +1644,7 @@
       "audio": false,
       "main": false,
       "burst": {
-        "mode": "firework",
+        "mode": "strobe",
         "seconds": 1,
         "hue": 32,
         "bright": 255,
@@ -1682,11 +1691,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "solid",
+        "mode": "strobe",
         "seconds": 0.5,
         "bright": 255,
         "sat": 0,
-        "speed": 0
+        "speed": 9
       }
     },
     {
@@ -1753,10 +1762,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "solid",
+        "mode": "strobe",
         "seconds": 1,
         "sat": 0,
-        "bright": 255
+        "bright": 255,
+        "speed": 9
       }
     },
     {
@@ -1779,10 +1789,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "solid",
+        "mode": "strobe",
         "seconds": 1,
         "sat": 0,
-        "bright": 255
+        "bright": 255,
+        "speed": 9
       }
     },
     {
@@ -1802,8 +1813,11 @@
       },
       "audio": false,
       "burst": {
-        "mode": "off",
-        "seconds": 1
+        "mode": "strobe",
+        "seconds": 1,
+        "hue": 136,
+        "bright": 255,
+        "speed": 9
       }
     },
     {
@@ -2030,10 +2044,31 @@
     },
     {
       "id": 34,
-      "name": "TEST white max",
+      "name": "Thank You End Card",
       "resolume": {
         "layer": 1,
         "clip": 34
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": {
+          "mode": "off"
+        }
+      },
+      "audio": false,
+      "burst": {
+        "mode": "off",
+        "seconds": 1
+      }
+    },
+    {
+      "id": 35,
+      "name": "TEST white max",
+      "resolume": {
+        "layer": 1,
+        "clip": 35
       },
       "dmx": {
         "cue": "off"
@@ -2049,11 +2084,11 @@
       "audio": false
     },
     {
-      "id": 35,
+      "id": 36,
       "name": "TEST strobe max",
       "resolume": {
         "layer": 1,
-        "clip": 35
+        "clip": 36
       },
       "dmx": {
         "cue": "off"
@@ -2069,11 +2104,11 @@
       "audio": false
     },
     {
-      "id": 36,
+      "id": 37,
       "name": "TEST chase fast",
       "resolume": {
         "layer": 1,
-        "clip": 36
+        "clip": 37
       },
       "dmx": {
         "cue": "off"
@@ -2089,11 +2124,11 @@
       "audio": false
     },
     {
-      "id": 37,
+      "id": 38,
       "name": "TEST chase slow",
       "resolume": {
         "layer": 1,
-        "clip": 37
+        "clip": 38
       },
       "dmx": {
         "cue": "off"
@@ -2109,11 +2144,11 @@
       "audio": false
     },
     {
-      "id": 38,
+      "id": 39,
       "name": "TEST pulse low",
       "resolume": {
         "layer": 1,
-        "clip": 38
+        "clip": 39
       },
       "dmx": {
         "cue": "off"
@@ -2129,11 +2164,11 @@
       "audio": false
     },
     {
-      "id": 39,
+      "id": 40,
       "name": "TEST pulse full",
       "resolume": {
         "layer": 1,
-        "clip": 39
+        "clip": 40
       },
       "dmx": {
         "cue": "off"
@@ -2149,11 +2184,11 @@
       "audio": false
     },
     {
-      "id": 40,
+      "id": 41,
       "name": "TEST sequence",
       "resolume": {
         "layer": 1,
-        "clip": 40
+        "clip": 41
       },
       "dmx": {
         "cue": "off"
