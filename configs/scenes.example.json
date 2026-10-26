@@ -577,212 +577,201 @@
       "lights": {
         "default": [
           {
+            "mode": "fire",
+            "colors": [
+              0
+            ],
+            "bright": 150,
+            "speed": 6,
+            "seconds": 30
+          },
+          {
             "mode": "chase",
             "colors": [
-              20,
               0,
-              20
+              24,
+              "w"
             ],
-            "bright": 110,
-            "speed": 3,
-            "seconds": 45
-          },
-          {
-            "mode": "wave",
-            "colors": [
-              20,
-              0,
-              20
-            ],
-            "bright": 110,
-            "speed": 2,
-            "seconds": 45
-          },
-          {
-            "mode": "scan",
-            "colors": [
-              150,
-              "w",
-              150
-            ],
-            "bright": 110,
-            "speed": 2,
-            "seconds": 45
-          },
-          {
-            "mode": "noise",
-            "colors": [
-              150,
-              "w",
-              150
-            ],
-            "bright": 110,
-            "speed": 2,
-            "seconds": 45
-          },
-          {
-            "mode": "wave",
-            "colors": [
-              160,
-              136
-            ],
-            "bright": 110,
-            "speed": 3,
-            "seconds": 40
-          },
-          {
-            "mode": "theater",
-            "colors": [
-              160,
-              136
-            ],
-            "bright": 110,
-            "speed": 3,
-            "seconds": 40
-          },
-          {
-            "mode": "noise",
-            "colors": [
-              165,
-              192,
-              165
-            ],
-            "bright": 110,
-            "speed": 2,
-            "seconds": 50
-          },
-          {
-            "mode": "pulse",
-            "colors": [
-              165,
-              192,
-              165
-            ],
-            "bright": 110,
-            "speed": 2,
-            "seconds": 50
+            "bright": 150,
+            "speed": 5,
+            "seconds": 25
           },
           {
             "mode": "confetti",
             "colors": [
-              80,
-              80,
+              12,
+              36,
               "w"
             ],
-            "bright": 110,
-            "speed": 2,
-            "seconds": 35
+            "bright": 150,
+            "speed": 5,
+            "seconds": 25
           },
           {
-            "mode": "chase",
+            "mode": "wave",
             "colors": [
-              80,
-              80,
+              0,
+              36
+            ],
+            "bright": 150,
+            "speed": 4,
+            "seconds": 25
+          },
+          {
+            "mode": "sparkle",
+            "colors": [
+              24,
+              "w",
+              24
+            ],
+            "bright": 150,
+            "speed": 5,
+            "seconds": 20
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              0,
+              12
+            ],
+            "bright": 150,
+            "speed": 5,
+            "seconds": 20
+          },
+          {
+            "mode": "noise",
+            "colors": [
+              12,
+              48,
+              12
+            ],
+            "bright": 150,
+            "speed": 5,
+            "seconds": 25
+          },
+          {
+            "mode": "scan",
+            "colors": [
+              36,
+              "w",
+              36
+            ],
+            "bright": 150,
+            "speed": 6,
+            "seconds": 20
+          },
+          {
+            "mode": "pulse",
+            "colors": [
+              0,
+              24
+            ],
+            "bright": 150,
+            "speed": 5,
+            "seconds": 20
+          },
+          {
+            "mode": "glitch",
+            "colors": [
+              24,
               "w"
             ],
-            "bright": 110,
-            "speed": 3,
-            "seconds": 35
+            "bright": 150,
+            "speed": 4,
+            "seconds": 15
           }
         ],
         "cabB": [
           {
             "mode": "noise",
             "colors": [
-              20,
-              0,
-              20
+              24,
+              0
             ],
-            "bright": 110,
-            "speed": 2
-          },
-          {
-            "mode": "pulse",
-            "colors": [
-              20,
-              0,
-              20
-            ],
-            "bright": 110,
-            "speed": 3
-          },
-          {
-            "mode": "wave",
-            "colors": [
-              150,
-              "w",
-              150
-            ],
-            "bright": 110,
-            "speed": 2
+            "bright": 150,
+            "speed": 5
           },
           {
             "mode": "sparkle",
             "colors": [
-              150,
+              0,
               "w",
-              150
+              36
             ],
-            "bright": 110,
-            "speed": 3
+            "bright": 150,
+            "speed": 5
+          },
+          {
+            "mode": "fire",
+            "colors": [
+              12
+            ],
+            "bright": 150,
+            "speed": 6
           },
           {
             "mode": "chase",
             "colors": [
-              160,
-              136
+              36,
+              0
             ],
-            "bright": 110,
-            "speed": 3
-          },
-          {
-            "mode": "noise",
-            "colors": [
-              160,
-              136
-            ],
-            "bright": 110,
-            "speed": 2
-          },
-          {
-            "mode": "sparkle",
-            "colors": [
-              165,
-              192,
-              165
-            ],
-            "bright": 110,
-            "speed": 2
-          },
-          {
-            "mode": "wave",
-            "colors": [
-              165,
-              192,
-              165
-            ],
-            "bright": 110,
-            "speed": 2
-          },
-          {
-            "mode": "scan",
-            "colors": [
-              80,
-              80,
-              "w"
-            ],
-            "bright": 110,
-            "speed": 2
+            "bright": 150,
+            "speed": 5
           },
           {
             "mode": "confetti",
             "colors": [
-              80,
-              80,
+              0,
+              24,
               "w"
             ],
-            "bright": 110,
-            "speed": 2
+            "bright": 150,
+            "speed": 5
+          },
+          {
+            "mode": "wave",
+            "colors": [
+              12,
+              48
+            ],
+            "bright": 150,
+            "speed": 4
+          },
+          {
+            "mode": "scan",
+            "colors": [
+              0,
+              "w",
+              0
+            ],
+            "bright": 150,
+            "speed": 6
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              24,
+              36
+            ],
+            "bright": 150,
+            "speed": 5
+          },
+          {
+            "mode": "fire",
+            "colors": [
+              0
+            ],
+            "bright": 150,
+            "speed": 6
+          },
+          {
+            "mode": "pulse",
+            "colors": [
+              36,
+              12
+            ],
+            "bright": 150,
+            "speed": 5
           }
         ]
       },
