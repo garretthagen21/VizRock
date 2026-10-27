@@ -1882,24 +1882,44 @@
       "lights": {
         "default": [
           {
-            "mode": "scan",
+            "mode": "strobe",
             "colors": [
-              "w",
-              32
+              "w"
             ],
-            "bright": 200,
-            "speed": 7,
-            "seconds": 8
+            "bright": 255,
+            "speed": 10,
+            "seconds": 2,
+            "once": true
           },
           {
-            "mode": "glitch",
+            "mode": "strobe",
             "colors": [
               32,
               "w"
             ],
-            "bright": 190,
-            "speed": 8,
-            "seconds": 6
+            "bright": 255,
+            "speed": 9,
+            "seconds": 4
+          },
+          {
+            "mode": "glitch",
+            "colors": [
+              "w",
+              32,
+              0
+            ],
+            "bright": 240,
+            "speed": 10,
+            "seconds": 4
+          },
+          {
+            "mode": "firework",
+            "colors": [
+              "w"
+            ],
+            "bright": 255,
+            "speed": 9,
+            "seconds": 3
           },
           {
             "mode": "chase",
@@ -1908,19 +1928,29 @@
               32,
               "w"
             ],
-            "bright": 200,
-            "speed": 7,
-            "seconds": 8
+            "bright": 230,
+            "speed": 9,
+            "seconds": 4
+          },
+          {
+            "mode": "strobe",
+            "colors": [
+              0,
+              "w"
+            ],
+            "bright": 255,
+            "speed": 10,
+            "seconds": 3
           }
         ]
       },
       "audio": false,
       "burst": {
         "mode": "strobe",
-        "seconds": 1,
-        "speed": 9,
+        "seconds": 2,
         "sat": 0,
-        "bright": 255
+        "bright": 255,
+        "speed": 10
       }
     },
     {
