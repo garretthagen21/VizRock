@@ -1701,32 +1701,121 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "solid",
-          "colors": [
-            64,
-            64,
-            64,
-            136
-          ],
-          "bright": 140
-        }
+        "default": [
+          {
+            "mode": "strobe",
+            "colors": [
+              64,
+              "w"
+            ],
+            "bright": 240,
+            "speed": 9,
+            "seconds": 4,
+            "once": true
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              64,
+              "w"
+            ],
+            "bright": 220,
+            "speed": 8,
+            "seconds": 6
+          },
+          {
+            "mode": "strobe",
+            "colors": [
+              64
+            ],
+            "bright": 230,
+            "speed": 8,
+            "seconds": 4
+          },
+          {
+            "mode": "confetti",
+            "colors": [
+              64,
+              "w",
+              64
+            ],
+            "bright": 220,
+            "speed": 8,
+            "seconds": 6
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              64,
+              32
+            ],
+            "bright": 220,
+            "speed": 8,
+            "seconds": 6
+          }
+        ]
       },
       "audio": false,
       "burst": {
         "mode": "strobe",
         "seconds": 1,
-        "sat": 0,
+        "hue": 64,
         "bright": 255,
         "speed": 9
       }
     },
     {
       "id": 30,
-      "name": "Letter Lost Intro",
+      "name": "Dyings Alright Crash",
       "resolume": {
         "layer": 1,
         "clip": 30
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "audio": false,
+      "lights": {
+        "default": [
+          {
+            "mode": "strobe",
+            "colors": [
+              "w"
+            ],
+            "bright": 255,
+            "speed": 10,
+            "seconds": 1.5,
+            "once": true
+          },
+          {
+            "mode": "off",
+            "seconds": 1,
+            "once": true
+          },
+          {
+            "mode": "progress",
+            "hue": 136,
+            "bright": 110,
+            "speed": 4,
+            "seconds": 0,
+            "once": true
+          }
+        ]
+      },
+      "burst": {
+        "mode": "strobe",
+        "seconds": 1,
+        "hue": 136,
+        "bright": 255,
+        "speed": 9
+      }
+    },
+    {
+      "id": 31,
+      "name": "Letter Lost Intro",
+      "resolume": {
+        "layer": 1,
+        "clip": 31
       },
       "dmx": {
         "cue": "off"
@@ -1769,11 +1858,11 @@
       }
     },
     {
-      "id": 31,
+      "id": 32,
       "name": "Letter Lost Drop",
       "resolume": {
         "layer": 1,
-        "clip": 31
+        "clip": 32
       },
       "dmx": {
         "cue": "off"
@@ -1816,11 +1905,11 @@
       }
     },
     {
-      "id": 32,
+      "id": 33,
       "name": "Letter Lost Main",
       "resolume": {
         "layer": 1,
-        "clip": 32
+        "clip": 33
       },
       "dmx": {
         "cue": "off"
@@ -1870,11 +1959,11 @@
       }
     },
     {
-      "id": 33,
+      "id": 34,
       "name": "Letter Lost Bridge / Solo",
       "resolume": {
         "layer": 1,
-        "clip": 33
+        "clip": 34
       },
       "dmx": {
         "cue": "off"
@@ -1954,11 +2043,11 @@
       }
     },
     {
-      "id": 34,
+      "id": 35,
       "name": "Letter Lost Soft",
       "resolume": {
         "layer": 1,
-        "clip": 34
+        "clip": 35
       },
       "dmx": {
         "cue": "off"
@@ -1984,11 +2073,11 @@
       }
     },
     {
-      "id": 35,
+      "id": 36,
       "name": "Letter Lost Outro",
       "resolume": {
         "layer": 1,
-        "clip": 35
+        "clip": 36
       },
       "dmx": {
         "cue": "off"
@@ -2055,11 +2144,11 @@
       }
     },
     {
-      "id": 36,
+      "id": 37,
       "name": "Letter Lost Blast",
       "resolume": {
         "layer": 1,
-        "clip": 36
+        "clip": 37
       },
       "dmx": {
         "cue": "off"
@@ -2091,11 +2180,11 @@
       }
     },
     {
-      "id": 37,
+      "id": 38,
       "name": "Fat Lip - All The Small Things Loop",
       "resolume": {
         "layer": 1,
-        "clip": 37
+        "clip": 38
       },
       "dmx": {
         "cue": "off"
@@ -2313,11 +2402,11 @@
       }
     },
     {
-      "id": 38,
+      "id": 39,
       "name": "Thank You End Card",
       "resolume": {
         "layer": 1,
-        "clip": 38
+        "clip": 39
       },
       "dmx": {
         "cue": "off"
@@ -2334,7 +2423,7 @@
       }
     },
     {
-      "id": 39,
+      "id": 40,
       "name": "TEST white max",
       "resolume": {
         "clear": true
@@ -2353,7 +2442,7 @@
       "audio": false
     },
     {
-      "id": 40,
+      "id": 41,
       "name": "TEST strobe max",
       "resolume": {
         "clear": true
@@ -2372,7 +2461,7 @@
       "audio": false
     },
     {
-      "id": 41,
+      "id": 42,
       "name": "TEST chase fast",
       "resolume": {
         "clear": true
@@ -2391,7 +2480,7 @@
       "audio": false
     },
     {
-      "id": 42,
+      "id": 43,
       "name": "TEST chase slow",
       "resolume": {
         "clear": true
@@ -2410,7 +2499,7 @@
       "audio": false
     },
     {
-      "id": 43,
+      "id": 44,
       "name": "TEST pulse low",
       "resolume": {
         "clear": true
@@ -2429,7 +2518,7 @@
       "audio": false
     },
     {
-      "id": 44,
+      "id": 45,
       "name": "TEST pulse full",
       "resolume": {
         "clear": true
@@ -2448,7 +2537,7 @@
       "audio": false
     },
     {
-      "id": 45,
+      "id": 46,
       "name": "TEST sequence",
       "resolume": {
         "clear": true
