@@ -907,7 +907,7 @@
       "name": "St Redacted Bridge",
       "resolume": {
         "layer": 1,
-        "clip": 35
+        "clip": 20
       },
       "dmx": {
         "cue": "off"
@@ -971,7 +971,7 @@
       "name": "St Redacted Outro",
       "resolume": {
         "layer": 1,
-        "clip": 20
+        "clip": 21
       },
       "dmx": {
         "cue": "off"
@@ -1039,7 +1039,7 @@
       "name": "Pink Pony Intro",
       "resolume": {
         "layer": 1,
-        "clip": 21
+        "clip": 22
       },
       "dmx": {
         "cue": "off"
@@ -1065,7 +1065,7 @@
       "name": "Pink Pony Drop / Main",
       "resolume": {
         "layer": 1,
-        "clip": 22
+        "clip": 23
       },
       "dmx": {
         "cue": "off"
@@ -1117,7 +1117,7 @@
       "name": "Sweet Child Skit",
       "resolume": {
         "layer": 1,
-        "clip": 23
+        "clip": 24
       },
       "dmx": {
         "cue": "off"
@@ -1346,7 +1346,7 @@
       "name": "MakeDamnSure - Say It Ain't So Loop",
       "resolume": {
         "layer": 1,
-        "clip": 24
+        "clip": 25
       },
       "dmx": {
         "cue": "off"
@@ -1576,7 +1576,7 @@
       "name": "Dyings Alright Intro",
       "resolume": {
         "layer": 1,
-        "clip": 25
+        "clip": 26
       },
       "dmx": {
         "cue": "off"
@@ -1604,7 +1604,7 @@
       "name": "Dyings Alright Drop",
       "resolume": {
         "layer": 1,
-        "clip": 26
+        "clip": 27
       },
       "dmx": {
         "cue": "off"
@@ -1631,7 +1631,7 @@
       "name": "Dyings Alright Main",
       "resolume": {
         "layer": 1,
-        "clip": 26
+        "clip": 27
       },
       "dmx": {
         "cue": "off"
@@ -1695,7 +1695,7 @@
       "name": "Dyings Alright Outro",
       "resolume": {
         "layer": 1,
-        "clip": 27
+        "clip": 28
       },
       "dmx": {
         "cue": "off"
@@ -1726,7 +1726,7 @@
       "name": "Letter Lost Intro",
       "resolume": {
         "layer": 1,
-        "clip": 28
+        "clip": 29
       },
       "dmx": {
         "cue": "off"
@@ -1773,7 +1773,7 @@
       "name": "Letter Lost Drop",
       "resolume": {
         "layer": 1,
-        "clip": 29
+        "clip": 30
       },
       "dmx": {
         "cue": "off"
@@ -1820,7 +1820,7 @@
       "name": "Letter Lost Main",
       "resolume": {
         "layer": 1,
-        "clip": 29
+        "clip": 30
       },
       "dmx": {
         "cue": "off"
@@ -1874,7 +1874,7 @@
       "name": "Letter Lost Bridge / Solo",
       "resolume": {
         "layer": 1,
-        "clip": 29
+        "clip": 30
       },
       "dmx": {
         "cue": "off"
@@ -1928,7 +1928,7 @@
       "name": "Letter Lost Soft",
       "resolume": {
         "layer": 1,
-        "clip": 29
+        "clip": 30
       },
       "dmx": {
         "cue": "off"
@@ -1958,7 +1958,7 @@
       "name": "Letter Lost Outro",
       "resolume": {
         "layer": 1,
-        "clip": 30
+        "clip": 31
       },
       "dmx": {
         "cue": "off"
@@ -2029,7 +2029,7 @@
       "name": "Letter Lost Blast",
       "resolume": {
         "layer": 1,
-        "clip": 31
+        "clip": 32
       },
       "dmx": {
         "cue": "off"
