@@ -926,6 +926,19 @@
             "once": true
           },
           {
+            "mode": "confetti",
+            "colors": [
+              192,
+              136,
+              "w",
+              160
+            ],
+            "bright": 220,
+            "speed": 8,
+            "seconds": 6,
+            "once": true
+          },
+          {
             "mode": "scan",
             "colors": [
               192,
