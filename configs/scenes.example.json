@@ -968,10 +968,74 @@
     },
     {
       "id": 21,
-      "name": "St Redacted Outro",
+      "name": "St Redacted Soft",
       "resolume": {
         "layer": 1,
         "clip": 21
+      },
+      "dmx": {
+        "cue": "off"
+      },
+      "lights": {
+        "default": [
+          {
+            "mode": "scan",
+            "colors": [
+              192,
+              136
+            ],
+            "bright": 150,
+            "speed": 4,
+            "seconds": 10
+          },
+          {
+            "mode": "sparkle",
+            "colors": [
+              136,
+              "w",
+              192
+            ],
+            "bright": 150,
+            "speed": 5,
+            "seconds": 10
+          },
+          {
+            "mode": "wave",
+            "colors": [
+              192,
+              160
+            ],
+            "bright": 140,
+            "speed": 3,
+            "seconds": 10
+          },
+          {
+            "mode": "chase",
+            "colors": [
+              136,
+              192
+            ],
+            "bright": 155,
+            "speed": 5,
+            "seconds": 10
+          }
+        ]
+      },
+      "audio": false,
+      "burst": {
+        "mode": "strobe",
+        "seconds": 1,
+        "speed": 6,
+        "hue": 136,
+        "bright": 200
+      }
+    },
+    {
+      "id": 22,
+      "name": "St Redacted Outro",
+      "resolume": {
+        "layer": 1,
+        "clip": 22
       },
       "dmx": {
         "cue": "off"
@@ -1035,11 +1099,11 @@
       }
     },
     {
-      "id": 22,
+      "id": 23,
       "name": "Pink Pony Intro",
       "resolume": {
         "layer": 1,
-        "clip": 22
+        "clip": 23
       },
       "dmx": {
         "cue": "off"
@@ -1061,11 +1125,11 @@
       }
     },
     {
-      "id": 23,
+      "id": 24,
       "name": "Pink Pony Drop / Main",
       "resolume": {
         "layer": 1,
-        "clip": 23
+        "clip": 24
       },
       "dmx": {
         "cue": "off"
@@ -1113,11 +1177,11 @@
       }
     },
     {
-      "id": 24,
+      "id": 25,
       "name": "Sweet Child Skit",
       "resolume": {
         "layer": 1,
-        "clip": 24
+        "clip": 25
       },
       "dmx": {
         "cue": "off"
@@ -1342,11 +1406,11 @@
       }
     },
     {
-      "id": 25,
+      "id": 26,
       "name": "MakeDamnSure - Say It Ain't So Loop",
       "resolume": {
         "layer": 1,
-        "clip": 25
+        "clip": 26
       },
       "dmx": {
         "cue": "off"
@@ -1572,11 +1636,11 @@
       "main": true
     },
     {
-      "id": 26,
+      "id": 27,
       "name": "Dyings Alright Intro",
       "resolume": {
         "layer": 1,
-        "clip": 26
+        "clip": 27
       },
       "dmx": {
         "cue": "off"
@@ -1603,11 +1667,11 @@
       }
     },
     {
-      "id": 27,
+      "id": 28,
       "name": "Dyings Alright Drop",
       "resolume": {
         "layer": 1,
-        "clip": 27
+        "clip": 28
       },
       "dmx": {
         "cue": "off"
@@ -1646,11 +1710,11 @@
       }
     },
     {
-      "id": 28,
+      "id": 29,
       "name": "Dyings Alright Main",
       "resolume": {
         "layer": 1,
-        "clip": 28
+        "clip": 29
       },
       "dmx": {
         "cue": "off"
@@ -1747,11 +1811,11 @@
       }
     },
     {
-      "id": 29,
+      "id": 30,
       "name": "Dyings Alright Outro",
       "resolume": {
         "layer": 1,
-        "clip": 29
+        "clip": 30
       },
       "dmx": {
         "cue": "off"
@@ -1822,11 +1886,11 @@
       }
     },
     {
-      "id": 30,
+      "id": 31,
       "name": "Dyings Alright Crash",
       "resolume": {
         "layer": 1,
-        "clip": 30
+        "clip": 31
       },
       "dmx": {
         "cue": "off"
@@ -1868,11 +1932,11 @@
       }
     },
     {
-      "id": 31,
+      "id": 32,
       "name": "Letter Lost Intro",
       "resolume": {
         "layer": 1,
-        "clip": 31
+        "clip": 32
       },
       "dmx": {
         "cue": "off"
@@ -1915,11 +1979,11 @@
       }
     },
     {
-      "id": 32,
+      "id": 33,
       "name": "Letter Lost Drop",
       "resolume": {
         "layer": 1,
-        "clip": 32
+        "clip": 33
       },
       "dmx": {
         "cue": "off"
@@ -1962,11 +2026,11 @@
       }
     },
     {
-      "id": 33,
+      "id": 34,
       "name": "Letter Lost Main",
       "resolume": {
         "layer": 1,
-        "clip": 33
+        "clip": 34
       },
       "dmx": {
         "cue": "off"
@@ -2016,11 +2080,11 @@
       }
     },
     {
-      "id": 34,
+      "id": 35,
       "name": "Letter Lost Bridge / Solo",
       "resolume": {
         "layer": 1,
-        "clip": 34
+        "clip": 35
       },
       "dmx": {
         "cue": "off"
@@ -2100,11 +2164,11 @@
       }
     },
     {
-      "id": 35,
+      "id": 36,
       "name": "Letter Lost Soft",
       "resolume": {
         "layer": 1,
-        "clip": 35
+        "clip": 36
       },
       "dmx": {
         "cue": "off"
@@ -2130,11 +2194,11 @@
       }
     },
     {
-      "id": 36,
+      "id": 37,
       "name": "Letter Lost Outro",
       "resolume": {
         "layer": 1,
-        "clip": 36
+        "clip": 37
       },
       "dmx": {
         "cue": "off"
@@ -2201,11 +2265,11 @@
       }
     },
     {
-      "id": 37,
+      "id": 38,
       "name": "Letter Lost Blast",
       "resolume": {
         "layer": 1,
-        "clip": 37
+        "clip": 38
       },
       "dmx": {
         "cue": "off"
@@ -2237,11 +2301,11 @@
       }
     },
     {
-      "id": 38,
+      "id": 39,
       "name": "Fat Lip - All The Small Things Loop",
       "resolume": {
         "layer": 1,
-        "clip": 38
+        "clip": 39
       },
       "dmx": {
         "cue": "off"
@@ -2459,11 +2523,11 @@
       }
     },
     {
-      "id": 39,
+      "id": 40,
       "name": "Thank You End Card",
       "resolume": {
         "layer": 1,
-        "clip": 39
+        "clip": 40
       },
       "dmx": {
         "cue": "off"
@@ -2480,7 +2544,7 @@
       }
     },
     {
-      "id": 40,
+      "id": 41,
       "name": "TEST white max",
       "resolume": {
         "clear": true
@@ -2499,7 +2563,7 @@
       "audio": false
     },
     {
-      "id": 41,
+      "id": 42,
       "name": "TEST strobe max",
       "resolume": {
         "clear": true
@@ -2518,7 +2582,7 @@
       "audio": false
     },
     {
-      "id": 42,
+      "id": 43,
       "name": "TEST chase fast",
       "resolume": {
         "clear": true
@@ -2537,7 +2601,7 @@
       "audio": false
     },
     {
-      "id": 43,
+      "id": 44,
       "name": "TEST chase slow",
       "resolume": {
         "clear": true
@@ -2556,7 +2620,7 @@
       "audio": false
     },
     {
-      "id": 44,
+      "id": 45,
       "name": "TEST pulse low",
       "resolume": {
         "clear": true
@@ -2575,7 +2639,7 @@
       "audio": false
     },
     {
-      "id": 45,
+      "id": 46,
       "name": "TEST pulse full",
       "resolume": {
         "clear": true
@@ -2594,7 +2658,7 @@
       "audio": false
     },
     {
-      "id": 46,
+      "id": 47,
       "name": "TEST sequence",
       "resolume": {
         "clear": true
