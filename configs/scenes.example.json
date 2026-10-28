@@ -1685,7 +1685,8 @@
             ],
             "bright": 220,
             "speed": 8,
-            "seconds": 4
+            "seconds": 3,
+            "once": true
           },
           {
             "mode": "confetti",
@@ -1695,8 +1696,7 @@
               64
             ],
             "bright": 230,
-            "speed": 9,
-            "seconds": 4
+            "speed": 9
           }
         ]
       },
@@ -1726,78 +1726,18 @@
             "colors": [
               64
             ],
-            "bright": 150,
-            "speed": 3,
-            "seconds": 20
-          },
-          {
-            "mode": "theater",
-            "colors": [
-              64
-            ],
-            "bright": 170,
-            "speed": 5,
-            "seconds": 20,
-            "sat": 170
-          },
-          {
-            "mode": "theater",
-            "colors": [
-              64,
-              "w"
-            ],
-            "bright": 180,
-            "speed": 6,
-            "seconds": 15
-          },
-          {
-            "mode": "theater",
-            "colors": [
-              64
-            ],
             "bright": 200,
-            "speed": 8,
-            "seconds": 15
+            "speed": 10
           }
         ],
         "cabB": [
           {
-            "mode": "theater",
+            "mode": "wave",
             "colors": [
-              64
+              0
             ],
             "bright": 150,
-            "speed": 2,
-            "seconds": 20
-          },
-          {
-            "mode": "theater",
-            "colors": [
-              64
-            ],
-            "bright": 170,
-            "speed": 4,
-            "seconds": 20,
-            "sat": 170
-          },
-          {
-            "mode": "theater",
-            "colors": [
-              64,
-              "w"
-            ],
-            "bright": 180,
-            "speed": 5,
-            "seconds": 15
-          },
-          {
-            "mode": "theater",
-            "colors": [
-              64
-            ],
-            "bright": 200,
-            "speed": 7,
-            "seconds": 15
+            "speed": 3
           }
         ]
       },
@@ -1857,8 +1797,7 @@
           {
             "mode": "theater",
             "colors": [
-              64,
-              "w"
+              64
             ],
             "bright": 245,
             "speed": 9,
@@ -1873,6 +1812,16 @@
             "bright": 255,
             "speed": 10,
             "once": true
+          }
+        ],
+        "cabB": [
+          {
+            "mode": "wave",
+            "colors": [
+              0
+            ],
+            "bright": 200,
+            "speed": 6
           }
         ]
       },
