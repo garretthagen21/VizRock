@@ -1582,13 +1582,16 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "progress",
-          "hue": 0,
-          "sat": 0,
-          "bright": 120,
-          "speed": 3
-        }
+        "default": [
+          {
+            "mode": "theater",
+            "colors": [
+              "w"
+            ],
+            "bright": 70,
+            "speed": 2
+          }
+        ]
       },
       "audio": false,
       "burst": {
@@ -1610,12 +1613,28 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "strobe",
-          "hue": 64,
-          "bright": 220,
-          "speed": 8
-        }
+        "default": [
+          {
+            "mode": "strobe",
+            "colors": [
+              64
+            ],
+            "bright": 220,
+            "speed": 8,
+            "seconds": 4
+          },
+          {
+            "mode": "confetti",
+            "colors": [
+              64,
+              "w",
+              64
+            ],
+            "bright": 230,
+            "speed": 9,
+            "seconds": 4
+          }
+        ]
       },
       "audio": false,
       "burst": {
@@ -1639,45 +1658,82 @@
       "lights": {
         "default": [
           {
-            "mode": "chase",
+            "mode": "theater",
             "colors": [
-              64,
-              "w"
+              64
+            ],
+            "bright": 150,
+            "speed": 3,
+            "seconds": 20
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              64
             ],
             "bright": 170,
             "speed": 5,
-            "seconds": 20
+            "seconds": 20,
+            "sat": 170
           },
           {
-            "mode": "wave",
+            "mode": "theater",
             "colors": [
               64,
-              32
-            ],
-            "bright": 160,
-            "speed": 4,
-            "seconds": 20
-          },
-          {
-            "mode": "confetti",
-            "colors": [
-              64,
-              136,
               "w"
             ],
+            "bright": 180,
+            "speed": 6,
+            "seconds": 15
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              64
+            ],
+            "bright": 200,
+            "speed": 8,
+            "seconds": 15
+          }
+        ],
+        "cabB": [
+          {
+            "mode": "theater",
+            "colors": [
+              64
+            ],
+            "bright": 150,
+            "speed": 2,
+            "seconds": 20
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              64
+            ],
             "bright": 170,
+            "speed": 4,
+            "seconds": 20,
+            "sat": 170
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              64,
+              "w"
+            ],
+            "bright": 180,
             "speed": 5,
             "seconds": 15
           },
           {
             "mode": "theater",
             "colors": [
-              64,
-              136
+              64
             ],
-            "bright": 160,
-            "speed": 5,
-            "seconds": 20
+            "bright": 200,
+            "speed": 7,
+            "seconds": 15
           }
         ]
       },
@@ -1710,48 +1766,49 @@
             ],
             "bright": 240,
             "speed": 9,
-            "seconds": 4,
+            "seconds": 3,
             "once": true
           },
           {
-            "mode": "chase",
-            "colors": [
-              64,
-              "w"
-            ],
-            "bright": 220,
-            "speed": 8,
-            "seconds": 6
-          },
-          {
-            "mode": "strobe",
+            "mode": "theater",
             "colors": [
               64
             ],
-            "bright": 230,
-            "speed": 8,
-            "seconds": 4
-          },
-          {
-            "mode": "confetti",
-            "colors": [
-              64,
-              "w",
-              64
-            ],
             "bright": 220,
-            "speed": 8,
-            "seconds": 6
+            "speed": 7,
+            "seconds": 8,
+            "once": true
           },
           {
             "mode": "theater",
             "colors": [
               64,
-              32
+              "w"
             ],
-            "bright": 220,
+            "bright": 230,
             "speed": 8,
-            "seconds": 6
+            "seconds": 8,
+            "once": true
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              64,
+              "w"
+            ],
+            "bright": 245,
+            "speed": 9,
+            "seconds": 8,
+            "once": true
+          },
+          {
+            "mode": "theater",
+            "colors": [
+              64
+            ],
+            "bright": 255,
+            "speed": 10,
+            "once": true
           }
         ]
       },
