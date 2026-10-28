@@ -915,6 +915,17 @@
       "lights": {
         "default": [
           {
+            "mode": "strobe",
+            "colors": [
+              192,
+              160
+            ],
+            "bright": 240,
+            "speed": 9,
+            "seconds": 3,
+            "once": true
+          },
+          {
             "mode": "scan",
             "colors": [
               192,
