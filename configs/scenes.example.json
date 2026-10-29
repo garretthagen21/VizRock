@@ -531,14 +531,14 @@
           },
           {
             "mode": "off",
-            "seconds": 1.6
+            "seconds": 1.35
           },
           {
             "mode": "strobe",
             "hue": 136,
             "bright": 255,
             "speed": 9,
-            "seconds": 1.25
+            "seconds": 1.5
           },
           {
             "mode": "pulse",
