@@ -1861,6 +1861,18 @@
       "lights": {
         "default": [
           {
+            "mode": "strobe",
+            "colors": [
+              0,
+              "w",
+              0
+            ],
+            "bright": 255,
+            "speed": 8,
+            "seconds": 5,
+            "once": true
+          },
+          {
             "mode": "confetti",
             "colors": [
               0
@@ -1870,6 +1882,18 @@
           }
         ],
         "cabB": [
+          {
+            "mode": "strobe",
+            "colors": [
+              0,
+              "w",
+              0
+            ],
+            "bright": 255,
+            "speed": 8,
+            "seconds": 5,
+            "once": true
+          },
           {
             "mode": "wave",
             "colors": [
