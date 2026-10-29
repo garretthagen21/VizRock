@@ -134,6 +134,7 @@
     ]
   },
   "epilepsy_safe": false,
+  "auto_restart_on_unblackout": true,
   "palette": [
     0,
     32,

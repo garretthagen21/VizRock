@@ -37,6 +37,11 @@ EFFECT_RESET_REPEAT = 3
 # foot held a beat too long in the normal run of the set still advances.
 UNDO_SECONDS = 5
 
+# Releasing blackout restarts LIVE (when enabled), but not in the first seconds after
+# boot, where the pedal has glitched blackout off, and not twice for one double tap.
+AUTO_RESTART_BOOT_GUARD = 5
+AUTO_RESTART_COOLDOWN = 1
+
 # Epilepsy-safe mode swaps every whole-cab flash for a look that moves without
 # flashing: strobe and firework flash every lit pixel together at ~25Hz, and glitch
 # blanks runs of the cab every frame, all far past the 3-flashes-a-second limit.
@@ -77,6 +82,8 @@ class Brain:
         self._step_started = 0.0         # when the current light step began, monotonic
         self._undo = None                # what the last GO replaced, while undo is open
         self._auditioning = False        # holding a preview of a scene being edited
+        self._started = time.monotonic()  # the pedal can glitch blackout off at boot
+        self._auto_restarted = 0.0       # last restart from a blackout release, monotonic
         self.last_action = None
         self._action_seq = 0
         self.last_event = 'armed · waiting for trigger'
@@ -110,17 +117,7 @@ class Brain:
                 # looping visual must leave whatever you had queued still queued
                 self._commit(target, rearm=False)
         elif action == 'restart_scene':
-            if self.live is None:
-                logger.warning('nothing is live, so there is nothing to restart')
-            else:
-                # Restart means the scene as authored: clip from the top, light
-                # sequence from step 1, the scene's own hue, no burst running. A
-                # color picked by hand mid-set must not survive a restart, or the
-                # button does not actually get you back to a known state.
-                self._cancel_burst()
-                # the only thing that re-fires a clip that is already playing
-                self._restart_visuals = True
-                self._commit(self.live, rearm=False)
+            self._restart_scene()
         elif action == 'clear_effects':
             self._clear_effects()
         elif action == 'cycle_color':
@@ -182,6 +179,7 @@ class Brain:
             'light_groups': vizrock_settings.light_groups,
             'light_trim': vizrock_settings.light_trim,
             'epilepsy_safe': vizrock_settings.epilepsy_safe,
+            'auto_restart_on_unblackout': vizrock_settings.auto_restart_on_unblackout,
             # seconds of undo left, so the UI can count it down without polling
             'undo_left': self._undo_left(),
             'undo_seconds': UNDO_SECONDS,
@@ -260,6 +258,26 @@ class Brain:
         return replacement is not None
 
     # MARK: - Private
+    def _restart_scene(self):
+        if self.live is None:
+            logger.warning('nothing is live, so there is nothing to restart')
+            return
+        # Restart means the scene as authored: clip from the top, light sequence from
+        # step 1, the scene's own hue, no burst running. A color picked by hand mid-set
+        # must not survive a restart, or the button does not actually get you back to a
+        # known state.
+        self._cancel_burst()
+        # the only thing that re-fires a clip that is already playing
+        self._restart_visuals = True
+        self._commit(self.live, rearm=False)
+
+    def _restart_on_release(self):
+        """Whether releasing blackout should restart LIVE rather than just reveal it."""
+        now = time.monotonic()
+        return (vizrock_settings.auto_restart_on_unblackout and self.live is not None
+                and now - self._started >= AUTO_RESTART_BOOT_GUARD
+                and now - self._auto_restarted >= AUTO_RESTART_COOLDOWN)
+
     def _toggle_blackout(self):
         """
         The panic control: every output off, held until pressed again.
@@ -279,6 +297,10 @@ class Brain:
             self._send_reset()
         self.last_event = 'blackout · press again to restore' if self.blackout else 'blackout off'
         logger.info(self.last_event)
+        if not self.blackout and self._restart_on_release():
+            self._auto_restarted = time.monotonic()
+            self._restart_scene()
+            return
         self._render()
         self.push_state()
 
@@ -773,6 +795,15 @@ class Brain:
             peripheral, vizrock_settings.light_trim[peripheral])
         logger.info(self.last_event)
         self._render()
+        self.push_state()
+
+    def set_auto_restart_on_unblackout(self, enabled):
+        """Whether releasing blackout restarts the scene, as a long switch 3 does."""
+        vizrock_settings.auto_restart_on_unblackout = bool(enabled)
+        vizrock_settings.raw['auto_restart_on_unblackout'] = vizrock_settings.auto_restart_on_unblackout
+        vizrock_settings.save_soon()
+        self.last_event = 'restart on blackout release ' + ('on' if enabled else 'off')
+        logger.info(self.last_event)
         self.push_state()
 
     def set_epilepsy_safe(self, enabled):

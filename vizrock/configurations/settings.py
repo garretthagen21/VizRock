@@ -54,6 +54,8 @@ class VizRockSettings:
             self.light_trim = {'default': int(raw_trim)}
         # swaps every flashing light look and screen effect for a safe one
         self.epilepsy_safe = bool(self.raw.get('epilepsy_safe', False))
+        # releasing blackout restarts the scene, as restart_scene does
+        self.auto_restart_on_unblackout = bool(self.raw.get('auto_restart_on_unblackout', True))
         # hues that cycle_color steps through; the scene's own hue is also a stop
         self.palette = self.raw.get('palette', [0, 32, 64, 96, 160, 200])
         self.midi_inputs = self.raw.get('midi_inputs', [])

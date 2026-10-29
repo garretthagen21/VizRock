@@ -727,6 +727,13 @@
             <button class="switch" id="epSafe" role="switch" aria-checked="false"
               aria-label="Epilepsy safe" onclick="setEpilepsySafe()"></button>
           </div></div>
+          <div class="sectlab mt">RESTART ON BLACKOUT RELEASE</div>
+          <div class="upd"><div class="learn switchrow" style="margin:0;border-style:solid">
+            <span class="hint">Turning blackout off restarts the scene from the top, clip
+              and lights, as a long press on switch 3 does. Ignored just after boot.</span>
+            <button class="switch" id="autoRestart" role="switch" aria-checked="true"
+              aria-label="Restart on blackout release" onclick="setAutoRestart()"></button>
+          </div></div>
           <div class="sectlab mt">OUTPUTS</div><div id="outList"></div>
           <div class="sectlab mt">CONNECT</div><div id="netBox"></div>
           <div class="sectlab mt">SOFTWARE</div><div id="updBox"></div>
@@ -1063,6 +1070,7 @@ function renderPills(){
     wrap.appendChild(e);
   }
   document.getElementById('epSafe')?.setAttribute('aria-checked', !!state.epilepsy_safe);
+  document.getElementById('autoRestart')?.setAttribute('aria-checked', !!state.auto_restart_on_unblackout);
   const b=document.createElement('div'); b.className="midiblip"; b.id="blip";
   b.title="flashes when the brain pushes new state";
   b.innerHTML=`<span class="sq"></span>${esc(state.last_event||"")}`;
@@ -1827,6 +1835,10 @@ function renderOuts(){
       + (fields?`<div class="outcfg">${fields}<button class="applybtn" onclick="applyOutput('${k}',this)">APPLY</button></div>`:"");
     wrap.appendChild(el);
   });
+}
+function setAutoRestart(){
+  if(!linked()) return;
+  ws.send(JSON.stringify({type:"set_auto_restart", enabled:!state.auto_restart_on_unblackout}));
 }
 function setEpilepsySafe(){
   if(!linked()) return;

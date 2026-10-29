@@ -111,6 +111,7 @@ def run():
     _epilepsy_safe_swaps_every_flash()
     _long_go_undoes_only_just_after_a_go()
     _restart_refires_without_rearming()
+    _blackout_release_restarts_the_scene()
     _next_main_is_a_dead_button_with_no_mains()
 
     snapshot = brain.snapshot()
@@ -1066,6 +1067,54 @@ def _a_pop_under_blackout_sends_no_effect():
         vizrock_settings.burst.update(saved)
         brain._cancel_burst()
         brain.handle('blackout')
+
+
+def _blackout_release_restarts_the_scene():
+    from vizrock.configurations.settings import vizrock_settings
+
+    def restarted(brain, spy):
+        before = len(spy.scenes)
+        brain.handle('blackout')            # off
+        return any(s.get('restart') for s in spy.scenes[before:])
+
+    def armed_brain():
+        brain = Brain()
+        spy = _Recorder('visuals')
+        brain.outputs = [spy]
+        brain.handle('goto', 2)
+        brain._started -= 10                # past the boot guard
+        brain.handle('blackout')            # on
+        return brain, spy
+
+    before = vizrock_settings.auto_restart_on_unblackout
+    try:
+        vizrock_settings.auto_restart_on_unblackout = True
+        brain, spy = armed_brain()
+        assert restarted(brain, spy), 'releasing blackout restarts LIVE'
+        assert brain.live == 2 and not brain.blackout
+
+        sent = len(spy.scenes)
+        brain.handle('blackout')
+        assert not any(s.get('restart') for s in spy.scenes[sent:]), 'blackout on never restarts'
+        assert not restarted(brain, spy), 'a double tap inside the cooldown restarts once'
+        brain._auto_restarted -= 2
+        brain.handle('blackout')
+        assert restarted(brain, spy), 'past the cooldown it restarts again'
+
+        brain, spy = armed_brain()
+        brain._started = time.monotonic()
+        assert not restarted(brain, spy), 'the boot guard ignores an early release'
+        assert not brain.blackout, 'the guard skips the restart, not the release'
+
+        brain, spy = armed_brain()
+        brain.live = None
+        assert not restarted(brain, spy), 'nothing live, nothing to restart'
+
+        vizrock_settings.auto_restart_on_unblackout = False
+        brain, spy = armed_brain()
+        assert not restarted(brain, spy), 'off, a release only reveals the scene'
+    finally:
+        vizrock_settings.auto_restart_on_unblackout = before
 
 
 def _restart_refires_without_rearming():
