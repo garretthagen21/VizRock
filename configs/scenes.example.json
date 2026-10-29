@@ -1795,7 +1795,7 @@
             ],
             "bright": 140,
             "speed": 4,
-            "seconds": 12,
+            "seconds": 16.8,
             "once": true
           },
           {
@@ -1846,7 +1846,7 @@
             ],
             "bright": 110,
             "speed": 3,
-            "seconds": 12,
+            "seconds": 40.8,
             "once": true
           },
           {
