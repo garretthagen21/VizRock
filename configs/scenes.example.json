@@ -1861,13 +1861,12 @@
       "lights": {
         "default": [
           {
-            "mode": "theater",
+            "mode": "confetti",
             "colors": [
-              64
+              0
             ],
             "bright": 255,
-            "speed": 10,
-            "once": true
+            "speed": 9
           }
         ],
         "cabB": [
@@ -1902,31 +1901,12 @@
       },
       "audio": false,
       "lights": {
-        "default": [
-          {
-            "mode": "strobe",
-            "colors": [
-              "w"
-            ],
-            "bright": 255,
-            "speed": 10,
-            "seconds": 1.5,
-            "once": true
-          },
-          {
-            "mode": "off",
-            "seconds": 1,
-            "once": true
-          },
-          {
-            "mode": "progress",
-            "hue": 136,
-            "bright": 110,
-            "speed": 4,
-            "seconds": 0,
-            "once": true
-          }
-        ]
+        "default": {
+          "mode": "sparkle",
+          "hue": 136,
+          "bright": 200,
+          "speed": 4
+        }
       },
       "burst": {
         "mode": "strobe",
