@@ -2613,7 +2613,7 @@
     },
     {
       "id": 43,
-      "name": "TEST white max",
+      "name": "TEST sequence",
       "resolume": {
         "clear": true
       },
@@ -2621,12 +2621,28 @@
         "cue": "off"
       },
       "lights": {
-        "default": {
-          "mode": "solid",
-          "hue": 0,
-          "bright": 255,
-          "speed": 0
-        }
+        "default": [
+          {
+            "mode": "solid",
+            "hue": 0,
+            "bright": 180,
+            "seconds": 2
+          },
+          {
+            "mode": "chase",
+            "hue": 96,
+            "bright": 200,
+            "speed": 6,
+            "seconds": 2
+          },
+          {
+            "mode": "strobe",
+            "hue": 160,
+            "bright": 220,
+            "speed": 8,
+            "seconds": 2
+          }
+        ]
       },
       "audio": false
     },
@@ -2727,7 +2743,7 @@
     },
     {
       "id": 49,
-      "name": "TEST sequence",
+      "name": "TEST white max",
       "resolume": {
         "clear": true
       },
@@ -2735,28 +2751,12 @@
         "cue": "off"
       },
       "lights": {
-        "default": [
-          {
-            "mode": "solid",
-            "hue": 0,
-            "bright": 180,
-            "seconds": 2
-          },
-          {
-            "mode": "chase",
-            "hue": 96,
-            "bright": 200,
-            "speed": 6,
-            "seconds": 2
-          },
-          {
-            "mode": "strobe",
-            "hue": 160,
-            "bright": 220,
-            "speed": 8,
-            "seconds": 2
-          }
-        ]
+        "default": {
+          "mode": "solid",
+          "hue": 0,
+          "bright": 255,
+          "speed": 0
+        }
       },
       "audio": false
     }
