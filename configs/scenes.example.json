@@ -2615,7 +2615,8 @@
       "id": 43,
       "name": "TEST sequence",
       "resolume": {
-        "clear": true
+        "layer": 1,
+        "clip": 43
       },
       "dmx": {
         "cue": "off"
@@ -2626,21 +2627,45 @@
             "mode": "solid",
             "hue": 0,
             "bright": 180,
-            "seconds": 2
+            "seconds": 2,
+            "once": true
           },
           {
             "mode": "chase",
             "hue": 96,
             "bright": 200,
             "speed": 6,
-            "seconds": 2
+            "seconds": 2,
+            "once": true
           },
           {
             "mode": "strobe",
             "hue": 160,
             "bright": 220,
             "speed": 8,
-            "seconds": 2
+            "seconds": 2,
+            "once": true
+          },
+          {
+            "mode": "solid",
+            "sat": 0,
+            "bright": 60,
+            "seconds": 32,
+            "once": true
+          },
+          {
+            "mode": "tempo",
+            "sat": 0,
+            "bright": 255,
+            "speed": 60,
+            "seconds": 10,
+            "once": true
+          },
+          {
+            "mode": "solid",
+            "sat": 0,
+            "bright": 120,
+            "once": true
           }
         ]
       },
